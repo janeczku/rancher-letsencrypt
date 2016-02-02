@@ -1,0 +1,39 @@
+#!/bin/bash
+#
+# validates that the project is clean of formatting and vet errors.
+# symlink as .git/hooks/pre-commit to use as a pre-commit check.
+#
+
+gofiles=$(find . ! -path "*/_*" -name "*.go")
+[ -z "$gofiles" ] && exit 0
+
+function checkfmt() {
+  unformatted=$(gofmt -l $*)
+  [ -z "$unformatted" ] && return 0
+
+  echo >&2 "Go files must be formatted with gofmt. Please run:"
+  for fn in $unformatted; do
+    echo >&2 "  gofmt -w $PWD/$fn"
+  done
+
+  return 1
+}
+
+function checkvet() {
+  unvetted=$(go vet ./... 2>&1 | grep -v "exit status")
+  [ -z "$unvetted" ] && return 0
+
+  echo >&2 "Go files must be vetted. Check these problems:"
+  IFS=$'\n'
+  for line in $unvetted; do
+    echo >&2 "  $line"
+  done
+  unset IFS
+
+  return 1
+}
+
+checkfmt $gofiles || fail=yes
+checkvet $gofiles || fail=yes
+
+[ -z "$fail" ] || exit 1
