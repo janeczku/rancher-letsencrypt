@@ -1,0 +1,65 @@
+{
+	"ImportPath": "github.com/janeczku/rancher-letsencrypt",
+	"GoVersion": "go1.5",
+	"Deps": [
+		{
+			"ImportPath": "github.com/Sirupsen/logrus",
+			"Comment": "v0.8.7-55-gf7f79f7",
+			"Rev": "f7f79f729e0fbe2fcc061db48a9ba0263f588252"
+		},
+		{
+			"ImportPath": "github.com/gorilla/websocket",
+			"Rev": "c45a635370221f34fea2d5163fd156fcb4e38e8a"
+		},
+		{
+			"ImportPath": "github.com/miekg/dns",
+			"Rev": "b9171237b0642de1d8e8004f16869970e065f46b"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/goamz/aws",
+			"Rev": "caaaea8b30ee15616494ee68abd5d8ebbbef05cf"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/goamz/route53",
+			"Rev": "caaaea8b30ee15616494ee68abd5d8ebbbef05cf"
+		},
+		{
+			"ImportPath": "github.com/rancher/go-rancher/client",
+			"Comment": "v0.1.0-143-g77690e2",
+			"Rev": "77690e2bf83b2c6227dbab555941894f2f76137a"
+		},
+		{
+			"ImportPath": "github.com/square/go-jose",
+			"Rev": "7465d2baefd097ef32054b46be7d9c41185869a1"
+		},
+		{
+			"ImportPath": "github.com/square/go-jose/cipher",
+			"Rev": "7465d2baefd097ef32054b46be7d9c41185869a1"
+		},
+		{
+			"ImportPath": "github.com/vaughan0/go-ini",
+			"Rev": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
+		},
+		{
+			"ImportPath": "github.com/weppos/dnsimple-go/dnsimple",
+			"Rev": "65c1ca73cb19baf0f8b2b33219b7f57595a3ccb0"
+		},
+		{
+			"ImportPath": "github.com/xenolf/lego/acme",
+			"Comment": "v0.2.0-117-g39eef1c",
+			"Rev": "39eef1c2f6f8025524aa88746c196ae598aeffc3"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/ocsp",
+			"Rev": "5dc8cb4b8a8eb076cbb5a06bc3b8682c15bdbbd3"
+		},
+		{
+			"ImportPath": "golang.org/x/net/publicsuffix",
+			"Rev": "3e5cd1ed149001198e582f9d3f5bfd564cde2896"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "eb2c74142fd19a79b3f237334c7384d5167b1b46"
+		}
+	]
+}

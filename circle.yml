@@ -1,0 +1,39 @@
+machine:
+  environment:
+    IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
+    DOCKER_HUB_URI: https://registry.hub.docker.com/u/janeczku/rancher-letsencrypt/trigger/
+
+general:
+  artifacts:
+    - "dist/*.tar.gz"
+    - "dist/*.sha512"
+
+checkout:
+  post:
+    - git config user.name "Circle CI Build Bot"
+    - git config user.email "no-reply@circleci.com"
+    - git remote -v
+    - git fetch --tags
+
+dependencies:
+  pre:
+    - go version
+    - make deps
+
+test:
+  pre: 
+    - make vet
+  override:
+    - make test
+  post:
+    - make ci-dist
+
+deployment:
+  release:
+    tag: /v.*/
+    owner: janeczku
+    commands:
+      - make ci-release
+      - curl --data "build=true" -X POST ${DOCKER_HUB_URI}${DOCKER_HUB_TOKEN}/
+      - echo `git name-rev --tags --name-only $(git rev-parse HEAD)`
+      - echo tag ${CIRCLE_TAG}
