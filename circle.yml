@@ -4,6 +4,7 @@ machine:
     DOCKER_HUB_URI: https://registry.hub.docker.com/u/janeczku/rancher-letsencrypt/trigger/
 
 general:
+  build_dir: ../.go_workspace/src/github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}
   artifacts:
     - "dist/*.tar.gz"
     - "dist/*.sha512"
@@ -18,7 +19,12 @@ checkout:
 dependencies:
   pre:
     - go version
+    - rm -rf ~/.go_workspace/src/github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
+    - mkdir -p ~/.go_workspace/src/github.com/$CIRCLE_PROJECT_USERNAME/
+    - ln -s ~/$CIRCLE_PROJECT_REPONAME ~/.go_workspace/src/github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
     - make deps
+  override:
+    - echo "deps are vendored don't run go build"
 
 test:
   pre: 
