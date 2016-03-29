@@ -87,6 +87,8 @@ func (c *Context) InitContext() {
 		DoAccessToken:   os.Getenv("DO_ACCESS_TOKEN"),
 		AwsAccessKey:    os.Getenv("AWS_ACCESS_KEY"),
 		AwsSecretKey:    os.Getenv("AWS_SECRET_KEY"),
+		DNSimpleEmail:   os.Getenv("DNSIMPLE_EMAIL"),
+		DNSimpleKey:     os.Getenv("DNSIMPLE_KEY"),
 		AwsRegionName:   "us-east-1",
 	}
 
