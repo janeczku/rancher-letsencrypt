@@ -22,6 +22,10 @@ type ProviderOpts struct {
 	AwsAccessKey  string
 	AwsSecretKey  string
 	AwsRegionName string
+
+	// DNSimple credentials
+	DNSimpleEmail string
+	DNSimpleKey   string
 }
 
 type DnsProvider string
@@ -30,12 +34,14 @@ const (
 	CLOUDFLARE   = DnsProvider("CloudFlare")
 	DIGITALOCEAN = DnsProvider("DigitalOcean")
 	ROUTE53      = DnsProvider("Route53")
+	DNSIMPLE     = DnsProvider("DNSimple")
 )
 
 var dnsProviderFactory = map[DnsProvider]interface{}{
 	CLOUDFLARE:   makeCloudflareProvider,
 	DIGITALOCEAN: makeDigitalOceanProvider,
 	ROUTE53:      makeRoute53Provider,
+	DNSIMPLE:     makeDNSimpleProvider,
 }
 
 func getProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
@@ -91,6 +97,22 @@ func makeRoute53Provider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 	}
 
 	provider, err := lego.NewDNSProviderRoute53(opts.AwsAccessKey, opts.AwsSecretKey, opts.AwsRegionName)
+	if err != nil {
+		return nil, err
+	}
+	return provider, nil
+}
+
+// returns a preconfigured DNSimple lego.ChallengeProvider
+func makeDNSimpleProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
+	if len(opts.DNSimpleEmail) == 0 {
+		return nil, fmt.Errorf("DNSimple Email not set")
+	}
+	if len(opts.DNSimpleKey) == 0 {
+		return nil, fmt.Errorf("DNSimple API key is not set")
+	}
+
+	provider, err := lego.NewDNSProviderDNSimple(opts.DNSimpleEmail, opts.DNSimpleKey)
 	if err != nil {
 		return nil, err
 	}
