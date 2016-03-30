@@ -21,7 +21,7 @@ var (
 	fqdnToZone                  = map[string]string{}
 )
 
-var recursiveNameserver = "google-public-dns-a.google.com:53"
+var RecursiveNameserver = "google-public-dns-a.google.com:53"
 
 // DNS01Record returns a DNS record which will fulfill the `dns-01` challenge
 func DNS01Record(domain, keyAuth string) (fqdn string, value string, ttl int) {
@@ -69,7 +69,15 @@ func (s *dnsChallenge) Solve(chlng challenge, domain string) error {
 
 	logf("[INFO][%s] Checking DNS record propagation...", domain)
 
-	err = waitFor(90, 2, func() (bool, error) {
+	var timeout, interval time.Duration
+	switch provider := s.provider.(type) {
+	case ChallengeProviderTimeout:
+		timeout, interval = provider.Timeout()
+	default:
+		timeout, interval = 60*time.Second, 2*time.Second
+	}
+
+	err = WaitFor(timeout, interval, func() (bool, error) {
 		return preCheckDNS(fqdn, value)
 	})
 	if err != nil {
@@ -82,7 +90,7 @@ func (s *dnsChallenge) Solve(chlng challenge, domain string) error {
 // checkDNSPropagation checks if the expected TXT record has been propagated to all authoritative nameservers.
 func checkDNSPropagation(fqdn, value string) (bool, error) {
 	// Initial attempt to resolve at the recursive NS
-	r, err := dnsQuery(fqdn, dns.TypeTXT, recursiveNameserver, true)
+	r, err := dnsQuery(fqdn, dns.TypeTXT, RecursiveNameserver, true)
 	if err != nil {
 		return false, err
 	}
@@ -160,12 +168,12 @@ func dnsQuery(fqdn string, rtype uint16, nameserver string, recursive bool) (in 
 func lookupNameservers(fqdn string) ([]string, error) {
 	var authoritativeNss []string
 
-	zone, err := findZoneByFqdn(fqdn, recursiveNameserver)
+	zone, err := FindZoneByFqdn(fqdn, RecursiveNameserver)
 	if err != nil {
 		return nil, err
 	}
 
-	r, err := dnsQuery(zone, dns.TypeNS, recursiveNameserver, true)
+	r, err := dnsQuery(zone, dns.TypeNS, RecursiveNameserver, true)
 	if err != nil {
 		return nil, err
 	}
@@ -182,14 +190,14 @@ func lookupNameservers(fqdn string) ([]string, error) {
 	return nil, fmt.Errorf("Could not determine authoritative nameservers")
 }
 
-// findZoneByFqdn determines the zone of the given fqdn
-func findZoneByFqdn(fqdn, nameserver string) (string, error) {
+// FindZoneByFqdn determines the zone of the given fqdn
+func FindZoneByFqdn(fqdn, nameserver string) (string, error) {
 	// Do we have it cached?
 	if zone, ok := fqdnToZone[fqdn]; ok {
 		return zone, nil
 	}
 
-	// Query the authorative nameserver for a hopefully non-existing SOA record,
+	// Query the authoritative nameserver for a hopefully non-existing SOA record,
 	// in the authority section of the reply it will have the SOA of the
 	// containing zone. rfc2308 has this to say on the subject:
 	//   Name servers authoritative for a zone MUST include the SOA record of
@@ -208,8 +216,8 @@ func findZoneByFqdn(fqdn, nameserver string) (string, error) {
 			if soa, ok := ans.(*dns.SOA); ok {
 				zone := soa.Hdr.Name
 				// If we ended up on one of the TLDs, it means the domain did not exist.
-				publicsuffix, _ := publicsuffix.PublicSuffix(unFqdn(zone))
-				if publicsuffix == unFqdn(zone) {
+				publicsuffix, _ := publicsuffix.PublicSuffix(UnFqdn(zone))
+				if publicsuffix == UnFqdn(zone) {
 					return "", fmt.Errorf("Could not determine zone authoritatively")
 				}
 				fqdnToZone[fqdn] = zone
@@ -223,8 +231,8 @@ func findZoneByFqdn(fqdn, nameserver string) (string, error) {
 		if soa, ok := ns.(*dns.SOA); ok {
 			zone := soa.Hdr.Name
 			// If we ended up on one of the TLDs, it means the domain did not exist.
-			publicsuffix, _ := publicsuffix.PublicSuffix(unFqdn(zone))
-			if publicsuffix == unFqdn(zone) {
+			publicsuffix, _ := publicsuffix.PublicSuffix(UnFqdn(zone))
+			if publicsuffix == UnFqdn(zone) {
 				return "", fmt.Errorf("Could not determine zone authoritatively")
 			}
 			fqdnToZone[fqdn] = zone
@@ -234,8 +242,13 @@ func findZoneByFqdn(fqdn, nameserver string) (string, error) {
 	return "", fmt.Errorf("NS %s did not return the expected SOA record in the authority section", nameserver)
 }
 
-// toFqdn converts the name into a fqdn appending a trailing dot.
-func toFqdn(name string) string {
+// ClearFqdnCache clears the cache of fqdn to zone mappings. Primarily used in testing.
+func ClearFqdnCache() {
+	fqdnToZone = map[string]string{}
+}
+
+// ToFqdn converts the name into a fqdn appending a trailing dot.
+func ToFqdn(name string) string {
 	n := len(name)
 	if n == 0 || name[n-1] == '.' {
 		return name
@@ -243,39 +256,11 @@ func toFqdn(name string) string {
 	return name + "."
 }
 
-// unFqdn converts the fqdn into a name removing the trailing dot.
-func unFqdn(name string) string {
+// UnFqdn converts the fqdn into a name removing the trailing dot.
+func UnFqdn(name string) string {
 	n := len(name)
 	if n != 0 && name[n-1] == '.' {
 		return name[:n-1]
 	}
 	return name
-}
-
-// clearFqdnCache clears the cache of fqdn to zone mappings. Primarily used in testing.
-func clearFqdnCache() {
-	fqdnToZone = map[string]string{}
-}
-
-// waitFor polls the given function 'f', once every 'interval' seconds, up to 'timeout' seconds.
-func waitFor(timeout, interval int, f func() (bool, error)) error {
-	var lastErr string
-	timeup := time.After(time.Duration(timeout) * time.Second)
-	for {
-		select {
-		case <-timeup:
-			return fmt.Errorf("Time limit exceeded. Last error: %s", lastErr)
-		default:
-		}
-
-		stop, err := f()
-		if stop {
-			return nil
-		}
-		if err != nil {
-			lastErr = err.Error()
-		}
-
-		time.Sleep(time.Duration(interval) * time.Second)
-	}
 }

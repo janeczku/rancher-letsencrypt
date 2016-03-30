@@ -3,7 +3,7 @@ package acme
 import (
 	"time"
 
-	"github.com/square/go-jose"
+	"gopkg.in/square/go-jose.v1"
 )
 
 type directory struct {
@@ -109,6 +109,7 @@ type CertificateResource struct {
 	Domain        string `json:"domain"`
 	CertURL       string `json:"certUrl"`
 	CertStableURL string `json:"certStableUrl"`
+	AccountRef    string `json:"accountRef,omitempty"`
 	PrivateKey    []byte `json:"-"`
 	Certificate   []byte `json:"-"`
 }

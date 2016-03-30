@@ -2,8 +2,13 @@ package letsencrypt
 
 import (
 	"fmt"
+	"os"
 
 	lego "github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/providers/dns/cloudflare"
+	"github.com/xenolf/lego/providers/dns/digitalocean"
+	"github.com/xenolf/lego/providers/dns/dnsimple"
+	"github.com/xenolf/lego/providers/dns/route53"
 )
 
 // ProviderOpts is used to configure the DNS provider
@@ -64,7 +69,7 @@ func makeCloudflareProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 		return nil, fmt.Errorf("CloudFlare API key is not set")
 	}
 
-	provider, err := lego.NewDNSProviderCloudFlare(opts.CloudflareEmail, opts.CloudflareKey)
+	provider, err := cloudflare.NewDNSProviderCredentials(opts.CloudflareEmail, opts.CloudflareKey)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +82,7 @@ func makeDigitalOceanProvider(opts ProviderOpts) (lego.ChallengeProvider, error)
 		return nil, fmt.Errorf("DigitalOcean API access token is not set")
 	}
 
-	provider, err := lego.NewDNSProviderDigitalOcean(opts.DoAccessToken)
+	provider, err := digitalocean.NewDNSProviderCredentials(opts.DoAccessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +101,11 @@ func makeRoute53Provider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 		return nil, fmt.Errorf("AWS region name is not set")
 	}
 
-	provider, err := lego.NewDNSProviderRoute53(opts.AwsAccessKey, opts.AwsSecretKey, opts.AwsRegionName)
+	os.Setenv("AWS_REGION", opts.AwsRegionName)
+	os.Setenv("AWS_ACCESS_KEY_ID", opts.AwsAccessKey)
+	os.Setenv("AWS_SECRET_ACCESS_KEY", opts.AwsSecretKey)
+
+	provider, err := route53.NewDNSProvider()
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +121,7 @@ func makeDNSimpleProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 		return nil, fmt.Errorf("DNSimple API key is not set")
 	}
 
-	provider, err := lego.NewDNSProviderDNSimple(opts.DNSimpleEmail, opts.DNSimpleKey)
+	provider, err := dnsimple.NewDNSProviderCredentials(opts.DNSimpleEmail, opts.DNSimpleKey)
 	if err != nil {
 		return nil, err
 	}
