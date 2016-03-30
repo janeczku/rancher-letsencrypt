@@ -8,6 +8,7 @@ import (
 	"github.com/xenolf/lego/providers/dns/cloudflare"
 	"github.com/xenolf/lego/providers/dns/digitalocean"
 	"github.com/xenolf/lego/providers/dns/dnsimple"
+	"github.com/xenolf/lego/providers/dns/dyn"
 	"github.com/xenolf/lego/providers/dns/route53"
 )
 
@@ -31,6 +32,11 @@ type ProviderOpts struct {
 	// DNSimple credentials
 	DNSimpleEmail string
 	DNSimpleKey   string
+
+	// Dyn credentials
+	DynCustomerName string
+	DynUserName     string
+	DynPassword     string
 }
 
 type DnsProvider string
@@ -40,6 +46,7 @@ const (
 	DIGITALOCEAN = DnsProvider("DigitalOcean")
 	ROUTE53      = DnsProvider("Route53")
 	DNSIMPLE     = DnsProvider("DNSimple")
+	DYN          = DnsProvider("Dyn")
 )
 
 var dnsProviderFactory = map[DnsProvider]interface{}{
@@ -47,6 +54,7 @@ var dnsProviderFactory = map[DnsProvider]interface{}{
 	DIGITALOCEAN: makeDigitalOceanProvider,
 	ROUTE53:      makeRoute53Provider,
 	DNSIMPLE:     makeDNSimpleProvider,
+	DYN:          makeDynProvider,
 }
 
 func getProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
@@ -115,13 +123,33 @@ func makeRoute53Provider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 // returns a preconfigured DNSimple lego.ChallengeProvider
 func makeDNSimpleProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 	if len(opts.DNSimpleEmail) == 0 {
-		return nil, fmt.Errorf("DNSimple Email not set")
+		return nil, fmt.Errorf("DNSimple Email is not set")
 	}
 	if len(opts.DNSimpleKey) == 0 {
 		return nil, fmt.Errorf("DNSimple API key is not set")
 	}
 
 	provider, err := dnsimple.NewDNSProviderCredentials(opts.DNSimpleEmail, opts.DNSimpleKey)
+	if err != nil {
+		return nil, err
+	}
+	return provider, nil
+}
+
+// returns a preconfigured Dyn lego.ChallengeProvider
+func makeDynProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
+	if len(opts.DynCustomerName) == 0 {
+		return nil, fmt.Errorf("Dyn customer name is not set")
+	}
+	if len(opts.DynUserName) == 0 {
+		return nil, fmt.Errorf("Dyn user name is not set")
+	}
+	if len(opts.DynPassword) == 0 {
+		return nil, fmt.Errorf("Dyn password is not set")
+	}
+
+	provider, err := dyn.NewDNSProviderCredentials(opts.DynCustomerName,
+		opts.DynUserName, opts.DynPassword)
 	if err != nil {
 		return nil, err
 	}
