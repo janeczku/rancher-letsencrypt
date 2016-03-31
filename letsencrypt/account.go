@@ -7,21 +7,25 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/Sirupsen/logrus"
 	lego "github.com/xenolf/lego/acme"
 )
 
 type Account struct {
-	Email        string `json:"email"`
-	key          crypto.PrivateKey
+	Email        string                     `json:"email"`
 	Registration *lego.RegistrationResource `json:"registrations"`
+
+	key  crypto.PrivateKey
+	path string
 }
 
 // NewAccount creates a new or gets a stored LE account for the given email
-func NewAccount(email string, keyType lego.KeyType) (*Account, error) {
-	keyFile := path.Join(configPath(), email+".key")
-	accountFile := path.Join(configPath(), email+".json")
+func NewAccount(email string, apiVer ApiVersion, keyType lego.KeyType) (*Account, error) {
+	accPath := accountPath(email, apiVer)
+	keyFile := path.Join(accPath, "account.key")
+	accountFile := path.Join(accPath, "account.json")
 
 	var privKey crypto.PrivateKey
 	if _, err := os.Stat(keyFile); os.IsNotExist(err) {
@@ -39,7 +43,7 @@ func NewAccount(email string, keyType lego.KeyType) (*Account, error) {
 	}
 
 	if _, err := os.Stat(accountFile); os.IsNotExist(err) {
-		return &Account{Email: email, key: privKey}, nil
+		return &Account{Email: email, key: privKey, path: accPath}, nil
 	}
 
 	fileBytes, err := ioutil.ReadFile(accountFile)
@@ -54,6 +58,7 @@ func NewAccount(email string, keyType lego.KeyType) (*Account, error) {
 	}
 
 	acc.key = privKey
+	acc.path = accPath
 	return &acc, nil
 }
 
@@ -63,7 +68,7 @@ func (a *Account) Save() error {
 	if err != nil {
 		return err
 	}
-	accountFile := path.Join(configPath(), a.Email+".json")
+	accountFile := path.Join(a.path, "account.json")
 	return ioutil.WriteFile(accountFile, jsonBytes, 0700)
 }
 
@@ -82,4 +87,10 @@ func (a *Account) GetPrivateKey() crypto.PrivateKey {
 // GetRegistration returns the server registration
 func (a *Account) GetRegistration() *lego.RegistrationResource {
 	return a.Registration
+}
+
+func accountPath(email string, apiVer ApiVersion) string {
+	path := path.Join(ConfigDir, strings.ToLower(string(apiVer)), "accounts", email)
+	maybeCreatePath(path)
+	return path
 }

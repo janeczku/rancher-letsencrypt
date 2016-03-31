@@ -13,22 +13,22 @@ func (r *Client) UpgradeLoadBalancers(certId string) error {
 	}
 
 	if len(balancers) == 0 {
-		logrus.Info("Certificate is not being used by any load balancers")
+		logrus.Info("Certificate is not being used by any load balancer")
 		return nil
 	}
 
 	for _, id := range balancers {
 		lb, err := r.client.LoadBalancerService.ById(id)
 		if err != nil {
-			logrus.Errorf("Failed to acquire load balancer by id %s: %v", id, err)
+			logrus.Errorf("Failed to get load balancer by id '%s': %v", id, err)
 			continue
 		}
-		logrus.Infof("Upgrading load balancer %s...", lb.Name)
+
 		err = r.upgrade(lb)
 		if err != nil {
-			logrus.Errorf("Failed to upgrade load balancer %s: %v", lb.Name, err)
+			logrus.Errorf("Failed to upgrade load balancer '%s': %v", lb.Name, err)
 		} else {
-			logrus.Infof("Successfully upgraded load balancer %s with renewed certificate", lb.Name)
+			logrus.Infof("Upgraded load balancer '%s' with renewed certificate", lb.Name)
 		}
 	}
 
@@ -43,6 +43,8 @@ func (r *Client) upgrade(lb *rancherClient.LoadBalancerService) error {
 	}
 	upgrade.ToServiceStrategy = &rancherClient.ToServiceUpgradeStrategy{}
 
+	logrus.Debugf("Upgrading load balancer '%s'", lb.Name)
+
 	service, err := r.client.LoadBalancerService.ActionUpgrade(lb, upgrade)
 	if err != nil {
 		return err
@@ -50,11 +52,11 @@ func (r *Client) upgrade(lb *rancherClient.LoadBalancerService) error {
 
 	err = r.WaitService(service)
 	if err != nil {
-		logrus.Warnf("Upgrade check: %v", err)
+		logrus.Warnf(err.Error())
 	}
 
 	if service.State == "upgraded" {
-		logrus.Debugf("Finishing upgrade of load balancer: %s", lb.Name)
+		logrus.Debugf("Finishing upgrade for load balancer '%s'", lb.Name)
 
 		service, err = r.client.Service.ActionFinishupgrade(service)
 		if err != nil {
@@ -62,7 +64,7 @@ func (r *Client) upgrade(lb *rancherClient.LoadBalancerService) error {
 		}
 		err = r.WaitService(service)
 		if err != nil {
-			logrus.Warnf("Upgrade check: %v", err)
+			logrus.Warnf(err.Error())
 		}
 	}
 
@@ -72,7 +74,7 @@ func (r *Client) upgrade(lb *rancherClient.LoadBalancerService) error {
 func (r *Client) findLoadBalancerServicesByCert(certId string) ([]string, error) {
 	var results []string
 
-	logrus.Debugf("Looking up load balancers matching certificate id %s", certId)
+	logrus.Debugf("Looking up load balancers matching certificate id '%s'", certId)
 
 	balancers, err := r.client.LoadBalancerService.List(&rancherClient.ListOpts{
 		Filters: map[string]interface{}{

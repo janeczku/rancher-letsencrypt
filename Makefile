@@ -52,7 +52,7 @@ dockerhub: image
 	docker push $(DOCKER_IMAGE):$(VERSION)
 
 image:
-	docker build -t $(DOCKER_IMAGE):$(VERSION) -f Dockerfile.dev .
+	docker build -t $(DOCKER_IMAGE):dev-$(SHA) -f Dockerfile.dev .
 
 version:
 	@echo $(VERSION) $(SHA)

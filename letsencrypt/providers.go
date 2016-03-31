@@ -25,9 +25,8 @@ type ProviderOpts struct {
 	DoAccessToken string
 
 	// AWS Route 53 credentials
-	AwsAccessKey  string
-	AwsSecretKey  string
-	AwsRegionName string
+	AwsAccessKey string
+	AwsSecretKey string
 
 	// DNSimple credentials
 	DNSimpleEmail string
@@ -105,11 +104,8 @@ func makeRoute53Provider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 	if len(opts.AwsSecretKey) == 0 {
 		return nil, fmt.Errorf("AWS secret key is not set")
 	}
-	if len(opts.AwsRegionName) == 0 {
-		return nil, fmt.Errorf("AWS region name is not set")
-	}
 
-	os.Setenv("AWS_REGION", opts.AwsRegionName)
+	os.Setenv("AWS_REGION", "us-east-1")
 	os.Setenv("AWS_ACCESS_KEY_ID", opts.AwsAccessKey)
 	os.Setenv("AWS_SECRET_ACCESS_KEY", opts.AwsSecretKey)
 

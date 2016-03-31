@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	DESCRIPTION       = "Created by Let's Encrypt Certificate Manager"
+	CERT_DESCRIPTION  = "Created by Let's Encrypt Certificate Manager"
 	ISSUER_PRODUCTION = "Let's Encrypt"
 	ISSUER_STAGING    = "fake CA"
 	PREFIX_PROD       = "[LE] "
@@ -38,12 +38,13 @@ func (c *Context) InitContext() {
 	cattleUrl := getEnvOption("CATTLE_URL", true)
 	cattleApiKey := getEnvOption("CATTLE_ACCESS_KEY", true)
 	cattleSecretKey := getEnvOption("CATTLE_SECRET_KEY", true)
-	debug := getEnvOption("DEBUG", false)
+	debugParam := getEnvOption("DEBUG", false)
 	eulaParam := getEnvOption("EULA", false)
 	apiVerParam := getEnvOption("API_VERSION", true)
 	emailParam := getEnvOption("EMAIL", true)
 	domainParam := getEnvOption("DOMAINS", true)
 	keyTypeParam := getEnvOption("PUBLIC_KEY_TYPE", true)
+	certNameParam := getEnvOption("CERT_NAME", false)
 	timeParam := getEnvOption("RENEWAL_TIME", true)
 	providerParam := getEnvOption("PROVIDER", true)
 
@@ -63,16 +64,24 @@ func (c *Context) InitContext() {
 		logrus.Fatalf("Invalid value for RENEWAL_TIME: %s", timeParam)
 	}
 
-	var serverURI string
+	var certAutoName string
+
 	switch apiVerParam {
 	case "Production":
-		serverURI = letsencrypt.PRODUCTION_URI
-		c.RancherCertName = PREFIX_PROD + c.Domains[0]
+		certAutoName = PREFIX_PROD + c.Domains[0]
 	case "Sandbox":
-		serverURI = letsencrypt.STAGING_URI
-		c.RancherCertName = PREFIX_STAGING + c.Domains[0]
+		certAutoName = PREFIX_STAGING + c.Domains[0]
 	default:
 		logrus.Fatalf("Invalid value for API_VERSION: %s", apiVerParam)
+	}
+
+	apiVersion := letsencrypt.ApiVersion(apiVerParam)
+	keyType := letsencrypt.KeyType(keyTypeParam)
+
+	if len(certNameParam) != 0 {
+		c.RancherCertName = certNameParam
+	} else {
+		c.RancherCertName = certAutoName
 	}
 
 	c.Rancher, err = rancher.NewClient(cattleUrl, cattleApiKey, cattleSecretKey)
@@ -92,19 +101,18 @@ func (c *Context) InitContext() {
 		DynCustomerName: os.Getenv("DYN_CUSTOMER_NAME"),
 		DynUserName:     os.Getenv("DYN_USER_NAME"),
 		DynPassword:     os.Getenv("DYN_PASSWORD"),
-		AwsRegionName:   "us-east-1",
 	}
 
-	c.Acme, err = letsencrypt.NewClient(emailParam, keyTypeParam, serverURI, providerOpts)
+	c.Acme, err = letsencrypt.NewClient(emailParam, keyType, apiVersion, providerOpts)
 	if err != nil {
 		logrus.Fatalf("LetsEncrypt client: %v", err)
 	}
 
 	// Enable debug/test mode
-	if strings.EqualFold(debug, "true") {
+	if strings.EqualFold(debugParam, "true") {
 		logrus.SetLevel(logrus.DebugLevel)
 		c.Debug = true
-		c.Acme.EnableDebugLogging()
+		c.Acme.EnableDebug()
 	}
 }
 
