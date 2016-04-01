@@ -1,7 +1,7 @@
 machine:
   environment:
     IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
-    DOCKER_HUB_URI: https://registry.hub.docker.com/u/janeczku/rancher-letsencrypt/trigger/
+    DOCKER_HUB_URI: https://registry.hub.docker.com/u/janeczku/rancher-letsencrypt/trigger
 
 general:
   build_dir: ../.go_workspace/src/github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}
@@ -40,6 +40,8 @@ deployment:
     owner: janeczku
     commands:
       - make ci-release
-      - curl --data "build=true" -X POST ${DOCKER_HUB_URI}${DOCKER_HUB_TOKEN}/
+      - curl --data "docker_tag=latest" -X POST ${DOCKER_HUB_URI}/${DOCKER_HUB_TOKEN}/
+      - sleep 3
+      - curl --data "source_type=Tag&source_name=${CIRCLE_TAG}" -X POST ${DOCKER_HUB_URI}/${DOCKER_HUB_TOKEN}/
       - echo `git name-rev --tags --name-only $(git rev-parse HEAD)`
       - echo tag ${CIRCLE_TAG}
