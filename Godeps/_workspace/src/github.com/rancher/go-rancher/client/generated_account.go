@@ -17,6 +17,8 @@ type Account struct {
 
 	ExternalIdType string `json:"externalIdType,omitempty" yaml:"external_id_type,omitempty"`
 
+	Identity string `json:"identity,omitempty" yaml:"identity,omitempty"`
+
 	Kind string `json:"kind,omitempty" yaml:"kind,omitempty"`
 
 	Name string `json:"name,omitempty" yaml:"name,omitempty"`

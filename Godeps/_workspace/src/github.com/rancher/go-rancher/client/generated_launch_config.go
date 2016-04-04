@@ -71,6 +71,8 @@ type LaunchConfig struct {
 
 	HealthState string `json:"healthState,omitempty" yaml:"health_state,omitempty"`
 
+	HostId string `json:"hostId,omitempty" yaml:"host_id,omitempty"`
+
 	Hostname string `json:"hostname,omitempty" yaml:"hostname,omitempty"`
 
 	ImageUuid string `json:"imageUuid,omitempty" yaml:"image_uuid,omitempty"`
@@ -120,6 +122,8 @@ type LaunchConfig struct {
 	Removed string `json:"removed,omitempty" yaml:"removed,omitempty"`
 
 	RequestedHostId string `json:"requestedHostId,omitempty" yaml:"requested_host_id,omitempty"`
+
+	RequestedIpAddress string `json:"requestedIpAddress,omitempty" yaml:"requested_ip_address,omitempty"`
 
 	SecurityOpt []string `json:"securityOpt,omitempty" yaml:"security_opt,omitempty"`
 
@@ -182,11 +186,15 @@ type LaunchConfigOperations interface {
 
 	ActionDeallocate(*LaunchConfig) (*Instance, error)
 
+	ActionError(*LaunchConfig) (*Instance, error)
+
 	ActionExecute(*LaunchConfig, *ContainerExec) (*HostAccess, error)
 
 	ActionLogs(*LaunchConfig, *ContainerLogs) (*HostAccess, error)
 
 	ActionMigrate(*LaunchConfig) (*Instance, error)
+
+	ActionProxy(*LaunchConfig, *ContainerProxy) (*HostAccess, error)
 
 	ActionPurge(*LaunchConfig) (*Instance, error)
 
@@ -286,6 +294,15 @@ func (c *LaunchConfigClient) ActionDeallocate(resource *LaunchConfig) (*Instance
 	return resp, err
 }
 
+func (c *LaunchConfigClient) ActionError(resource *LaunchConfig) (*Instance, error) {
+
+	resp := &Instance{}
+
+	err := c.rancherClient.doAction(LAUNCH_CONFIG_TYPE, "error", &resource.Resource, nil, resp)
+
+	return resp, err
+}
+
 func (c *LaunchConfigClient) ActionExecute(resource *LaunchConfig, input *ContainerExec) (*HostAccess, error) {
 
 	resp := &HostAccess{}
@@ -309,6 +326,15 @@ func (c *LaunchConfigClient) ActionMigrate(resource *LaunchConfig) (*Instance, e
 	resp := &Instance{}
 
 	err := c.rancherClient.doAction(LAUNCH_CONFIG_TYPE, "migrate", &resource.Resource, nil, resp)
+
+	return resp, err
+}
+
+func (c *LaunchConfigClient) ActionProxy(resource *LaunchConfig, input *ContainerProxy) (*HostAccess, error) {
+
+	resp := &HostAccess{}
+
+	err := c.rancherClient.doAction(LAUNCH_CONFIG_TYPE, "proxy", &resource.Resource, input, resp)
 
 	return resp, err
 }

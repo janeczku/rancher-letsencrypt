@@ -7,6 +7,8 @@ const (
 type ProcessExecution struct {
 	Resource
 
+	Created string `json:"created,omitempty" yaml:"created,omitempty"`
+
 	Log map[string]interface{} `json:"log,omitempty" yaml:"log,omitempty"`
 
 	ProcessInstanceId string `json:"processInstanceId,omitempty" yaml:"process_instance_id,omitempty"`

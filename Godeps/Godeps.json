@@ -137,8 +137,8 @@
 		},
 		{
 			"ImportPath": "github.com/rancher/go-rancher/client",
-			"Comment": "v0.1.0-143-g77690e2",
-			"Rev": "77690e2bf83b2c6227dbab555941894f2f76137a"
+			"Comment": "v0.1.0-151-gc21ad77",
+			"Rev": "c21ad7797bc727e5fe65ae85d1be714845ce415c"
 		},
 		{
 			"ImportPath": "github.com/weppos/dnsimple-go/dnsimple",

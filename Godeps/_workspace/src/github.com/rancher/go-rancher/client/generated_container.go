@@ -67,6 +67,8 @@ type Container struct {
 
 	HealthState string `json:"healthState,omitempty" yaml:"health_state,omitempty"`
 
+	HostId string `json:"hostId,omitempty" yaml:"host_id,omitempty"`
+
 	Hostname string `json:"hostname,omitempty" yaml:"hostname,omitempty"`
 
 	ImageUuid string `json:"imageUuid,omitempty" yaml:"image_uuid,omitempty"`
@@ -174,11 +176,15 @@ type ContainerOperations interface {
 
 	ActionDeallocate(*Container) (*Instance, error)
 
+	ActionError(*Container) (*Instance, error)
+
 	ActionExecute(*Container, *ContainerExec) (*HostAccess, error)
 
 	ActionLogs(*Container, *ContainerLogs) (*HostAccess, error)
 
 	ActionMigrate(*Container) (*Instance, error)
+
+	ActionProxy(*Container, *ContainerProxy) (*HostAccess, error)
 
 	ActionPurge(*Container) (*Instance, error)
 
@@ -278,6 +284,15 @@ func (c *ContainerClient) ActionDeallocate(resource *Container) (*Instance, erro
 	return resp, err
 }
 
+func (c *ContainerClient) ActionError(resource *Container) (*Instance, error) {
+
+	resp := &Instance{}
+
+	err := c.rancherClient.doAction(CONTAINER_TYPE, "error", &resource.Resource, nil, resp)
+
+	return resp, err
+}
+
 func (c *ContainerClient) ActionExecute(resource *Container, input *ContainerExec) (*HostAccess, error) {
 
 	resp := &HostAccess{}
@@ -301,6 +316,15 @@ func (c *ContainerClient) ActionMigrate(resource *Container) (*Instance, error) 
 	resp := &Instance{}
 
 	err := c.rancherClient.doAction(CONTAINER_TYPE, "migrate", &resource.Resource, nil, resp)
+
+	return resp, err
+}
+
+func (c *ContainerClient) ActionProxy(resource *Container, input *ContainerProxy) (*HostAccess, error) {
+
+	resp := &HostAccess{}
+
+	err := c.rancherClient.doAction(CONTAINER_TYPE, "proxy", &resource.Resource, input, resp)
 
 	return resp, err
 }

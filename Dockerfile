@@ -3,7 +3,7 @@ MAINTAINER Jan Broer <jan@festplatte.eu.org>
 
 RUN apk add --no-cache ca-certificates
 
-ENV LETSENCRYPT_RELEASE v0.2.6
+ENV LETSENCRYPT_RELEASE v0.2.7
 
 ADD https://github.com/janeczku/rancher-letsencrypt/releases/download/${LETSENCRYPT_RELEASE}/rancher-letsencrypt-linux-amd64.tar.gz /tmp/rancher-letsencrypt.tar.gz
 

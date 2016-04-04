@@ -86,7 +86,7 @@ func (c *Context) InitContext() {
 
 	c.Rancher, err = rancher.NewClient(cattleUrl, cattleApiKey, cattleSecretKey)
 	if err != nil {
-		logrus.Fatalf("Rancher client: %v", err)
+		logrus.Fatalf("Could not connect to Rancher API: %v", err)
 	}
 
 	providerOpts := letsencrypt.ProviderOpts{

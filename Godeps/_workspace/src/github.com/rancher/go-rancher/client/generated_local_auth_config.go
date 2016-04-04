@@ -13,7 +13,7 @@ type LocalAuthConfig struct {
 
 	Name string `json:"name,omitempty" yaml:"name,omitempty"`
 
-	Password Password `json:"password,omitempty" yaml:"password,omitempty"`
+	Password string `json:"password,omitempty" yaml:"password,omitempty"`
 
 	Username string `json:"username,omitempty" yaml:"username,omitempty"`
 }

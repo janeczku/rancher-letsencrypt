@@ -39,8 +39,8 @@ test:
 	godep go test -v ./...
 
 release:
-	git tag `cat VERSION`
-	git push origin master --tags
+	git tag -f `cat VERSION`
+	git push -f origin master --tags
 
 clean:
 	go clean
