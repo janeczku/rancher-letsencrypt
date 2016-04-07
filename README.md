@@ -8,7 +8,12 @@ A [Rancher](http://rancher.com/rancher/) service that obtains free SSL/TLS certi
 
 #### Requirements
 * Rancher Server >= v0.63.0
-* Existing account with one of the supported DNS providers (currently `CloudFlare`, `DigitalOcean` and `AWS Route53`).
+* Existing account with one of the supported DNS providers:
+  * `CloudFlare`
+  * `DigitalOcean`
+  * `AWS Route 53`
+  * `DNSimple`
+  * `Dyn`
 
 ### How to use
 
@@ -20,11 +25,6 @@ Then find the `Let's Encrypt` template in the Catalog section of the UI and foll
 ### Building the image
 
 `make build && make image`
-
-### Todo
-
-* Add unit/integration tests
-* Support additional DNS providers
 
 ### Contributions
 
