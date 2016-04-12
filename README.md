@@ -22,6 +22,40 @@ This application is distributed via the [Rancher Community Catalog](https://gith
 Enable the Community Catalog under `Admin` => `Settings` in the Rancher UI.
 Then find the `Let's Encrypt` template in the Catalog section of the UI and follow the instructions.
 
+### Provider specific usage
+
+#### AWS Route 53
+
+The following IAM policy describes the minimum permissions required to run `rancher-letsencrypt` using AWS Route 53 for domain authorization.    
+Replace `<HOSTED_ZONE_ID>` with the ID of the hosted zone that encloses the domain(s) for which you are going to obtain certificates. You may use a wildcard (*) in place of the ID to make this policy work with all of the hosted zones associated with an AWS account.
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "route53:GetChange",
+                "route53:ListHostedZonesByName"
+            ],
+            "Resource": [
+                "*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "route53:ChangeResourceRecordSets"
+            ],
+            "Resource": [
+                "arn:aws:route53:::hostedzone/<HOSTED_ZONE_ID>"
+            ]
+        }
+    ]
+}
+``` 
+
 ### Building the image
 
 `make build && make image`
