@@ -146,33 +146,33 @@
 		},
 		{
 			"ImportPath": "github.com/xenolf/lego/acme",
-			"Comment": "v0.3.0-34-gca19a90",
-			"Rev": "ca19a90028e242e878585941c2a27c8f3b3efc25"
+			"Comment": "v0.3.0-55-g094e3d4",
+			"Rev": "094e3d41bb0422746c31a8b0b2a2daeeb87408a7"
 		},
 		{
 			"ImportPath": "github.com/xenolf/lego/providers/dns/cloudflare",
-			"Comment": "v0.3.0-34-gca19a90",
-			"Rev": "ca19a90028e242e878585941c2a27c8f3b3efc25"
+			"Comment": "v0.3.0-55-g094e3d4",
+			"Rev": "094e3d41bb0422746c31a8b0b2a2daeeb87408a7"
 		},
 		{
 			"ImportPath": "github.com/xenolf/lego/providers/dns/digitalocean",
-			"Comment": "v0.3.0-34-gca19a90",
-			"Rev": "ca19a90028e242e878585941c2a27c8f3b3efc25"
+			"Comment": "v0.3.0-55-g094e3d4",
+			"Rev": "094e3d41bb0422746c31a8b0b2a2daeeb87408a7"
 		},
 		{
 			"ImportPath": "github.com/xenolf/lego/providers/dns/dnsimple",
-			"Comment": "v0.3.0-34-gca19a90",
-			"Rev": "ca19a90028e242e878585941c2a27c8f3b3efc25"
+			"Comment": "v0.3.0-55-g094e3d4",
+			"Rev": "094e3d41bb0422746c31a8b0b2a2daeeb87408a7"
 		},
 		{
 			"ImportPath": "github.com/xenolf/lego/providers/dns/dyn",
-			"Comment": "v0.3.0-34-gca19a90",
-			"Rev": "ca19a90028e242e878585941c2a27c8f3b3efc25"
+			"Comment": "v0.3.0-55-g094e3d4",
+			"Rev": "094e3d41bb0422746c31a8b0b2a2daeeb87408a7"
 		},
 		{
 			"ImportPath": "github.com/xenolf/lego/providers/dns/route53",
-			"Comment": "v0.3.0-34-gca19a90",
-			"Rev": "ca19a90028e242e878585941c2a27c8f3b3efc25"
+			"Comment": "v0.3.0-55-g094e3d4",
+			"Rev": "094e3d41bb0422746c31a8b0b2a2daeeb87408a7"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/ocsp",
