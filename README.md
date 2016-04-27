@@ -59,7 +59,8 @@ Replace `<HOSTED_ZONE_ID>` with the ID of the hosted zone that encloses the doma
 
 #### Namecheap
 
-Namecheap requires all IP addresses from which you call it's API to be whitelisted. Make sure to grant API access to the host running `rancher-letsencrypt` by navigating to "Manage Profile" => "API Access" in your Namecheap account.
+Namecheap requires all IP addresses from which you call it's API to be whitelisted. Make sure to grant API access to the host running `rancher-letsencrypt` by navigating to "Manage Profile" => "API Access" in your Namecheap account.   
+Be aware that Namecheap can be slow to propagate DNS changes (up to 60 minutes). This may slow down the process of creating certificates significantly.
 
 ### Building the image
 
