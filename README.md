@@ -9,11 +9,12 @@ A [Rancher](http://rancher.com/rancher/) service that obtains free SSL/TLS certi
 #### Requirements
 * Rancher Server >= v0.63.0
 * Existing account with one of the supported DNS providers:
+  * `AWS Route 53`
   * `CloudFlare`
   * `DigitalOcean`
-  * `AWS Route 53`
   * `DNSimple`
   * `Dyn`
+  * `Namecheap`
 
 ### How to use
 
@@ -55,6 +56,10 @@ Replace `<HOSTED_ZONE_ID>` with the ID of the hosted zone that encloses the doma
     ]
 }
 ``` 
+
+#### Namecheap
+
+Namecheap requires all IP addresses from which you call it's API to be whitelisted. Make sure to grant API access to the host running `rancher-letsencrypt` by navigating to "Manage Profile" => "API Access" in your Namecheap account.
 
 ### Building the image
 
