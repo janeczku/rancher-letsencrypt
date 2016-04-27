@@ -171,6 +171,11 @@
 			"Rev": "948483535f53c34d144419869ecbed86251a30f6"
 		},
 		{
+			"ImportPath": "github.com/xenolf/lego/providers/dns/namecheap",
+			"Comment": "v0.3.1-5-g9484835",
+			"Rev": "948483535f53c34d144419869ecbed86251a30f6"
+		},
+		{
 			"ImportPath": "github.com/xenolf/lego/providers/dns/route53",
 			"Comment": "v0.3.1-5-g9484835",
 			"Rev": "948483535f53c34d144419869ecbed86251a30f6"
@@ -182,10 +187,6 @@
 		{
 			"ImportPath": "golang.org/x/net/publicsuffix",
 			"Rev": "3e5cd1ed149001198e582f9d3f5bfd564cde2896"
-		},
-		{
-			"ImportPath": "golang.org/x/sys/unix",
-			"Rev": "eb2c74142fd19a79b3f237334c7384d5167b1b46"
 		},
 		{
 			"ImportPath": "gopkg.in/square/go-jose.v1",
