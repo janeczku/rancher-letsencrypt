@@ -9,13 +9,6 @@ general:
     - "dist/*.tar.gz"
     - "dist/*.sha512"
 
-checkout:
-  post:
-    - git config user.name "Circle CI Build Bot"
-    - git config user.email "no-reply@circleci.com"
-    - git remote -v
-    - git fetch --tags
-
 dependencies:
   pre:
     - go version
@@ -25,6 +18,12 @@ dependencies:
     - make deps
   override:
     - echo "deps are vendored don't run go build"
+  post:
+    - git config user.name "Circle CI Build Bot"
+    - git config user.email "no-reply@circleci.com"
+    - git remote -v
+    - git fetch --tags
+    - git describe --abbrev=0 --tags
 
 test:
   pre: 
@@ -41,7 +40,7 @@ deployment:
     commands:
       - make ci-release
       - curl --data "docker_tag=latest" -X POST ${DOCKER_HUB_URI}/${DOCKER_HUB_TOKEN}/
-      - sleep 30
+      - sleep 60
       - curl --data "source_type=Tag&source_name=${CIRCLE_TAG}" -X POST ${DOCKER_HUB_URI}/${DOCKER_HUB_TOKEN}/
       - echo `git name-rev --tags --name-only $(git rev-parse HEAD)`
       - echo tag ${CIRCLE_TAG}

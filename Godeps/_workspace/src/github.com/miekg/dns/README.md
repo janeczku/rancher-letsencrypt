@@ -12,7 +12,7 @@ can build servers and resolvers with it.
 
 We try to keep the "master" branch as sane as possible and at the bleeding edge
 of standards, avoiding breaking changes wherever reasonable. We support the last
-two versions of Go, currently: 1.4 and 1.5.
+two versions of Go, currently: 1.5 and 1.6.
 
 # Goals
 
@@ -48,6 +48,8 @@ A not-so-up-to-date-list-that-may-be-actually-current:
 * https://github.com/miekg/unbound
 * https://github.com/miekg/exdns
 * https://dnslookup.org
+* https://github.com/looterz/grimd
+* https://github.com/phamhongviet/serf-dns
 
 Send pull request if you want to be listed here.
 
@@ -61,7 +63,7 @@ Send pull request if you want to be listed here.
 * Server side programming (mimicking the net/http package);
 * Client side programming;
 * DNSSEC: signing, validating and key generation for DSA, RSA and ECDSA;
-* EDNS0, NSID;
+* EDNS0, NSID, Cookies;
 * AXFR/IXFR;
 * TSIG, SIG(0);
 * DNS over TLS: optional encrypted connection between client and server;
@@ -140,6 +142,7 @@ Example programs can be found in the `github.com/miekg/exdns` repository.
 * 7553 - URI record
 * xxxx - EDNS0 DNS Update Lease (draft)
 * yyyy - DNS over TLS: Initiation and Performance Considerations (draft)
+* xxxx - Domain Name System (DNS) Cookies (draft-ietf-dnsop-cookies)
 
 ## Loosely based upon
 

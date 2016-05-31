@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"regexp"
 	"strings"
 	"time"
 
@@ -15,7 +16,7 @@ import (
 )
 
 const (
-	ConfigDir        = "/etc/letsencrypt"
+	StorageDir       = "/etc/letsencrypt"
 	ProductionApiUri = "https://acme-v01.api.letsencrypt.org/directory"
 	StagingApiUri    = "https://acme-staging.api.letsencrypt.org/directory"
 )
@@ -46,8 +47,9 @@ const (
 // Domain      string
 type AcmeCertificate struct {
 	lego.CertificateResource
+	DnsNames     string    `json:"dnsNames"`
 	ExpiryDate   time.Time `json:"expiryDate"`
-	SerialNumber string    `json:"serialnumber"`
+	SerialNumber string    `json:"serialNumber"`
 }
 
 // Client represents a Lets Encrypt client
@@ -81,7 +83,7 @@ func NewClient(email string, kt KeyType, apiVer ApiVersion, provider ProviderOpt
 	case Sandbox:
 		serverUri = StagingApiUri
 	default:
-		return nil, fmt.Errorf("Invalid LE API version: %s", string(apiVer))
+		return nil, fmt.Errorf("Invalid API version: %s", string(apiVer))
 	}
 
 	acc, err := NewAccount(email, apiVer, keyType)
@@ -143,82 +145,80 @@ func (c *Client) EnableDebug() {
 }
 
 // Issue obtains a new SAN certificate from the Lets Encrypt CA
-func (c *Client) Issue(domains []string) (*AcmeCertificate, map[string]error) {
-	cert, failures := c.client.ObtainCertificate(domains, true, nil)
+func (c *Client) Issue(certName string, domains []string) (*AcmeCertificate, map[string]error) {
+	certRes, failures := c.client.ObtainCertificate(domains, true, nil)
 	if len(failures) > 0 {
 		return nil, failures
 	}
 
-	expirydate, _ := lego.GetPEMCertExpiration(cert.Certificate)
-	serialnum, _ := getPEMCertSerialNo(cert.Certificate)
-
-	acmeCert := AcmeCertificate{
-		CertificateResource: cert,
-		ExpiryDate:          expirydate,
-		SerialNumber:        serialnum,
+	dnsNames := dnsNamesIdentifier(domains)
+	acmeCert, err := c.saveCertificate(certName, dnsNames, certRes)
+	if err != nil {
+		logrus.Fatalf("Error saving certificate '%s': %v", certName, err)
 	}
 
-	c.saveCertificate(acmeCert)
-	return &acmeCert, nil
+	return acmeCert, nil
 }
 
-// Renew obtains a renewed SAN certificate from the Lets Encrypt CA
-func (c *Client) Renew(domains []string) (*AcmeCertificate, error) {
-	domain := domains[0]
-	currentCert, err := c.loadCertificate(domain)
+// Renew renewes the given stored certificate
+func (c *Client) Renew(certName string) (*AcmeCertificate, error) {
+	acmeCert, err := c.loadCertificateByName(certName)
 	if err != nil {
-		logrus.Fatalf(err.Error())
+		return nil, fmt.Errorf("Error loading certificate '%s': %v", certName, err)
 	}
-	certRes := currentCert.CertificateResource
 
-	newCert, err := c.client.RenewCertificate(certRes, true)
+	certRes := acmeCert.CertificateResource
+	newCertRes, err := c.client.RenewCertificate(certRes, true)
 	if err != nil {
 		return nil, err
 	}
 
-	expirydate, _ := lego.GetPEMCertExpiration(newCert.Certificate)
-	serialnum, _ := getPEMCertSerialNo(newCert.Certificate)
-
-	acmeCert := AcmeCertificate{
-		CertificateResource: newCert,
-		ExpiryDate:          expirydate,
-		SerialNumber:        serialnum,
+	newAcmeCert, err := c.saveCertificate(certName, acmeCert.DnsNames, newCertRes)
+	if err != nil {
+		logrus.Fatalf("Error saving certificate '%s': %v", certName, err)
 	}
 
-	c.saveCertificate(acmeCert)
-	return &acmeCert, nil
+	return newAcmeCert, nil
 }
 
-// GetStoredCertificate returns a locally stored certificate for the given domains
-func (c *Client) GetStoredCertificate(domains []string) (bool, *AcmeCertificate) {
-	domain := domains[0]
-	if !c.haveCertificate(domain) {
+// GetStoredCertificate returns the locally stored certificate for the given domains
+func (c *Client) GetStoredCertificate(certName string, domains []string) (bool, *AcmeCertificate) {
+	logrus.Debugf("Looking up stored certificate by name '%s'", certName)
+	if !c.haveCertificateByName(certName) {
 		return false, nil
 	}
 
-	acmeCert, err := c.loadCertificate(domain)
+	acmeCert, err := c.loadCertificateByName(certName)
 	if err != nil {
-		// Don't fail here. Try to create a new certificate instead.
-		logrus.Error(err.Error())
+		// Don't quit. Try to issue a new certificate instead.
+		logrus.Errorf("Error loading certificate '%s': %v", certName, err)
 		return false, nil
 	}
+
+	// check if the DNS names are a match
+	if dnsNames := dnsNamesIdentifier(domains); acmeCert.DnsNames != dnsNames {
+		logrus.Infof("Stored certificate does not have matching domain names: '%s' ", acmeCert.DnsNames)
+		return false, nil
+	}
+
 	return true, &acmeCert
 }
 
-func (c *Client) haveCertificate(domain string) bool {
-	certPath := c.CertPath(domain)
+func (c *Client) haveCertificateByName(certName string) bool {
+	certPath := c.CertPath(certName)
 	if _, err := os.Stat(path.Join(certPath, "metadata.json")); err != nil {
-		logrus.Debugf("No existing acme certificate resource found for '%s'", domain)
+		logrus.Debugf("No certificate in path '%s'", certPath)
 		return false
 	}
+
 	return true
 }
 
-func (c *Client) loadCertificate(domain string) (AcmeCertificate, error) {
+func (c *Client) loadCertificateByName(certName string) (AcmeCertificate, error) {
 	var acmeCert AcmeCertificate
-	certPath := c.CertPath(domain)
+	certPath := c.CertPath(certName)
 
-	logrus.Debugf("Loading acme certificate resource for '%s' from '%s'", domain, certPath)
+	logrus.Debugf("Loading certificate '%s' from '%s'", certName, certPath)
 
 	certIn := path.Join(certPath, "fullchain.pem")
 	privIn := path.Join(certPath, "privkey.pem")
@@ -226,76 +226,113 @@ func (c *Client) loadCertificate(domain string) (AcmeCertificate, error) {
 
 	certBytes, err := ioutil.ReadFile(certIn)
 	if err != nil {
-		return acmeCert, fmt.Errorf("Failed to load certificate for domain '%s': %s", domain, err.Error())
+		return acmeCert, fmt.Errorf("Failed to load certificate from '%s': %v", certIn, err)
 	}
 
 	metaBytes, err := ioutil.ReadFile(metaIn)
 	if err != nil {
-		return acmeCert, fmt.Errorf("Failed to load meta data for domain '%s': %s", domain, err.Error())
+		return acmeCert, fmt.Errorf("Failed to load meta data from '%s': %v", metaIn, err)
 	}
 
 	keyBytes, err := ioutil.ReadFile(privIn)
 	if err != nil {
-		return acmeCert, fmt.Errorf("Failed to load private key for domain '%s': %s", domain, err.Error())
+		return acmeCert, fmt.Errorf("Failed to load private key from '%s': %v", privIn, err)
 	}
 
 	err = json.Unmarshal(metaBytes, &acmeCert)
 	if err != nil {
-		return acmeCert, fmt.Errorf("Failed to unmarshal meta data for domain '%s': %s", domain, err.Error())
+		return acmeCert, fmt.Errorf("Failed to unmarshal json meta data from '%s': %v", metaIn, err)
 	}
 
 	acmeCert.PrivateKey = keyBytes
 	acmeCert.Certificate = certBytes
-
 	return acmeCert, nil
 }
 
-func (c *Client) saveCertificate(acmeCert AcmeCertificate) {
-	certPath := c.CertPath(acmeCert.Domain)
+func (c *Client) saveCertificate(certName, dnsNames string, certRes lego.CertificateResource) (*AcmeCertificate, error) {
+	expiryDate, err := lego.GetPEMCertExpiration(certRes.Certificate)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to read certificate expiry date: %v", err)
+	}
+	serialNumber, err := getPEMCertSerialNumber(certRes.Certificate)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to read certificate serial number: %v", err)
+	}
+
+	acmeCert := AcmeCertificate{
+		CertificateResource: certRes,
+		ExpiryDate:          expiryDate,
+		SerialNumber:        serialNumber,
+		DnsNames:            dnsNames,
+	}
+
+	certPath := c.CertPath(certName)
 	maybeCreatePath(certPath)
 
-	logrus.Debugf("Saving acme certificate resource for '%s' to '%s'", acmeCert.Domain, certPath)
+	logrus.Debugf("Saving certificate '%s' to path '%s'", certName, certPath)
 
 	certOut := path.Join(certPath, "fullchain.pem")
 	privOut := path.Join(certPath, "privkey.pem")
 	metaOut := path.Join(certPath, "metadata.json")
 
-	err := ioutil.WriteFile(certOut, acmeCert.Certificate, 0600)
+	err = ioutil.WriteFile(certOut, acmeCert.Certificate, 0600)
 	if err != nil {
-		logrus.Fatalf("Failed to save certificate for domain %s\n\t%s", acmeCert.Domain, err.Error())
+		return nil, fmt.Errorf("Failed to save certificate to '%s': %v", certOut, err)
 	}
+
+	logrus.Infof("Certificate saved to '%s'", certOut)
 
 	err = ioutil.WriteFile(privOut, acmeCert.PrivateKey, 0600)
 	if err != nil {
-		logrus.Fatalf("Failed to save private key for domain %s\n\t%s", acmeCert.Domain, err.Error())
+		return nil, fmt.Errorf("Failed to save private key to '%s': %v", privOut, err)
 	}
+
+	logrus.Infof("Private key saved to '%s'", privOut)
 
 	jsonBytes, err := json.MarshalIndent(acmeCert, "", "\t")
 	if err != nil {
-		logrus.Fatalf("Failed to marshal meta data for domain %s\n\t%s", acmeCert.Domain, err.Error())
+		return nil, fmt.Errorf("Failed to marshal meta data for certificate '%s': %v", certName, err)
 	}
 
 	err = ioutil.WriteFile(metaOut, jsonBytes, 0600)
 	if err != nil {
-		logrus.Fatalf("Failed to save meta data for domain %s\n\t%s", acmeCert.Domain, err.Error())
+		return nil, fmt.Errorf("Failed to save meta data to '%s': %v", metaOut, err)
 	}
+
+	return &acmeCert, nil
 }
 
 func (c *Client) ConfigPath() string {
-	path := path.Join(ConfigDir, strings.ToLower(string(c.apiVersion)))
+	path := path.Join(StorageDir, strings.ToLower(string(c.apiVersion)))
 	maybeCreatePath(path)
 	return path
 }
 
-func (c *Client) CertPath(domain string) string {
-	return path.Join(c.ConfigPath(), "certificates", domain)
+func (c *Client) CertPath(certName string) string {
+	return path.Join(c.ConfigPath(), "certs", safeFileName(certName))
+}
+
+func dnsNamesIdentifier(domains []string) string {
+	return strings.Join(domains, "|")
 }
 
 func maybeCreatePath(path string) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		err = os.MkdirAll(path, 0700)
 		if err != nil {
-			logrus.Fatalf("Error creating path: %v", err)
+			logrus.Fatalf("Failed to create path: %v", err)
 		}
 	}
+}
+
+// safeFileName replaces separators with dashes and removes all
+// characters other than alphanumerics, dashes, underscores and dots.
+func safeFileName(str string) string {
+	separators := regexp.MustCompile(`[ /&=+:]`)
+	illegals := regexp.MustCompile(`[^[:alnum:]-_.]`)
+	dashes := regexp.MustCompile(`[\-]+`)
+	str = separators.ReplaceAllString(str, "-")
+	str = illegals.ReplaceAllString(str, "")
+	str = dashes.ReplaceAllString(str, "-")
+	return str
 }

@@ -90,7 +90,7 @@ func (a *Account) GetRegistration() *lego.RegistrationResource {
 }
 
 func accountPath(email string, apiVer ApiVersion) string {
-	path := path.Join(ConfigDir, strings.ToLower(string(apiVer)), "accounts", email)
+	path := path.Join(StorageDir, strings.ToLower(string(apiVer)), "accounts", email)
 	maybeCreatePath(path)
 	return path
 }

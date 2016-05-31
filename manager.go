@@ -21,44 +21,44 @@ func (c *Context) Run() {
 }
 
 func (c *Context) startup() {
-	var haveLocal, haveRemote bool
-	ok, acmeCert := c.Acme.GetStoredCertificate(c.Domains)
+	var storedLocally, storedInRancher bool
+	ok, acmeCert := c.Acme.GetStoredCertificate(c.CertificateName, c.Domains)
 	if ok {
-		haveLocal = true
+		storedLocally = true
 		c.ExpiryDate = acmeCert.ExpiryDate
-		logrus.Infof("Found locally stored certificate for '%s'", strings.Join(c.Domains, " | "))
+		logrus.Infof("Found locally stored certificate '%s'", c.CertificateName)
 	}
 
-	rancherCert, err := c.Rancher.FindCertByName(c.RancherCertName)
+	rancherCert, err := c.Rancher.FindCertByName(c.CertificateName)
 	if err != nil {
-		logrus.Fatalf("Error looking up Rancher certificates: %v", err)
+		logrus.Fatalf("Could not lookup certificate in Rancher API: %v", err)
 	}
 
 	if rancherCert != nil {
-		haveRemote = true
+		storedInRancher = true
 		c.RancherCertId = rancherCert.Id
-		logrus.Infof("Found existing Rancher certificate '%s'", rancherCert.Name)
+		logrus.Infof("Found existing certificate '%s' in Rancher", c.CertificateName)
 	}
 
-	if haveLocal && haveRemote {
+	if storedLocally && storedInRancher {
 		if rancherCert.SerialNumber == acmeCert.SerialNumber {
-			logrus.Infof("Managing renewal of Rancher certificate '%s'", rancherCert.Name)
+			logrus.Infof("Managing renewal of certificate '%s'", c.CertificateName)
 			return
 		}
-		logrus.Infof("Certificate serial number mismatch. Overwriting Rancher certificate '%s'", rancherCert.Name)
+		logrus.Infof("Serial number mismatch between Rancher and local certificate '%s'", c.CertificateName)
 		c.updateRancherCert(acmeCert.PrivateKey, acmeCert.Certificate)
 		return
 	}
 
-	if haveLocal && !haveRemote {
-		logrus.Infof("Adding Rancher certificate '%s'", rancherCert.Name)
+	if storedLocally && !storedInRancher {
+		logrus.Debugf("Adding certificate '%s' to Rancher", c.CertificateName)
 		c.addRancherCert(acmeCert.PrivateKey, acmeCert.Certificate)
 		return
 	}
 
-	logrus.Infof("Trying to obtain SSL certificate for %s", strings.Join(c.Domains, " | "))
+	logrus.Infof("Trying to obtain SSL certificate (%s) from Let's Encrypt CA", strings.Join(c.Domains, ","))
 
-	acmeCert, failures := c.Acme.Issue(c.Domains)
+	acmeCert, failures := c.Acme.Issue(c.CertificateName, c.Domains)
 	if len(failures) > 0 {
 		for k, v := range failures {
 			logrus.Errorf("[%s] Error obtaining certificate: %s", k, v.Error())
@@ -66,12 +66,12 @@ func (c *Context) startup() {
 		os.Exit(1)
 	}
 
-	logrus.Infof("Successfully obtained SSL certificate")
+	logrus.Infof("Certificate obtained successfully")
 
 	c.ExpiryDate = acmeCert.ExpiryDate
 
-	if haveRemote {
-		logrus.Infof("Overwriting Rancher certificate '%s'", rancherCert.Name)
+	if storedInRancher {
+		logrus.Debugf("Overwriting Rancher certificate '%s'", c.CertificateName)
 		c.updateRancherCert(acmeCert.PrivateKey, acmeCert.Certificate)
 		return
 	}
@@ -80,36 +80,36 @@ func (c *Context) startup() {
 }
 
 func (c *Context) addRancherCert(privateKey, cert []byte) {
-	rancherCert, err := c.Rancher.AddCertificate(c.RancherCertName, CERT_DESCRIPTION, privateKey, cert)
+	rancherCert, err := c.Rancher.AddCertificate(c.CertificateName, CERT_DESCRIPTION, privateKey, cert)
 	if err != nil {
-		logrus.Fatalf("Failed to add Rancher certificate '%s': %v", c.RancherCertName, err)
+		logrus.Fatalf("Failed to add Rancher certificate '%s': %v", c.CertificateName, err)
 	}
 	c.RancherCertId = rancherCert.Id
-	logrus.Infof("Added Rancher certificate '%s'", c.RancherCertName)
+	logrus.Infof("Certificate '%s' added to Rancher", c.CertificateName)
 }
 
 func (c *Context) updateRancherCert(privateKey, cert []byte) {
 	err := c.Rancher.UpdateCertificate(c.RancherCertId, CERT_DESCRIPTION, privateKey, cert)
 	if err != nil {
-		logrus.Fatalf("Failed to update Rancher certificate '%s': %v", c.RancherCertName, err)
+		logrus.Fatalf("Failed to update Rancher certificate '%s': %v", c.CertificateName, err)
 	}
-	logrus.Infof("Updated Rancher certificate '%s'", c.RancherCertName)
+	logrus.Infof("Updated Rancher certificate '%s'", c.CertificateName)
 
 	err = c.Rancher.UpgradeLoadBalancers(c.RancherCertId)
 	if err != nil {
-		logrus.Fatalf("Error upgrading load balancers: %v", err)
+		logrus.Fatalf("Failed to upgrade load balancers: %v", err)
 	}
 }
 
 func (c *Context) renew() {
-	logrus.Infof("Trying to renew certificate for '%s'", strings.Join(c.Domains, " | "))
+	logrus.Infof("Trying to obtain renewed SSL certificate (%s) from Let's Encrypt CA", strings.Join(c.Domains, ","))
 
-	acmeCert, err := c.Acme.Renew(c.Domains)
+	acmeCert, err := c.Acme.Renew(c.CertificateName)
 	if err != nil {
 		logrus.Fatalf("Failed to renew certificate: %v", err)
 	}
 
-	logrus.Infof("Successfully renewed certificate")
+	logrus.Infof("Certificate renewed successfully")
 
 	c.ExpiryDate = acmeCert.ExpiryDate
 	c.updateRancherCert(acmeCert.PrivateKey, acmeCert.Certificate)
@@ -123,11 +123,11 @@ func (c *Context) timer() <-chan time.Time {
 		left = 10 * time.Second
 	}
 
-	logrus.Infof("Next certificate renewal scheduled for %s", next.Format("2006/01/02 15:04 MST"))
+	logrus.Infof("Certificate renewal scheduled for %s", next.Format("2006/01/02 15:04 MST"))
 
-	// Debug option set to true enables test mode
+	// Debug option forces renewal
 	if c.Debug {
-		logrus.Debug("Test mode enabled: certificate will be renewed in 120 seconds")
+		logrus.Debug("Debug mode: Forced certificate renewal in 120 seconds")
 		left = 120 * time.Second
 	}
 
