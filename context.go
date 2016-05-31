@@ -90,19 +90,17 @@ func (c *Context) InitContext() {
 	}
 
 	providerOpts := letsencrypt.ProviderOpts{
-		Provider:         letsencrypt.DnsProvider(providerParam),
-		CloudflareEmail:  os.Getenv("CLOUDFLARE_EMAIL"),
-		CloudflareKey:    os.Getenv("CLOUDFLARE_KEY"),
-		DoAccessToken:    os.Getenv("DO_ACCESS_TOKEN"),
-		AwsAccessKey:     os.Getenv("AWS_ACCESS_KEY"),
-		AwsSecretKey:     os.Getenv("AWS_SECRET_KEY"),
-		DNSimpleEmail:    os.Getenv("DNSIMPLE_EMAIL"),
-		DNSimpleKey:      os.Getenv("DNSIMPLE_KEY"),
-		DynCustomerName:  os.Getenv("DYN_CUSTOMER_NAME"),
-		DynUserName:      os.Getenv("DYN_USER_NAME"),
-		DynPassword:      os.Getenv("DYN_PASSWORD"),
-		NamecheapApiUser: os.Getenv("NAMECHEAP_API_USER"),
-		NamecheapApiKey:  os.Getenv("NAMECHEAP_API_KEY"),
+		Provider:        letsencrypt.DnsProvider(providerParam),
+		CloudflareEmail: os.Getenv("CLOUDFLARE_EMAIL"),
+		CloudflareKey:   os.Getenv("CLOUDFLARE_KEY"),
+		DoAccessToken:   os.Getenv("DO_ACCESS_TOKEN"),
+		AwsAccessKey:    os.Getenv("AWS_ACCESS_KEY"),
+		AwsSecretKey:    os.Getenv("AWS_SECRET_KEY"),
+		DNSimpleEmail:   os.Getenv("DNSIMPLE_EMAIL"),
+		DNSimpleKey:     os.Getenv("DNSIMPLE_KEY"),
+		DynCustomerName: os.Getenv("DYN_CUSTOMER_NAME"),
+		DynUserName:     os.Getenv("DYN_USER_NAME"),
+		DynPassword:     os.Getenv("DYN_PASSWORD"),
 	}
 
 	c.Acme, err = letsencrypt.NewClient(emailParam, keyType, apiVersion, providerOpts)
