@@ -20,7 +20,17 @@ A [Rancher](http://rancher.com/rancher/) service that obtains free SSL/TLS certi
 This application is distributed via the [Rancher Community Catalog](https://github.com/rancher/community-catalog).
 
 Enable the Community Catalog under `Admin` => `Settings` in the Rancher UI.
-Then find the `Let's Encrypt` template in the Catalog section of the UI and follow the instructions.
+Then locate the `Let's Encrypt` template in the Catalog section of the UI and follow the instructions.
+
+#### Accessing certificates and private keys from other services
+The created SSL certificate is stored in Rancher for usage in load balancers.    
+If you want to use it from other services (e.g. a Nginx container) you can opt to save the certificate and private key to a host path,
+named volume or Convoy storage volume. You can then mount the volume or host path to other containers and access the files as follows:    
+`<path_on_host or volume name>/<certificate name>/fullchain.pem`    
+`<path_on_host or volume name>/<certificate name>/privkey.pem`    
+where `<certificate name>` is the name you specified in the UI forced to this set of characters: `[a-zA-Z0-9-_.]`.
+
+
 
 ### Provider specific usage
 
