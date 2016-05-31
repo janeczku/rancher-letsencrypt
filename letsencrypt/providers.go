@@ -9,7 +9,6 @@ import (
 	"github.com/xenolf/lego/providers/dns/digitalocean"
 	"github.com/xenolf/lego/providers/dns/dnsimple"
 	"github.com/xenolf/lego/providers/dns/dyn"
-	"github.com/xenolf/lego/providers/dns/namecheap"
 	"github.com/xenolf/lego/providers/dns/route53"
 )
 
@@ -37,10 +36,6 @@ type ProviderOpts struct {
 	DynCustomerName string
 	DynUserName     string
 	DynPassword     string
-
-	// Namecheap credentials
-	NamecheapApiUser string
-	NamecheapApiKey  string
 }
 
 type DnsProvider string
@@ -51,7 +46,6 @@ const (
 	ROUTE53      = DnsProvider("Route53")
 	DNSIMPLE     = DnsProvider("DNSimple")
 	DYN          = DnsProvider("Dyn")
-	NAMECHEAP    = DnsProvider("Namecheap")
 )
 
 var dnsProviderFactory = map[DnsProvider]interface{}{
@@ -60,7 +54,6 @@ var dnsProviderFactory = map[DnsProvider]interface{}{
 	ROUTE53:      makeRoute53Provider,
 	DNSIMPLE:     makeDNSimpleProvider,
 	DYN:          makeDynProvider,
-	NAMECHEAP:    makeNamecheapProvider,
 }
 
 func getProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
@@ -153,23 +146,6 @@ func makeDynProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 
 	provider, err := dyn.NewDNSProviderCredentials(opts.DynCustomerName,
 		opts.DynUserName, opts.DynPassword)
-	if err != nil {
-		return nil, err
-	}
-	return provider, nil
-}
-
-// returns a preconfigured Namecheap lego.ChallengeProvider
-func makeNamecheapProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
-	if len(opts.NamecheapApiUser) == 0 {
-		return nil, fmt.Errorf("Dyn customer name is not set")
-	}
-	if len(opts.NamecheapApiKey) == 0 {
-		return nil, fmt.Errorf("Dyn user name is not set")
-	}
-
-	provider, err := namecheap.NewDNSProviderCredentials(opts.NamecheapApiUser,
-		opts.NamecheapApiKey)
 	if err != nil {
 		return nil, err
 	}
