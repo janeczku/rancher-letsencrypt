@@ -596,7 +596,7 @@ func packStructValue(val reflect.Value, msg []byte, off int, compression map[str
 				for j := 0; j < val.Field(i).Len(); j++ {
 					element := val.Field(i).Index(j).Interface()
 					b, e := element.(EDNS0).pack()
-					if e != nil {
+					if e != nil || off+3 > lenmsg {
 						return lenmsg, &Error{err: "overflow packing opt"}
 					}
 					// Option code
@@ -953,6 +953,13 @@ func unpackStructValue(val reflect.Value, msg []byte, off int) (off1 int, err er
 					if code == EDNS0SUBNETDRAFT {
 						e.DraftOption = true
 					}
+				case EDNS0COOKIE:
+					e := new(EDNS0_COOKIE)
+					if err := e.unpack(msg[off1 : off1+int(optlen)]); err != nil {
+						return lenmsg, err
+					}
+					edns = append(edns, e)
+					off = off1 + int(optlen)
 				case EDNS0UL:
 					e := new(EDNS0_UL)
 					if err := e.unpack(msg[off1 : off1+int(optlen)]); err != nil {
@@ -1894,6 +1901,11 @@ func id() uint16 {
 func Copy(r RR) RR {
 	r1 := r.copy()
 	return r1
+}
+
+// Len returns the length (in octets) of the uncompressed RR in wire format.
+func Len(r RR) int {
+	return r.len()
 }
 
 // Copy returns a new *Msg which is a deep-copy of dns.

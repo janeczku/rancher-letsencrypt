@@ -22,7 +22,7 @@ help:
 	@echo "make clean - Duh!"
 	@echo "make release - tag with version and trigger CI release build"
 	@echo "make image - build Docker image"
-	@echo "make dockerhub - build and push image to Docker Hub"
+	@echo "make dockerhub - build and push dev image to Docker Hub"
 	@echo "make version - show app version"
 
 build: build-dir
@@ -48,8 +48,8 @@ clean:
 	rm -fr ./dist
 
 dockerhub: image
-	@echo "Pushing $(DOCKER_IMAGE):$(VERSION)"
-	docker push $(DOCKER_IMAGE):$(VERSION)
+	@echo "Pushing $(DOCKER_IMAGE):dev-$(SHA)"
+	docker push $(DOCKER_IMAGE):dev-$(SHA)
 
 image:
 	docker build -t $(DOCKER_IMAGE):dev-$(SHA) -f Dockerfile.dev .

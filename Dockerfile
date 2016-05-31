@@ -10,6 +10,4 @@ ADD https://github.com/janeczku/rancher-letsencrypt/releases/download/${LETSENCR
 RUN tar -zxvf /tmp/rancher-letsencrypt.tar.gz -C /usr/bin \
 	&& chmod +x /usr/bin/rancher-letsencrypt
 
-VOLUME /etc/letsencrypt
-
 ENTRYPOINT ["/usr/bin/rancher-letsencrypt"]

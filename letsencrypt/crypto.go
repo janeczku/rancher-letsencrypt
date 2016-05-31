@@ -77,7 +77,7 @@ func loadPrivateKey(file string) (crypto.PrivateKey, error) {
 	return nil, fmt.Errorf("Unknown private key type.")
 }
 
-func getPEMCertSerialNo(cert []byte) (string, error) {
+func getPEMCertSerialNumber(cert []byte) (string, error) {
 	pemBlock, _ := pem.Decode(cert)
 	if pemBlock == nil {
 		return "", fmt.Errorf("Pem decode did not yield a valid block")
