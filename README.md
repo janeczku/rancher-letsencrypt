@@ -2,7 +2,15 @@
 
 # Let's Encrypt Certificate Manager for Rancher
 
-[![Circle CI](https://circleci.com/gh/janeczku/rancher-letsencrypt.svg?style=shield&circle-token=cd06c9a78ae3ef7b6c1387067c36360f62d97b7a)](https://circleci.com/gh/janeczku/rancher-letsencrypt)
+[![Latest Version](https://img.shields.io/github/release/janeczku/rancher-letsencrypt.svg?maxAge=2592000)][release]
+[![Circle CI](https://circleci.com/gh/janeczku/rancher-letsencrypt.svg?style=shield&circle-token=cd06c9a78ae3ef7b6c1387067c36360f62d97b7a)][circleci]
+[![Docker Pulls](https://img.shields.io/docker/pulls/janeczku/rancher-letsencrypt.svg?maxAge=2592000)][hub]
+[![License](https://img.shields.io/github/license/janeczku/rancher-letsencrypt.svg?maxAge=2592000)]()
+
+[release]: https://github.com/janeczku/rancher-letsencrypt/releases
+[circleci]: https://circleci.com/gh/janeczku/rancher-letsencrypt
+[hub]: https://hub.docker.com/r/janeczku/rancher-letsencrypt/
+
 
 A [Rancher](http://rancher.com/rancher/) service that obtains free SSL/TLS certificates from the [Let's Encrypt CA](https://letsencrypt.org/), adds them to Rancher's certificate store and manages renewal and propagation of updated certificates to load balancers.
 
