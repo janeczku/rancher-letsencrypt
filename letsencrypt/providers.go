@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/disaster37/lego/providers/dns/ovh"
 	lego "github.com/xenolf/lego/acme"
 	"github.com/xenolf/lego/providers/dns/cloudflare"
 	"github.com/xenolf/lego/providers/dns/digitalocean"
@@ -36,6 +37,11 @@ type ProviderOpts struct {
 	DynCustomerName string
 	DynUserName     string
 	DynPassword     string
+
+	// OVH credentials
+	OvhApplicationKey    string
+	OvhApplicationSecret string
+	OvhConsumerKey       string
 }
 
 type DnsProvider string
@@ -46,6 +52,7 @@ const (
 	ROUTE53      = DnsProvider("Route53")
 	DNSIMPLE     = DnsProvider("DNSimple")
 	DYN          = DnsProvider("Dyn")
+	OVH          = DnsProvider("Ovh")
 )
 
 var dnsProviderFactory = map[DnsProvider]interface{}{
@@ -54,6 +61,7 @@ var dnsProviderFactory = map[DnsProvider]interface{}{
 	ROUTE53:      makeRoute53Provider,
 	DNSIMPLE:     makeDNSimpleProvider,
 	DYN:          makeDynProvider,
+	OVH:          makeOvhProvider,
 }
 
 func getProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
@@ -146,6 +154,26 @@ func makeDynProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 
 	provider, err := dyn.NewDNSProviderCredentials(opts.DynCustomerName,
 		opts.DynUserName, opts.DynPassword)
+	if err != nil {
+		return nil, err
+	}
+	return provider, nil
+}
+
+// returns a preconfigured Ovh lego.ChallengeProvider
+func makeOvhProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
+	if len(opts.OvhApplicationKey) == 0 {
+		return nil, fmt.Errorf("OVH application key is not set")
+	}
+	if len(opts.OvhApplicationSecret) == 0 {
+		return nil, fmt.Errorf("OVH application secret is not set")
+	}
+	if len(opts.OvhConsumerKey) == 0 {
+		return nil, fmt.Errorf("OVH consumer key is not set")
+	}
+
+	provider, err := ovh.NewDNSProviderCredentials("ovh-eu", opts.OvhApplicationKey, opts.OvhApplicationSecret,
+		opts.OvhConsumerKey)
 	if err != nil {
 		return nil, err
 	}
