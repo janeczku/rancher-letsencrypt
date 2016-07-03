@@ -5,3 +5,4 @@
 rancher-letsencrypt*
 secrets.txt
 .DS_Store
+.idea/
