@@ -82,6 +82,7 @@ func (c *Context) InitContext() {
 		DynCustomerName: getEnvOption("DYN_CUSTOMER_NAME", false),
 		DynUserName:     getEnvOption("DYN_USER_NAME", false),
 		DynPassword:     getEnvOption("DYN_PASSWORD", false),
+		VultrApiKey:     getEnvOption("VULTR_API_KEY", false),
 	}
 
 	c.Acme, err = letsencrypt.NewClient(emailParam, keyType, apiVersion, providerOpts)
