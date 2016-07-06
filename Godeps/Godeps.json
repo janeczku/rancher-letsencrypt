@@ -1,8 +1,16 @@
 {
 	"ImportPath": "github.com/janeczku/rancher-letsencrypt",
 	"GoVersion": "go1.5",
-	"GodepVersion": "v70",
+	"GodepVersion": "v74",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
+		{
+			"ImportPath": "github.com/JamesClonk/vultr/lib",
+			"Comment": "v1.8",
+			"Rev": "f4daffde4646155fa142e64e114f771aa259c7f5"
+		},
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
 			"Comment": "v0.8.7-55-gf7f79f7",
@@ -133,6 +141,10 @@
 			"Rev": "0b12d6b521d83fc7f755e7cfc1b1fbdd35a01a74"
 		},
 		{
+			"ImportPath": "github.com/juju/ratelimit",
+			"Rev": "77ed1c8a01217656d2080ad51981f6e99adaa177"
+		},
+		{
 			"ImportPath": "github.com/miekg/dns",
 			"Rev": "48ab6605c66ac797e07f615101c3e9e10e932b66"
 		},
@@ -172,6 +184,11 @@
 		},
 		{
 			"ImportPath": "github.com/xenolf/lego/providers/dns/route53",
+			"Comment": "v0.3.1-15-g30a7a8e",
+			"Rev": "30a7a8e8821de3532192d1240a45e53c6204f603"
+		},
+		{
+			"ImportPath": "github.com/xenolf/lego/providers/dns/vultr",
 			"Comment": "v0.3.1-15-g30a7a8e",
 			"Rev": "30a7a8e8821de3532192d1240a45e53c6204f603"
 		},

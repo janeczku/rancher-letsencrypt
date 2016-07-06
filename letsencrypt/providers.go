@@ -10,6 +10,7 @@ import (
 	"github.com/xenolf/lego/providers/dns/dnsimple"
 	"github.com/xenolf/lego/providers/dns/dyn"
 	"github.com/xenolf/lego/providers/dns/route53"
+	"github.com/xenolf/lego/providers/dns/vultr"
 )
 
 // ProviderOpts is used to configure the DNS provider
@@ -36,6 +37,9 @@ type ProviderOpts struct {
 	DynCustomerName string
 	DynUserName     string
 	DynPassword     string
+
+	// Vultr credentials
+	VultrApiKey string
 }
 
 type DnsProvider string
@@ -46,6 +50,7 @@ const (
 	ROUTE53      = DnsProvider("Route53")
 	DNSIMPLE     = DnsProvider("DNSimple")
 	DYN          = DnsProvider("Dyn")
+	VULTR        = DnsProvider("Vultr")
 )
 
 var dnsProviderFactory = map[DnsProvider]interface{}{
@@ -54,6 +59,7 @@ var dnsProviderFactory = map[DnsProvider]interface{}{
 	ROUTE53:      makeRoute53Provider,
 	DNSIMPLE:     makeDNSimpleProvider,
 	DYN:          makeDynProvider,
+	VULTR:        makeVultrProvider,
 }
 
 func getProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
@@ -146,6 +152,19 @@ func makeDynProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 
 	provider, err := dyn.NewDNSProviderCredentials(opts.DynCustomerName,
 		opts.DynUserName, opts.DynPassword)
+	if err != nil {
+		return nil, err
+	}
+	return provider, nil
+}
+
+// returns a preconfigured Vultr lego.ChallengeProvider
+func makeVultrProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
+	if len(opts.VultrApiKey) == 0 {
+		return nil, fmt.Errorf("Vultr API key is not set")
+	}
+
+	provider, err := vultr.NewDNSProviderCredentials(opts.VultrApiKey)
 	if err != nil {
 		return nil, err
 	}
