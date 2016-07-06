@@ -1,7 +1,7 @@
 {
 	"ImportPath": "github.com/janeczku/rancher-letsencrypt",
 	"GoVersion": "go1.5",
-	"GodepVersion": "v70",
+	"GodepVersion": "v60",
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
@@ -137,6 +137,10 @@
 			"Rev": "48ab6605c66ac797e07f615101c3e9e10e932b66"
 		},
 		{
+			"ImportPath": "github.com/ovh/go-ovh/ovh",
+			"Rev": "d2b2eae2511fa5fcd0bdef9f1790ea3979fa35d4"
+		},
+		{
 			"ImportPath": "github.com/rancher/go-rancher/client",
 			"Comment": "v0.1.0-151-gc21ad77",
 			"Rev": "c21ad7797bc727e5fe65ae85d1be714845ce415c"
@@ -147,33 +151,38 @@
 		},
 		{
 			"ImportPath": "github.com/xenolf/lego/acme",
-			"Comment": "v0.3.1-15-g30a7a8e",
-			"Rev": "30a7a8e8821de3532192d1240a45e53c6204f603"
+			"Comment": "v0.3.1-37-gb7b05e8",
+			"Rev": "b7b05e88dbca506e8eac0cc9e4c7ad5e3132da58"
 		},
 		{
 			"ImportPath": "github.com/xenolf/lego/providers/dns/cloudflare",
-			"Comment": "v0.3.1-15-g30a7a8e",
-			"Rev": "30a7a8e8821de3532192d1240a45e53c6204f603"
+			"Comment": "v0.3.1-37-gb7b05e8",
+			"Rev": "b7b05e88dbca506e8eac0cc9e4c7ad5e3132da58"
 		},
 		{
 			"ImportPath": "github.com/xenolf/lego/providers/dns/digitalocean",
-			"Comment": "v0.3.1-15-g30a7a8e",
-			"Rev": "30a7a8e8821de3532192d1240a45e53c6204f603"
+			"Comment": "v0.3.1-37-gb7b05e8",
+			"Rev": "b7b05e88dbca506e8eac0cc9e4c7ad5e3132da58"
 		},
 		{
 			"ImportPath": "github.com/xenolf/lego/providers/dns/dnsimple",
-			"Comment": "v0.3.1-15-g30a7a8e",
-			"Rev": "30a7a8e8821de3532192d1240a45e53c6204f603"
+			"Comment": "v0.3.1-37-gb7b05e8",
+			"Rev": "b7b05e88dbca506e8eac0cc9e4c7ad5e3132da58"
 		},
 		{
 			"ImportPath": "github.com/xenolf/lego/providers/dns/dyn",
-			"Comment": "v0.3.1-15-g30a7a8e",
-			"Rev": "30a7a8e8821de3532192d1240a45e53c6204f603"
+			"Comment": "v0.3.1-37-gb7b05e8",
+			"Rev": "b7b05e88dbca506e8eac0cc9e4c7ad5e3132da58"
+		},
+		{
+			"ImportPath": "github.com/xenolf/lego/providers/dns/ovh",
+			"Comment": "v0.3.1-37-gb7b05e8",
+			"Rev": "b7b05e88dbca506e8eac0cc9e4c7ad5e3132da58"
 		},
 		{
 			"ImportPath": "github.com/xenolf/lego/providers/dns/route53",
-			"Comment": "v0.3.1-15-g30a7a8e",
-			"Rev": "30a7a8e8821de3532192d1240a45e53c6204f603"
+			"Comment": "v0.3.1-37-gb7b05e8",
+			"Rev": "b7b05e88dbca506e8eac0cc9e4c7ad5e3132da58"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/ocsp",
@@ -186,6 +195,11 @@
 		{
 			"ImportPath": "golang.org/x/sys/unix",
 			"Rev": "eb2c74142fd19a79b3f237334c7384d5167b1b46"
+		},
+		{
+			"ImportPath": "gopkg.in/ini.v1",
+			"Comment": "v1.17.0",
+			"Rev": "d84ec27dc16c761f6dea7636e6162ff831b771b1"
 		},
 		{
 			"ImportPath": "gopkg.in/square/go-jose.v1",
