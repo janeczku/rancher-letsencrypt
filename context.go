@@ -71,18 +71,21 @@ func (c *Context) InitContext() {
 	}
 
 	providerOpts := letsencrypt.ProviderOpts{
-		Provider:        letsencrypt.DnsProvider(providerParam),
-		CloudflareEmail: getEnvOption("CLOUDFLARE_EMAIL", false),
-		CloudflareKey:   getEnvOption("CLOUDFLARE_KEY", false),
-		DoAccessToken:   getEnvOption("DO_ACCESS_TOKEN", false),
-		AwsAccessKey:    getEnvOption("AWS_ACCESS_KEY", false),
-		AwsSecretKey:    getEnvOption("AWS_SECRET_KEY", false),
-		DNSimpleEmail:   getEnvOption("DNSIMPLE_EMAIL", false),
-		DNSimpleKey:     getEnvOption("DNSIMPLE_KEY", false),
-		DynCustomerName: getEnvOption("DYN_CUSTOMER_NAME", false),
-		DynUserName:     getEnvOption("DYN_USER_NAME", false),
-		DynPassword:     getEnvOption("DYN_PASSWORD", false),
-		VultrApiKey:     getEnvOption("VULTR_API_KEY", false),
+		Provider:             letsencrypt.DnsProvider(providerParam),
+		CloudflareEmail:      getEnvOption("CLOUDFLARE_EMAIL", false),
+		CloudflareKey:        getEnvOption("CLOUDFLARE_KEY", false),
+		DoAccessToken:        getEnvOption("DO_ACCESS_TOKEN", false),
+		AwsAccessKey:         getEnvOption("AWS_ACCESS_KEY", false),
+		AwsSecretKey:         getEnvOption("AWS_SECRET_KEY", false),
+		DNSimpleEmail:        getEnvOption("DNSIMPLE_EMAIL", false),
+		DNSimpleKey:          getEnvOption("DNSIMPLE_KEY", false),
+		DynCustomerName:      getEnvOption("DYN_CUSTOMER_NAME", false),
+		DynUserName:          getEnvOption("DYN_USER_NAME", false),
+		DynPassword:          getEnvOption("DYN_PASSWORD", false),
+		OvhApplicationKey:    getEnvOption("OVH_APPLICATION_KEY", false),
+		OvhApplicationSecret: getEnvOption("OVH_APPLICATION_SECRET", false),
+		OvhConsumerKey:       getEnvOption("OVH_CONSUMER_KEY", false),
+		VultrApiKey:          getEnvOption("VULTR_API_KEY", false),
 	}
 
 	c.Acme, err = letsencrypt.NewClient(emailParam, keyType, apiVersion, providerOpts)

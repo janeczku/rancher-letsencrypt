@@ -12,8 +12,9 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/gorilla/websocket"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 const (
@@ -43,6 +44,15 @@ type ApiError struct {
 
 func (e *ApiError) Error() string {
 	return e.Msg
+}
+
+func IsNotFound(err error) bool {
+	apiError, ok := err.(*ApiError)
+	if !ok {
+		return false
+	}
+
+	return apiError.StatusCode == http.StatusNotFound
 }
 
 func newApiError(resp *http.Response, url string) *ApiError {
@@ -211,8 +221,9 @@ func (rancherClient *RancherBaseClient) doDelete(url string) error {
 	if err != nil {
 		return err
 	}
-
 	defer resp.Body.Close()
+
+	io.Copy(ioutil.Discard, resp.Body)
 
 	if resp.StatusCode >= 300 {
 		return newApiError(resp, url)
@@ -267,6 +278,10 @@ func (rancherClient *RancherBaseClient) doGet(url string, opts *ListOpts, respOb
 	}
 
 	return json.Unmarshal(byteContent, respObject)
+}
+
+func (rancherClient *RancherBaseClient) List(schemaType string, opts *ListOpts, respObject interface{}) error {
+	return rancherClient.doList(schemaType, opts, respObject)
 }
 
 func (rancherClient *RancherBaseClient) doList(schemaType string, opts *ListOpts, respObject interface{}) error {
@@ -413,6 +428,10 @@ func (rancherClient *RancherBaseClient) doUpdate(schemaType string, existing *Re
 	return rancherClient.doModify("PUT", selfUrl, updates, respObject)
 }
 
+func (rancherClient *RancherBaseClient) ById(schemaType string, id string, respObject interface{}) error {
+	return rancherClient.doById(schemaType, id, respObject)
+}
+
 func (rancherClient *RancherBaseClient) doById(schemaType string, id string, respObject interface{}) error {
 	schema, ok := rancherClient.Types[schemaType]
 	if !ok {
@@ -431,6 +450,13 @@ func (rancherClient *RancherBaseClient) doById(schemaType string, id string, res
 	err := rancherClient.doGet(collectionUrl+"/"+id, nil, respObject)
 	//TODO check for 404 and return nil, nil
 	return err
+}
+
+func (rancherClient *RancherBaseClient) Delete(existing *Resource) error {
+	if existing == nil {
+		return nil
+	}
+	return rancherClient.doResourceDelete(existing.Type, existing)
 }
 
 func (rancherClient *RancherBaseClient) doResourceDelete(schemaType string, existing *Resource) error {

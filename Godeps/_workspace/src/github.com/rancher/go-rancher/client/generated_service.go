@@ -15,6 +15,8 @@ type Service struct {
 
 	Created string `json:"created,omitempty" yaml:"created,omitempty"`
 
+	CurrentScale int64 `json:"currentScale,omitempty" yaml:"current_scale,omitempty"`
+
 	Data map[string]interface{} `json:"data,omitempty" yaml:"data,omitempty"`
 
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
@@ -44,6 +46,8 @@ type Service struct {
 	RetainIp bool `json:"retainIp,omitempty" yaml:"retain_ip,omitempty"`
 
 	Scale int64 `json:"scale,omitempty" yaml:"scale,omitempty"`
+
+	ScalePolicy *ScalePolicy `json:"scalePolicy,omitempty" yaml:"scale_policy,omitempty"`
 
 	SecondaryLaunchConfigs []interface{} `json:"secondaryLaunchConfigs,omitempty" yaml:"secondary_launch_configs,omitempty"`
 

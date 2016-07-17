@@ -22,6 +22,7 @@ A [Rancher](http://rancher.com/rancher/) service that obtains free SSL/TLS certi
   * `DigitalOcean`
   * `DNSimple`
   * `Dyn`
+  * `Ovh`
 
 ### How to use
 
@@ -72,7 +73,29 @@ Replace `<HOSTED_ZONE_ID>` with the ID of the hosted zone that encloses the doma
         }
     ]
 }
-``` 
+```
+
+#### OVH
+
+You need to create your credential on the following URL: https://eu.api.ovh.com/createToken/
+Then submit the form as following:
+- `Account ID`: Your OVH account ID
+- `Password`: Your password
+- `Script name`: letsencrypt
+- `Script description`: Letsencrypt for Rancher
+- `Validity`: Unlimited
+- `Rights`:
+  - GET /domain/zone/*
+  - POST /domain/zone/*
+  - DELETE /domain/zone/*
+
+Then get your key and store them.
+
+To finish, when you start this container add the following environment variable:
+- `PROVIDER`: Ovh
+- `OVH_APPLICATION_KEY`: your key generated in previous step
+- `OVH_APPLICATION_SECRET`: your secret generated in previous step
+- `OVH_CONSUMER_KEY`: your consumer key generated in previous step
 
 ### Building the image
 

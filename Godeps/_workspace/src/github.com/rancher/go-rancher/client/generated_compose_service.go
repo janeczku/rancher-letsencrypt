@@ -11,6 +11,8 @@ type ComposeService struct {
 
 	Created string `json:"created,omitempty" yaml:"created,omitempty"`
 
+	CurrentScale int64 `json:"currentScale,omitempty" yaml:"current_scale,omitempty"`
+
 	Data map[string]interface{} `json:"data,omitempty" yaml:"data,omitempty"`
 
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
@@ -36,6 +38,8 @@ type ComposeService struct {
 	Removed string `json:"removed,omitempty" yaml:"removed,omitempty"`
 
 	Scale int64 `json:"scale,omitempty" yaml:"scale,omitempty"`
+
+	ScalePolicy *ScalePolicy `json:"scalePolicy,omitempty" yaml:"scale_policy,omitempty"`
 
 	SelectorContainer string `json:"selectorContainer,omitempty" yaml:"selector_container,omitempty"`
 
@@ -74,31 +78,17 @@ type ComposeServiceOperations interface {
 
 	ActionActivate(*ComposeService) (*Service, error)
 
-	ActionAddservicelink(*ComposeService, *AddRemoveServiceLinkInput) (*Service, error)
-
 	ActionCancelrollback(*ComposeService) (*Service, error)
 
 	ActionCancelupgrade(*ComposeService) (*Service, error)
 
 	ActionCreate(*ComposeService) (*Service, error)
 
-	ActionDeactivate(*ComposeService) (*Service, error)
-
 	ActionFinishupgrade(*ComposeService) (*Service, error)
 
 	ActionRemove(*ComposeService) (*Service, error)
 
-	ActionRemoveservicelink(*ComposeService, *AddRemoveServiceLinkInput) (*Service, error)
-
-	ActionRestart(*ComposeService, *ServiceRestart) (*Service, error)
-
 	ActionRollback(*ComposeService) (*Service, error)
-
-	ActionSetservicelinks(*ComposeService, *SetServiceLinksInput) (*Service, error)
-
-	ActionUpdate(*ComposeService) (*Service, error)
-
-	ActionUpgrade(*ComposeService, *ServiceUpgrade) (*Service, error)
 }
 
 func newComposeServiceClient(rancherClient *RancherClient) *ComposeServiceClient {
@@ -149,15 +139,6 @@ func (c *ComposeServiceClient) ActionActivate(resource *ComposeService) (*Servic
 	return resp, err
 }
 
-func (c *ComposeServiceClient) ActionAddservicelink(resource *ComposeService, input *AddRemoveServiceLinkInput) (*Service, error) {
-
-	resp := &Service{}
-
-	err := c.rancherClient.doAction(COMPOSE_SERVICE_TYPE, "addservicelink", &resource.Resource, input, resp)
-
-	return resp, err
-}
-
 func (c *ComposeServiceClient) ActionCancelrollback(resource *ComposeService) (*Service, error) {
 
 	resp := &Service{}
@@ -185,15 +166,6 @@ func (c *ComposeServiceClient) ActionCreate(resource *ComposeService) (*Service,
 	return resp, err
 }
 
-func (c *ComposeServiceClient) ActionDeactivate(resource *ComposeService) (*Service, error) {
-
-	resp := &Service{}
-
-	err := c.rancherClient.doAction(COMPOSE_SERVICE_TYPE, "deactivate", &resource.Resource, nil, resp)
-
-	return resp, err
-}
-
 func (c *ComposeServiceClient) ActionFinishupgrade(resource *ComposeService) (*Service, error) {
 
 	resp := &Service{}
@@ -212,56 +184,11 @@ func (c *ComposeServiceClient) ActionRemove(resource *ComposeService) (*Service,
 	return resp, err
 }
 
-func (c *ComposeServiceClient) ActionRemoveservicelink(resource *ComposeService, input *AddRemoveServiceLinkInput) (*Service, error) {
-
-	resp := &Service{}
-
-	err := c.rancherClient.doAction(COMPOSE_SERVICE_TYPE, "removeservicelink", &resource.Resource, input, resp)
-
-	return resp, err
-}
-
-func (c *ComposeServiceClient) ActionRestart(resource *ComposeService, input *ServiceRestart) (*Service, error) {
-
-	resp := &Service{}
-
-	err := c.rancherClient.doAction(COMPOSE_SERVICE_TYPE, "restart", &resource.Resource, input, resp)
-
-	return resp, err
-}
-
 func (c *ComposeServiceClient) ActionRollback(resource *ComposeService) (*Service, error) {
 
 	resp := &Service{}
 
 	err := c.rancherClient.doAction(COMPOSE_SERVICE_TYPE, "rollback", &resource.Resource, nil, resp)
-
-	return resp, err
-}
-
-func (c *ComposeServiceClient) ActionSetservicelinks(resource *ComposeService, input *SetServiceLinksInput) (*Service, error) {
-
-	resp := &Service{}
-
-	err := c.rancherClient.doAction(COMPOSE_SERVICE_TYPE, "setservicelinks", &resource.Resource, input, resp)
-
-	return resp, err
-}
-
-func (c *ComposeServiceClient) ActionUpdate(resource *ComposeService) (*Service, error) {
-
-	resp := &Service{}
-
-	err := c.rancherClient.doAction(COMPOSE_SERVICE_TYPE, "update", &resource.Resource, nil, resp)
-
-	return resp, err
-}
-
-func (c *ComposeServiceClient) ActionUpgrade(resource *ComposeService, input *ServiceUpgrade) (*Service, error) {
-
-	resp := &Service{}
-
-	err := c.rancherClient.doAction(COMPOSE_SERVICE_TYPE, "upgrade", &resource.Resource, input, resp)
 
 	return resp, err
 }

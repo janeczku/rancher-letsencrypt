@@ -23,6 +23,8 @@ type DynamicSchema struct {
 
 	Parent string `json:"parent,omitempty" yaml:"parent,omitempty"`
 
+	Removed string `json:"removed,omitempty" yaml:"removed,omitempty"`
+
 	Roles []string `json:"roles,omitempty" yaml:"roles,omitempty"`
 
 	State string `json:"state,omitempty" yaml:"state,omitempty"`

@@ -13,6 +13,8 @@ type VirtualMachine struct {
 
 	AllocationState string `json:"allocationState,omitempty" yaml:"allocation_state,omitempty"`
 
+	BlkioDeviceOptions map[string]interface{} `json:"blkioDeviceOptions,omitempty" yaml:"blkio_device_options,omitempty"`
+
 	Command []string `json:"command,omitempty" yaml:"command,omitempty"`
 
 	Count int64 `json:"count,omitempty" yaml:"count,omitempty"`

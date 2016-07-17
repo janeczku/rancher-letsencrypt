@@ -13,6 +13,8 @@ type LaunchConfig struct {
 
 	AllocationState string `json:"allocationState,omitempty" yaml:"allocation_state,omitempty"`
 
+	BlkioDeviceOptions map[string]interface{} `json:"blkioDeviceOptions,omitempty" yaml:"blkio_device_options,omitempty"`
+
 	Build *DockerBuild `json:"build,omitempty" yaml:"build,omitempty"`
 
 	CapAdd []string `json:"capAdd,omitempty" yaml:"cap_add,omitempty"`
@@ -190,8 +192,6 @@ type LaunchConfigOperations interface {
 
 	ActionExecute(*LaunchConfig, *ContainerExec) (*HostAccess, error)
 
-	ActionLogs(*LaunchConfig, *ContainerLogs) (*HostAccess, error)
-
 	ActionMigrate(*LaunchConfig) (*Instance, error)
 
 	ActionProxy(*LaunchConfig, *ContainerProxy) (*HostAccess, error)
@@ -308,15 +308,6 @@ func (c *LaunchConfigClient) ActionExecute(resource *LaunchConfig, input *Contai
 	resp := &HostAccess{}
 
 	err := c.rancherClient.doAction(LAUNCH_CONFIG_TYPE, "execute", &resource.Resource, input, resp)
-
-	return resp, err
-}
-
-func (c *LaunchConfigClient) ActionLogs(resource *LaunchConfig, input *ContainerLogs) (*HostAccess, error) {
-
-	resp := &HostAccess{}
-
-	err := c.rancherClient.doAction(LAUNCH_CONFIG_TYPE, "logs", &resource.Resource, input, resp)
 
 	return resp, err
 }

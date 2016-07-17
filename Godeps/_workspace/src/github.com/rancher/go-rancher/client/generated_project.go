@@ -21,6 +21,8 @@ type Project struct {
 
 	Members []interface{} `json:"members,omitempty" yaml:"members,omitempty"`
 
+	Mesos bool `json:"mesos,omitempty" yaml:"mesos,omitempty"`
+
 	Name string `json:"name,omitempty" yaml:"name,omitempty"`
 
 	PublicDns bool `json:"publicDns,omitempty" yaml:"public_dns,omitempty"`
@@ -42,6 +44,8 @@ type Project struct {
 	TransitioningProgress int64 `json:"transitioningProgress,omitempty" yaml:"transitioning_progress,omitempty"`
 
 	Uuid string `json:"uuid,omitempty" yaml:"uuid,omitempty"`
+
+	VirtualMachine bool `json:"virtualMachine,omitempty" yaml:"virtual_machine,omitempty"`
 }
 
 type ProjectCollection struct {

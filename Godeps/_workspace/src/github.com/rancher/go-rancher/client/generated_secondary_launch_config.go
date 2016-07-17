@@ -13,6 +13,8 @@ type SecondaryLaunchConfig struct {
 
 	AllocationState string `json:"allocationState,omitempty" yaml:"allocation_state,omitempty"`
 
+	BlkioDeviceOptions map[string]interface{} `json:"blkioDeviceOptions,omitempty" yaml:"blkio_device_options,omitempty"`
+
 	Build *DockerBuild `json:"build,omitempty" yaml:"build,omitempty"`
 
 	CapAdd []string `json:"capAdd,omitempty" yaml:"cap_add,omitempty"`
@@ -192,8 +194,6 @@ type SecondaryLaunchConfigOperations interface {
 
 	ActionExecute(*SecondaryLaunchConfig, *ContainerExec) (*HostAccess, error)
 
-	ActionLogs(*SecondaryLaunchConfig, *ContainerLogs) (*HostAccess, error)
-
 	ActionMigrate(*SecondaryLaunchConfig) (*Instance, error)
 
 	ActionProxy(*SecondaryLaunchConfig, *ContainerProxy) (*HostAccess, error)
@@ -310,15 +310,6 @@ func (c *SecondaryLaunchConfigClient) ActionExecute(resource *SecondaryLaunchCon
 	resp := &HostAccess{}
 
 	err := c.rancherClient.doAction(SECONDARY_LAUNCH_CONFIG_TYPE, "execute", &resource.Resource, input, resp)
-
-	return resp, err
-}
-
-func (c *SecondaryLaunchConfigClient) ActionLogs(resource *SecondaryLaunchConfig, input *ContainerLogs) (*HostAccess, error) {
-
-	resp := &HostAccess{}
-
-	err := c.rancherClient.doAction(SECONDARY_LAUNCH_CONFIG_TYPE, "logs", &resource.Resource, input, resp)
 
 	return resp, err
 }
