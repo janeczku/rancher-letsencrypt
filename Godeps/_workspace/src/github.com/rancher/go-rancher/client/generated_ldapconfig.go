@@ -9,6 +9,8 @@ type Ldapconfig struct {
 
 	AccessMode string `json:"accessMode,omitempty" yaml:"access_mode,omitempty"`
 
+	AllowedIdentities []interface{} `json:"allowedIdentities,omitempty" yaml:"allowed_identities,omitempty"`
+
 	ConnectionTimeout int64 `json:"connectionTimeout,omitempty" yaml:"connection_timeout,omitempty"`
 
 	Domain string `json:"domain,omitempty" yaml:"domain,omitempty"`

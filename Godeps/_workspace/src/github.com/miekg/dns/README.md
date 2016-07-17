@@ -113,7 +113,6 @@ Example programs can be found in the `github.com/miekg/exdns` repository.
 * 340{1,2,3} - NAPTR record
 * 3445 - Limiting the scope of (DNS)KEY
 * 3597 - Unknown RRs
-* 4025 - IPSECKEY
 * 403{3,4,5} - DNSSEC + validation functions
 * 4255 - SSHFP record
 * 4343 - Case insensitivity
@@ -140,9 +139,9 @@ Example programs can be found in the `github.com/miekg/exdns` repository.
 * 7043 - EUI48/EUI64 records
 * 7314 - DNS (EDNS) EXPIRE Option
 * 7553 - URI record
+* 7858 - DNS over TLS: Initiation and Performance Considerations (draft)
+* 7873 - Domain Name System (DNS) Cookies (draft-ietf-dnsop-cookies)
 * xxxx - EDNS0 DNS Update Lease (draft)
-* yyyy - DNS over TLS: Initiation and Performance Considerations (draft)
-* xxxx - Domain Name System (DNS) Cookies (draft-ietf-dnsop-cookies)
 
 ## Loosely based upon
 
@@ -150,11 +149,3 @@ Example programs can be found in the `github.com/miekg/exdns` repository.
 * `NSD`
 * `Net::DNS`
 * `GRONG`
-
-## TODO
-
-* privatekey.Precompute() when signing?
-* Last remaining RRs: APL, ATMA, A6, NSAP and NXT.
-* Missing in parsing: ISDN, UNSPEC, NSAP and ATMA.
-* NSEC(3) cover/match/closest enclose.
-* Replies with TC bit are not parsed to the end.

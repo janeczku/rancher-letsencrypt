@@ -79,6 +79,8 @@ type CertificateOperations interface {
 	ActionCreate(*Certificate) (*Certificate, error)
 
 	ActionRemove(*Certificate) (*Certificate, error)
+
+	ActionUpdate(*Certificate) (*Certificate, error)
 }
 
 func newCertificateClient(rancherClient *RancherClient) *CertificateClient {
@@ -134,6 +136,15 @@ func (c *CertificateClient) ActionRemove(resource *Certificate) (*Certificate, e
 	resp := &Certificate{}
 
 	err := c.rancherClient.doAction(CERTIFICATE_TYPE, "remove", &resource.Resource, nil, resp)
+
+	return resp, err
+}
+
+func (c *CertificateClient) ActionUpdate(resource *Certificate) (*Certificate, error) {
+
+	resp := &Certificate{}
+
+	err := c.rancherClient.doAction(CERTIFICATE_TYPE, "update", &resource.Resource, nil, resp)
 
 	return resp, err
 }

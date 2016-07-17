@@ -62,31 +62,19 @@ type ComposeProjectOperations interface {
 	ById(id string) (*ComposeProject, error)
 	Delete(container *ComposeProject) error
 
-	ActionActivateservices(*ComposeProject) (*Environment, error)
-
-	ActionAddoutputs(*ComposeProject, *AddOutputsInput) (*Environment, error)
-
 	ActionCancelrollback(*ComposeProject) (*Environment, error)
 
 	ActionCancelupgrade(*ComposeProject) (*Environment, error)
 
 	ActionCreate(*ComposeProject) (*Environment, error)
 
-	ActionDeactivateservices(*ComposeProject) (*Environment, error)
-
 	ActionError(*ComposeProject) (*Environment, error)
-
-	ActionExportconfig(*ComposeProject, *ComposeConfigInput) (*ComposeConfig, error)
 
 	ActionFinishupgrade(*ComposeProject) (*Environment, error)
 
 	ActionRemove(*ComposeProject) (*Environment, error)
 
 	ActionRollback(*ComposeProject) (*Environment, error)
-
-	ActionUpdate(*ComposeProject) (*Environment, error)
-
-	ActionUpgrade(*ComposeProject, *EnvironmentUpgrade) (*Environment, error)
 }
 
 func newComposeProjectClient(rancherClient *RancherClient) *ComposeProjectClient {
@@ -128,24 +116,6 @@ func (c *ComposeProjectClient) Delete(container *ComposeProject) error {
 	return c.rancherClient.doResourceDelete(COMPOSE_PROJECT_TYPE, &container.Resource)
 }
 
-func (c *ComposeProjectClient) ActionActivateservices(resource *ComposeProject) (*Environment, error) {
-
-	resp := &Environment{}
-
-	err := c.rancherClient.doAction(COMPOSE_PROJECT_TYPE, "activateservices", &resource.Resource, nil, resp)
-
-	return resp, err
-}
-
-func (c *ComposeProjectClient) ActionAddoutputs(resource *ComposeProject, input *AddOutputsInput) (*Environment, error) {
-
-	resp := &Environment{}
-
-	err := c.rancherClient.doAction(COMPOSE_PROJECT_TYPE, "addoutputs", &resource.Resource, input, resp)
-
-	return resp, err
-}
-
 func (c *ComposeProjectClient) ActionCancelrollback(resource *ComposeProject) (*Environment, error) {
 
 	resp := &Environment{}
@@ -173,29 +143,11 @@ func (c *ComposeProjectClient) ActionCreate(resource *ComposeProject) (*Environm
 	return resp, err
 }
 
-func (c *ComposeProjectClient) ActionDeactivateservices(resource *ComposeProject) (*Environment, error) {
-
-	resp := &Environment{}
-
-	err := c.rancherClient.doAction(COMPOSE_PROJECT_TYPE, "deactivateservices", &resource.Resource, nil, resp)
-
-	return resp, err
-}
-
 func (c *ComposeProjectClient) ActionError(resource *ComposeProject) (*Environment, error) {
 
 	resp := &Environment{}
 
 	err := c.rancherClient.doAction(COMPOSE_PROJECT_TYPE, "error", &resource.Resource, nil, resp)
-
-	return resp, err
-}
-
-func (c *ComposeProjectClient) ActionExportconfig(resource *ComposeProject, input *ComposeConfigInput) (*ComposeConfig, error) {
-
-	resp := &ComposeConfig{}
-
-	err := c.rancherClient.doAction(COMPOSE_PROJECT_TYPE, "exportconfig", &resource.Resource, input, resp)
 
 	return resp, err
 }
@@ -223,24 +175,6 @@ func (c *ComposeProjectClient) ActionRollback(resource *ComposeProject) (*Enviro
 	resp := &Environment{}
 
 	err := c.rancherClient.doAction(COMPOSE_PROJECT_TYPE, "rollback", &resource.Resource, nil, resp)
-
-	return resp, err
-}
-
-func (c *ComposeProjectClient) ActionUpdate(resource *ComposeProject) (*Environment, error) {
-
-	resp := &Environment{}
-
-	err := c.rancherClient.doAction(COMPOSE_PROJECT_TYPE, "update", &resource.Resource, nil, resp)
-
-	return resp, err
-}
-
-func (c *ComposeProjectClient) ActionUpgrade(resource *ComposeProject, input *EnvironmentUpgrade) (*Environment, error) {
-
-	resp := &Environment{}
-
-	err := c.rancherClient.doAction(COMPOSE_PROJECT_TYPE, "upgrade", &resource.Resource, input, resp)
 
 	return resp, err
 }

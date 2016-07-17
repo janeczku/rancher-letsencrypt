@@ -13,9 +13,13 @@ type VirtualMachineDisk struct {
 
 	Opts map[string]interface{} `json:"opts,omitempty" yaml:"opts,omitempty"`
 
+	ReadIops int64 `json:"readIops,omitempty" yaml:"read_iops,omitempty"`
+
 	Root bool `json:"root,omitempty" yaml:"root,omitempty"`
 
 	Size string `json:"size,omitempty" yaml:"size,omitempty"`
+
+	WriteIops int64 `json:"writeIops,omitempty" yaml:"write_iops,omitempty"`
 }
 
 type VirtualMachineDiskCollection struct {
