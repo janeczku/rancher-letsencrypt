@@ -9,6 +9,7 @@ import (
 	"github.com/xenolf/lego/providers/dns/digitalocean"
 	"github.com/xenolf/lego/providers/dns/dnsimple"
 	"github.com/xenolf/lego/providers/dns/dyn"
+	"github.com/xenolf/lego/providers/dns/ovh"
 	"github.com/xenolf/lego/providers/dns/route53"
 	"github.com/xenolf/lego/providers/dns/vultr"
 )
@@ -40,6 +41,11 @@ type ProviderOpts struct {
 
 	// Vultr credentials
 	VultrApiKey string
+
+	// OVH credentials
+	OvhApplicationKey    string
+	OvhApplicationSecret string
+	OvhConsumerKey       string
 }
 
 type DnsProvider string
@@ -51,6 +57,7 @@ const (
 	DNSIMPLE     = DnsProvider("DNSimple")
 	DYN          = DnsProvider("Dyn")
 	VULTR        = DnsProvider("Vultr")
+	OVH          = DnsProvider("Ovh")
 )
 
 var dnsProviderFactory = map[DnsProvider]interface{}{
@@ -60,6 +67,7 @@ var dnsProviderFactory = map[DnsProvider]interface{}{
 	DNSIMPLE:     makeDNSimpleProvider,
 	DYN:          makeDynProvider,
 	VULTR:        makeVultrProvider,
+	OVH:          makeOvhProvider,
 }
 
 func getProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
@@ -165,6 +173,26 @@ func makeVultrProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 	}
 
 	provider, err := vultr.NewDNSProviderCredentials(opts.VultrApiKey)
+	if err != nil {
+		return nil, err
+	}
+	return provider, nil
+}
+
+// returns a preconfigured Ovh lego.ChallengeProvider
+func makeOvhProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
+	if len(opts.OvhApplicationKey) == 0 {
+		return nil, fmt.Errorf("OVH application key is not set")
+	}
+	if len(opts.OvhApplicationSecret) == 0 {
+		return nil, fmt.Errorf("OVH application secret is not set")
+	}
+	if len(opts.OvhConsumerKey) == 0 {
+		return nil, fmt.Errorf("OVH consumer key is not set")
+	}
+
+	provider, err := ovh.NewDNSProviderCredentials("ovh-eu", opts.OvhApplicationKey, opts.OvhApplicationSecret,
+		opts.OvhConsumerKey)
 	if err != nil {
 		return nil, err
 	}
