@@ -167,15 +167,31 @@ func (c *Client) Register() (*RegistrationResource, error) {
 	}
 
 	var serverReg Registration
+	var regURI string
 	hdr, err := postJSON(c.jws, c.directory.NewRegURL, regMsg, &serverReg)
 	if err != nil {
-		return nil, err
+		remoteErr, ok := err.(RemoteError)
+		if ok && remoteErr.StatusCode == 409 {
+			regURI = hdr.Get("Location")
+			regMsg = registrationMessage{
+				Resource: "reg",
+			}
+			if hdr, err = postJSON(c.jws, regURI, regMsg, &serverReg); err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
 	}
 
 	reg := &RegistrationResource{Body: serverReg}
 
 	links := parseLinks(hdr["Link"])
-	reg.URI = hdr.Get("Location")
+
+	if regURI == "" {
+		regURI = hdr.Get("Location")
+	}
+	reg.URI = regURI
 	if links["terms-of-service"] != "" {
 		reg.TosURL = links["terms-of-service"]
 	}
@@ -184,6 +200,68 @@ func (c *Client) Register() (*RegistrationResource, error) {
 		reg.NewAuthzURL = links["next"]
 	} else {
 		return nil, errors.New("acme: The server did not return 'next' link to proceed")
+	}
+
+	return reg, nil
+}
+
+// DeleteRegistration deletes the client's user registration from the ACME
+// server.
+func (c *Client) DeleteRegistration() error {
+	if c == nil || c.user == nil {
+		return errors.New("acme: cannot unregister a nil client or user")
+	}
+	logf("[INFO] acme: Deleting account for %s", c.user.GetEmail())
+
+	regMsg := registrationMessage{
+		Resource: "reg",
+		Delete:   true,
+	}
+
+	_, err := postJSON(c.jws, c.user.GetRegistration().URI, regMsg, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// QueryRegistration runs a POST request on the client's registration and
+// returns the result.
+//
+// This is similar to the Register function, but acting on an existing
+// registration link and resource.
+func (c *Client) QueryRegistration() (*RegistrationResource, error) {
+	if c == nil || c.user == nil {
+		return nil, errors.New("acme: cannot query the registration of a nil client or user")
+	}
+	// Log the URL here instead of the email as the email may not be set
+	logf("[INFO] acme: Querying account for %s", c.user.GetRegistration().URI)
+
+	regMsg := registrationMessage{
+		Resource: "reg",
+	}
+
+	var serverReg Registration
+	hdr, err := postJSON(c.jws, c.user.GetRegistration().URI, regMsg, &serverReg)
+	if err != nil {
+		return nil, err
+	}
+
+	reg := &RegistrationResource{Body: serverReg}
+
+	links := parseLinks(hdr["Link"])
+	// Location: header is not returned so this needs to be populated off of
+	// existing URI
+	reg.URI = c.user.GetRegistration().URI
+	if links["terms-of-service"] != "" {
+		reg.TosURL = links["terms-of-service"]
+	}
+
+	if links["next"] != "" {
+		reg.NewAuthzURL = links["next"]
+	} else {
+		return nil, errors.New("acme: No new-authz link in response to registration query")
 	}
 
 	return reg, nil
@@ -198,6 +276,65 @@ func (c *Client) AgreeToTOS() error {
 	reg.Body.Resource = "reg"
 	_, err := postJSON(c.jws, c.user.GetRegistration().URI, c.user.GetRegistration().Body, nil)
 	return err
+}
+
+// ObtainCertificateForCSR tries to obtain a certificate matching the CSR passed into it.
+// The domains are inferred from the CommonName and SubjectAltNames, if any. The private key
+// for this CSR is not required.
+// If bundle is true, the []byte contains both the issuer certificate and
+// your issued certificate as a bundle.
+// This function will never return a partial certificate. If one domain in the list fails,
+// the whole certificate will fail.
+func (c *Client) ObtainCertificateForCSR(csr x509.CertificateRequest, bundle bool) (CertificateResource, map[string]error) {
+	// figure out what domains it concerns
+	// start with the common name
+	domains := []string{csr.Subject.CommonName}
+
+	// loop over the SubjectAltName DNS names
+DNSNames:
+	for _, sanName := range csr.DNSNames {
+		for _, existingName := range domains {
+			if existingName == sanName {
+				// duplicate; skip this name
+				continue DNSNames
+			}
+		}
+
+		// name is unique
+		domains = append(domains, sanName)
+	}
+
+	if bundle {
+		logf("[INFO][%s] acme: Obtaining bundled SAN certificate given a CSR", strings.Join(domains, ", "))
+	} else {
+		logf("[INFO][%s] acme: Obtaining SAN certificate given a CSR", strings.Join(domains, ", "))
+	}
+
+	challenges, failures := c.getChallenges(domains)
+	// If any challenge fails - return. Do not generate partial SAN certificates.
+	if len(failures) > 0 {
+		return CertificateResource{}, failures
+	}
+
+	errs := c.solveChallenges(challenges)
+	// If any challenge fails - return. Do not generate partial SAN certificates.
+	if len(errs) > 0 {
+		return CertificateResource{}, errs
+	}
+
+	logf("[INFO][%s] acme: Validations succeeded; requesting certificates", strings.Join(domains, ", "))
+
+	cert, err := c.requestCertificateForCsr(challenges, bundle, csr.Raw, nil)
+	if err != nil {
+		for _, chln := range challenges {
+			failures[chln.Domain] = err
+		}
+	}
+
+	// Add the CSR to the certificate so that it can be used for renewals.
+	cert.CSR = pemEncode(&csr)
+
+	return cert, failures
 }
 
 // ObtainCertificate tries to obtain a single certificate using all domains passed into it.
@@ -326,6 +463,18 @@ func (c *Client) RenewCertificate(cert CertificateResource, bundle bool) (Certif
 		return cert, nil
 	}
 
+	// If the certificate is the same, then we need to request a new certificate.
+	// Start by checking to see if the certificate was based off a CSR, and
+	// use that if it's defined.
+	if len(cert.CSR) > 0 {
+		csr, err := pemDecodeTox509CSR(cert.CSR)
+		if err != nil {
+			return CertificateResource{}, err
+		}
+		newCert, failures := c.ObtainCertificateForCSR(*csr, bundle)
+		return newCert, failures[cert.Domain]
+	}
+
 	var privKey crypto.PrivateKey
 	if cert.PrivateKey != nil {
 		privKey, err = parsePEMPrivateKey(cert.PrivateKey)
@@ -450,7 +599,6 @@ func (c *Client) requestCertificate(authz []authorizationResource, bundle bool, 
 		return CertificateResource{}, errors.New("Passed no authorizations to requestCertificate!")
 	}
 
-	commonName := authz[0]
 	var err error
 	if privKey == nil {
 		privKey, err = generatePrivateKey(c.keyType)
@@ -459,17 +607,28 @@ func (c *Client) requestCertificate(authz []authorizationResource, bundle bool, 
 		}
 	}
 
+	// determine certificate name(s) based on the authorization resources
+	commonName := authz[0]
 	var san []string
-	var authURLs []string
 	for _, auth := range authz[1:] {
 		san = append(san, auth.Domain)
-		authURLs = append(authURLs, auth.AuthURL)
 	}
 
 	// TODO: should the CSR be customizable?
 	csr, err := generateCsr(privKey, commonName.Domain, san)
 	if err != nil {
 		return CertificateResource{}, err
+	}
+
+	return c.requestCertificateForCsr(authz, bundle, csr, pemEncode(privKey))
+}
+
+func (c *Client) requestCertificateForCsr(authz []authorizationResource, bundle bool, csr []byte, privateKeyPem []byte) (CertificateResource, error) {
+	commonName := authz[0]
+
+	var authURLs []string
+	for _, auth := range authz[1:] {
+		authURLs = append(authURLs, auth.AuthURL)
 	}
 
 	csrString := base64.URLEncoding.EncodeToString(csr)
@@ -483,7 +642,6 @@ func (c *Client) requestCertificate(authz []authorizationResource, bundle bool, 
 		return CertificateResource{}, err
 	}
 
-	privateKeyPem := pemEncode(privKey)
 	cerRes := CertificateResource{
 		Domain:     commonName.Domain,
 		CertURL:    resp.Header.Get("Location"),
