@@ -24,6 +24,7 @@ A [Rancher](http://rancher.com/rancher/) service that obtains free SSL/TLS certi
   * `Dyn`
   * `Vultr`
   * `Ovh`
+  * `Gandi`
 
 ### How to use
 

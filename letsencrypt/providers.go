@@ -9,6 +9,7 @@ import (
 	"github.com/xenolf/lego/providers/dns/digitalocean"
 	"github.com/xenolf/lego/providers/dns/dnsimple"
 	"github.com/xenolf/lego/providers/dns/dyn"
+	"github.com/xenolf/lego/providers/dns/gandi"
 	"github.com/xenolf/lego/providers/dns/ovh"
 	"github.com/xenolf/lego/providers/dns/route53"
 	"github.com/xenolf/lego/providers/dns/vultr"
@@ -46,6 +47,9 @@ type ProviderOpts struct {
 	OvhApplicationKey    string
 	OvhApplicationSecret string
 	OvhConsumerKey       string
+
+	// Gandi credentials
+	GandiApiKey string
 }
 
 type DnsProvider string
@@ -58,6 +62,7 @@ const (
 	DYN          = DnsProvider("Dyn")
 	VULTR        = DnsProvider("Vultr")
 	OVH          = DnsProvider("Ovh")
+	GANDI        = DnsProvider("Gandi")
 )
 
 var dnsProviderFactory = map[DnsProvider]interface{}{
@@ -68,6 +73,7 @@ var dnsProviderFactory = map[DnsProvider]interface{}{
 	DYN:          makeDynProvider,
 	VULTR:        makeVultrProvider,
 	OVH:          makeOvhProvider,
+	GANDI:        makeGandiProvider,
 }
 
 func getProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
@@ -193,6 +199,19 @@ func makeOvhProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 
 	provider, err := ovh.NewDNSProviderCredentials("ovh-eu", opts.OvhApplicationKey, opts.OvhApplicationSecret,
 		opts.OvhConsumerKey)
+	if err != nil {
+		return nil, err
+	}
+	return provider, nil
+}
+
+// returns a preconfigured Gandi lego.ChallengeProvider
+func makeGandiProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
+	if len(opts.GandiApiKey) == 0 {
+		return nil, fmt.Errorf("Gandi API key is not set")
+	}
+
+	provider, err := gandi.NewDNSProviderCredentials(opts.GandiApiKey)
 	if err != nil {
 		return nil, err
 	}

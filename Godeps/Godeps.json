@@ -184,6 +184,11 @@
 			"Rev": "b12ce5e73146e74520c426895394b92dffeb3a25"
 		},
 		{
+			"ImportPath": "github.com/xenolf/lego/providers/dns/gandi",
+			"Comment": "v0.3.1-44-gb12ce5e",
+			"Rev": "b12ce5e73146e74520c426895394b92dffeb3a25"
+		},
+		{
 			"ImportPath": "github.com/xenolf/lego/providers/dns/ovh",
 			"Comment": "v0.3.1-44-gb12ce5e",
 			"Rev": "b12ce5e73146e74520c426895394b92dffeb3a25"
