@@ -71,7 +71,7 @@ func (c *Context) InitContext() {
 	}
 
 	providerOpts := letsencrypt.ProviderOpts{
-		Provider:             letsencrypt.DnsProvider(providerParam),
+		Provider:             letsencrypt.Provider(providerParam),
 		CloudflareEmail:      getEnvOption("CLOUDFLARE_EMAIL", false),
 		CloudflareKey:        getEnvOption("CLOUDFLARE_KEY", false),
 		DoAccessToken:        getEnvOption("DO_ACCESS_TOKEN", false),
@@ -86,6 +86,7 @@ func (c *Context) InitContext() {
 		OvhApplicationKey:    getEnvOption("OVH_APPLICATION_KEY", false),
 		OvhApplicationSecret: getEnvOption("OVH_APPLICATION_SECRET", false),
 		OvhConsumerKey:       getEnvOption("OVH_CONSUMER_KEY", false),
+		HTTPWebrootPath:      getEnvOption("HTTP_WEBROOT_PATH", false),
 	}
 
 	c.Acme, err = letsencrypt.NewClient(emailParam, keyType, apiVersion, providerOpts)

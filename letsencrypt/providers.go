@@ -12,12 +12,13 @@ import (
 	"github.com/xenolf/lego/providers/dns/ovh"
 	"github.com/xenolf/lego/providers/dns/route53"
 	"github.com/xenolf/lego/providers/dns/vultr"
+	"github.com/xenolf/lego/providers/http/webroot"
 )
 
 // ProviderOpts is used to configure the DNS provider
 // used by the Let's Encrypt client for domain validation
 type ProviderOpts struct {
-	Provider DnsProvider
+	Provider Provider
 
 	// CloudFlare credentials
 	CloudflareEmail string
@@ -46,39 +47,50 @@ type ProviderOpts struct {
 	OvhApplicationKey    string
 	OvhApplicationSecret string
 	OvhConsumerKey       string
+
+	// HTTP challenge options
+	HTTPWebrootPath string
 }
 
-type DnsProvider string
+type Provider string
 
 const (
-	CLOUDFLARE   = DnsProvider("CloudFlare")
-	DIGITALOCEAN = DnsProvider("DigitalOcean")
-	ROUTE53      = DnsProvider("Route53")
-	DNSIMPLE     = DnsProvider("DNSimple")
-	DYN          = DnsProvider("Dyn")
-	VULTR        = DnsProvider("Vultr")
-	OVH          = DnsProvider("Ovh")
+	CLOUDFLARE   = Provider("CloudFlare")
+	DIGITALOCEAN = Provider("DigitalOcean")
+	ROUTE53      = Provider("Route53")
+	DNSIMPLE     = Provider("DNSimple")
+	DYN          = Provider("Dyn")
+	VULTR        = Provider("Vultr")
+	OVH          = Provider("Ovh")
+	HTTP         = Provider("HTTP")
 )
 
-var dnsProviderFactory = map[DnsProvider]interface{}{
-	CLOUDFLARE:   makeCloudflareProvider,
-	DIGITALOCEAN: makeDigitalOceanProvider,
-	ROUTE53:      makeRoute53Provider,
-	DNSIMPLE:     makeDNSimpleProvider,
-	DYN:          makeDynProvider,
-	VULTR:        makeVultrProvider,
-	OVH:          makeOvhProvider,
+type ProviderFactory struct {
+	factory interface{}
+	challenge lego.Challenge
 }
 
-func getProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
-	if f, ok := dnsProviderFactory[opts.Provider]; ok {
-		provider, err := f.(func(ProviderOpts) (lego.ChallengeProvider, error))(opts)
+var providerFactory = map[Provider]ProviderFactory{
+	CLOUDFLARE:   ProviderFactory{makeCloudflareProvider,   lego.DNS01},
+	DIGITALOCEAN: ProviderFactory{makeDigitalOceanProvider, lego.DNS01},
+	ROUTE53:      ProviderFactory{makeRoute53Provider,      lego.DNS01},
+	DNSIMPLE:     ProviderFactory{makeDNSimpleProvider,     lego.DNS01},
+	DYN:          ProviderFactory{makeDynProvider,          lego.DNS01},
+	VULTR:        ProviderFactory{makeVultrProvider,        lego.DNS01},
+	OVH:          ProviderFactory{makeOvhProvider,          lego.DNS01},
+	HTTP:         ProviderFactory{makeHTTPProvider,         lego.HTTP01},
+}
+
+func getProvider(opts ProviderOpts) (lego.ChallengeProvider, lego.Challenge, error) {
+	if f, ok := providerFactory[opts.Provider]; ok {
+		provider, err := f.factory.(func(ProviderOpts) (lego.ChallengeProvider, error))(opts)
 		if err != nil {
-			return nil, err
+			return nil, f.challenge, err
 		}
-		return provider, nil
+		return provider, f.challenge, nil
 	}
-	return nil, fmt.Errorf("Unsupported DNS provider: %s", opts.Provider)
+	irrelevant := lego.DNS01
+	return nil, irrelevant, fmt.Errorf("Unsupported provider: %s", opts.Provider)
 }
 
 // returns a preconfigured CloudFlare lego.ChallengeProvider
@@ -193,6 +205,22 @@ func makeOvhProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 
 	provider, err := ovh.NewDNSProviderCredentials("ovh-eu", opts.OvhApplicationKey, opts.OvhApplicationSecret,
 		opts.OvhConsumerKey)
+	if err != nil {
+		return nil, err
+	}
+	return provider, nil
+}
+
+// returns a preconfigured HTTP lego.ChallengeProvider
+func makeHTTPProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
+	if len(opts.HTTPWebrootPath) == 0 {
+		return nil, fmt.Errorf("HTTP webroot path is not set")
+	}
+
+	webrootPath := opts.HTTPWebrootPath
+	maybeCreatePath(webrootPath)
+
+	provider, err := webroot.NewHTTPProvider(webrootPath)
 	if err != nil {
 		return nil, err
 	}
