@@ -12,7 +12,6 @@ import (
 	"github.com/xenolf/lego/providers/dns/ovh"
 	"github.com/xenolf/lego/providers/dns/route53"
 	"github.com/xenolf/lego/providers/dns/vultr"
-	"github.com/xenolf/lego/providers/http/webroot"
 )
 
 // ProviderOpts is used to configure the DNS provider
@@ -213,16 +212,7 @@ func makeOvhProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 
 // returns a preconfigured HTTP lego.ChallengeProvider
 func makeHTTPProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
-	if len(opts.HTTPWebrootPath) == 0 {
-		return nil, fmt.Errorf("HTTP webroot path is not set")
-	}
+	provider := lego.NewHTTPProviderServer("", "")
 
-	webrootPath := opts.HTTPWebrootPath
-	maybeCreatePath(webrootPath)
-
-	provider, err := webroot.NewHTTPProvider(webrootPath)
-	if err != nil {
-		return nil, err
-	}
 	return provider, nil
 }
