@@ -65,19 +65,19 @@ const (
 )
 
 type ProviderFactory struct {
-	factory interface{}
+	factory   interface{}
 	challenge lego.Challenge
 }
 
 var providerFactory = map[Provider]ProviderFactory{
-	CLOUDFLARE:   ProviderFactory{makeCloudflareProvider,   lego.DNS01},
+	CLOUDFLARE:   ProviderFactory{makeCloudflareProvider, lego.DNS01},
 	DIGITALOCEAN: ProviderFactory{makeDigitalOceanProvider, lego.DNS01},
-	ROUTE53:      ProviderFactory{makeRoute53Provider,      lego.DNS01},
-	DNSIMPLE:     ProviderFactory{makeDNSimpleProvider,     lego.DNS01},
-	DYN:          ProviderFactory{makeDynProvider,          lego.DNS01},
-	VULTR:        ProviderFactory{makeVultrProvider,        lego.DNS01},
-	OVH:          ProviderFactory{makeOvhProvider,          lego.DNS01},
-	HTTP:         ProviderFactory{makeHTTPProvider,         lego.HTTP01},
+	ROUTE53:      ProviderFactory{makeRoute53Provider, lego.DNS01},
+	DNSIMPLE:     ProviderFactory{makeDNSimpleProvider, lego.DNS01},
+	DYN:          ProviderFactory{makeDynProvider, lego.DNS01},
+	VULTR:        ProviderFactory{makeVultrProvider, lego.DNS01},
+	OVH:          ProviderFactory{makeOvhProvider, lego.DNS01},
+	HTTP:         ProviderFactory{makeHTTPProvider, lego.HTTP01},
 }
 
 func getProvider(opts ProviderOpts) (lego.ChallengeProvider, lego.Challenge, error) {
