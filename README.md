@@ -16,6 +16,7 @@ A [Rancher](http://rancher.com/rancher/) service that obtains free SSL/TLS certi
 #### Requirements
 * Rancher Server >= v1.2.0
 * If using a DNS-based challenge, existing account with one of the supported DNS providers:
+  * `Aurora DNS`
   * `AWS Route 53`
   * `Azure DNS`
   * `CloudFlare`

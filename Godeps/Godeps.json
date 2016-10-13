@@ -169,6 +169,37 @@
 			"Rev": "2268707a8f0843315e2004ee4f1d021dc08baedf"
 		},
 		{
+			"ImportPath": "github.com/edeckers/auroradnsclient",
+			"Comment": "v1.0.1",
+			"Rev": "8b777c170cfd377aa16bb4368f093017dddef3f9"
+		},
+		{
+			"ImportPath": "github.com/edeckers/auroradnsclient/records",
+			"Comment": "v1.0.1",
+			"Rev": "8b777c170cfd377aa16bb4368f093017dddef3f9"
+		},
+		{
+			"ImportPath": "github.com/edeckers/auroradnsclient/requests",
+			"Comment": "v1.0.1",
+			"Rev": "8b777c170cfd377aa16bb4368f093017dddef3f9"
+		},
+		{
+			"ImportPath": "github.com/edeckers/auroradnsclient/requests/errors",
+			"Comment": "v1.0.1",
+			"Rev": "8b777c170cfd377aa16bb4368f093017dddef3f9"
+		},
+		{
+			"ImportPath": "github.com/edeckers/auroradnsclient/tokens",
+			"Comment": "v1.0.1",
+			"Rev": "8b777c170cfd377aa16bb4368f093017dddef3f9"
+		},
+		{
+			"ImportPath": "github.com/edeckers/auroradnsclient/zones",
+			"Comment": "v1.0.1",
+			"Rev": "8b777c170cfd377aa16bb4368f093017dddef3f9"
+>>>>>>> 7b808b4... Add support for AuroraDNS
+		},
+		{
 			"ImportPath": "github.com/go-ini/ini",
 			"Comment": "v1.24.0",
 			"Rev": "e3c2d47c61e5333f9aa2974695dd94396eb69c75"
@@ -216,6 +247,11 @@
 		},
 		{
 			"ImportPath": "github.com/xenolf/lego/providers/dns/azure",
+			"Comment": "v0.3.1-102-gf5d538c",
+			"Rev": "f5d538caab6dc0c167d4e32990c79bbf9eff578c"
+		},
+		{
+			"ImportPath": "github.com/xenolf/lego/providers/dns/auroradns",
 			"Comment": "v0.3.1-102-gf5d538c",
 			"Rev": "f5d538caab6dc0c167d4e32990c79bbf9eff578c"
 		},
