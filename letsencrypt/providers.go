@@ -46,9 +46,6 @@ type ProviderOpts struct {
 	OvhApplicationKey    string
 	OvhApplicationSecret string
 	OvhConsumerKey       string
-
-	// HTTP challenge options
-	HTTPWebrootPath string
 }
 
 type Provider string
