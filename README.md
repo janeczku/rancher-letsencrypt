@@ -16,7 +16,7 @@ A [Rancher](http://rancher.com/rancher/) service that obtains free SSL/TLS certi
 
 #### Requirements
 * Rancher Server >= v0.63.0
-* Existing account with one of the supported DNS providers:
+* If using a DNS-based challenge, existing account with one of the supported DNS providers:
   * `AWS Route 53`
   * `CloudFlare`
   * `DigitalOcean`
@@ -24,6 +24,7 @@ A [Rancher](http://rancher.com/rancher/) service that obtains free SSL/TLS certi
   * `Dyn`
   * `Vultr`
   * `Ovh`
+* If using the HTTP challenge, a proxy that routes `example.com/.well-known/acme-challenge` to `rancher-letsencrypt`.
 
 ### How to use
 
@@ -96,7 +97,22 @@ To finish, when you start this container add the following environment variable:
 - `PROVIDER`: Ovh
 - `OVH_APPLICATION_KEY`: your key generated in previous step
 - `OVH_APPLICATION_SECRET`: your secret generated in previous step
-- `OVH_CONSUMER_KEY`: your consumer key generated in previous step 
+- `OVH_CONSUMER_KEY`: your consumer key generated in previous step
+
+#### HTTP
+
+If you prefer not to use a DNS-based challenge
+or your provider is not supported, you can use the HTTP challenge.
+
+Simply set the following option:
+- `PROVIDER`: HTTP
+
+With this you'll have to make sure that HTTP
+requests to `example.com/.well-known/acme-challenge` get redirected
+to your `rancher-letsencrypt` instance. You can use a reverse proxy, like
+the Rancher Load Balancer for that:
+
+![Rancher Load Balancer LetsEncrypt Targets](https://cloud.githubusercontent.com/assets/198988/22224463/0d1eb4aa-e1bf-11e6-955c-5f0d085ce8cd.png)
 
 ### Building the image
 
