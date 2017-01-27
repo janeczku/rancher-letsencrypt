@@ -121,17 +121,21 @@ func NewClient(email string, kt KeyType, apiVer ApiVersion, provider ProviderOpt
 		logrus.Infof("Using locally stored Let's Encrypt account for %s", email)
 	}
 
-	prov, err := getProvider(provider)
+	prov, challenge, err := getProvider(provider)
 	if err != nil {
-		return nil, fmt.Errorf("Could not set DNS provider: %v", err)
+		return nil, fmt.Errorf("Could not get provider: %v", err)
 	}
 
-	err = client.SetChallengeProvider(lego.DNS01, prov)
+	err = client.SetChallengeProvider(challenge, prov)
 	if err != nil {
-		return nil, fmt.Errorf("Could not set DNS provider: %v", err)
+		return nil, fmt.Errorf("Could not set provider: %v", err)
 	}
 
-	client.ExcludeChallenges([]lego.Challenge{lego.HTTP01, lego.TLSSNI01})
+	if challenge == lego.DNS01 {
+		client.ExcludeChallenges([]lego.Challenge{lego.HTTP01, lego.TLSSNI01})
+	} else if challenge == lego.HTTP01 {
+		client.ExcludeChallenges([]lego.Challenge{lego.TLSSNI01, lego.DNS01})
+	}
 
 	return &Client{
 		client:     client,
