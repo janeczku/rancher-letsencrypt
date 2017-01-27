@@ -24,6 +24,7 @@ A [Rancher](http://rancher.com/rancher/) service that obtains free SSL/TLS certi
   * `Dyn`
   * `Vultr`
   * `Ovh`
+  * `Gandi`
 * If using the HTTP challenge, a proxy that routes `example.com/.well-known/acme-challenge` to `rancher-letsencrypt`.
 
 ### How to use
