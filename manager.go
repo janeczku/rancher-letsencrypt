@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	RENEW_BEFORE_DAYS = 14
+	RENEW_BEFORE_DAYS = 20
 )
 
 func (c *Context) Run() {
