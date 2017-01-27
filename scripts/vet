@@ -4,7 +4,7 @@
 # symlink as .git/hooks/pre-commit to use as a pre-commit check.
 #
 
-gofiles=$(find . ! -path "*/_*" -name "*.go")
+gofiles=$(find . ! -path "*/_*" -name "*.go" | grep -v /vendor/)
 [ -z "$gofiles" ] && exit 0
 
 function checkfmt() {
@@ -20,7 +20,7 @@ function checkfmt() {
 }
 
 function checkvet() {
-  unvetted=$(go vet ./... 2>&1 | grep -v "exit status")
+  unvetted=$(go vet $(go list ./... | grep -v /vendor/) 2>&1 | grep -v "exit status")
   [ -z "$unvetted" ] && return 0
 
   echo >&2 "Go files must be vetted. Check these problems:"
