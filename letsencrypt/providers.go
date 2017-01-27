@@ -62,7 +62,7 @@ const (
 	DYN          = Provider("Dyn")
 	VULTR        = Provider("Vultr")
 	OVH          = Provider("Ovh")
-  GANDI        = Provider("Gandi")
+	GANDI        = Provider("Gandi")
 	HTTP         = Provider("HTTP")
 )
 
@@ -79,7 +79,7 @@ var providerFactory = map[Provider]ProviderFactory{
 	DYN:          ProviderFactory{makeDynProvider, lego.DNS01},
 	VULTR:        ProviderFactory{makeVultrProvider, lego.DNS01},
 	OVH:          ProviderFactory{makeOvhProvider, lego.DNS01},
-  GANDI:        ProviderFactory{makeGandiProvider, lego.DNS01},
+	GANDI:        ProviderFactory{makeGandiProvider, lego.DNS01},
 	HTTP:         ProviderFactory{makeHTTPProvider, lego.HTTP01},
 }
 
@@ -223,7 +223,7 @@ func makeGandiProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 	if err != nil {
 		return nil, err
 	}
-  return provider, nil
+	return provider, nil
 } 
 
 // returns a preconfigured HTTP lego.ChallengeProvider
