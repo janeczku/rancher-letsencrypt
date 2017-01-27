@@ -224,7 +224,7 @@ func makeGandiProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 		return nil, err
 	}
 	return provider, nil
-} 
+}
 
 // returns a preconfigured HTTP lego.ChallengeProvider
 func makeHTTPProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
