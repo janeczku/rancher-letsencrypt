@@ -1,6 +1,8 @@
 FROM alpine:3.3
 MAINTAINER <jan@rancher.com>
 
+EXPOSE 80
+
 RUN apk add --no-cache ca-certificates
 
 ENV LETSENCRYPT_RELEASE v0.3.0

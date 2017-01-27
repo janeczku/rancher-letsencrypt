@@ -71,7 +71,7 @@ func (c *Context) InitContext() {
 	}
 
 	providerOpts := letsencrypt.ProviderOpts{
-		Provider:             letsencrypt.DnsProvider(providerParam),
+		Provider:             letsencrypt.Provider(providerParam),
 		CloudflareEmail:      getEnvOption("CLOUDFLARE_EMAIL", false),
 		CloudflareKey:        getEnvOption("CLOUDFLARE_KEY", false),
 		DoAccessToken:        getEnvOption("DO_ACCESS_TOKEN", false),
