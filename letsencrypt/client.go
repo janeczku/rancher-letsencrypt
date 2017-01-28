@@ -56,6 +56,7 @@ type AcmeCertificate struct {
 type Client struct {
 	client     *lego.Client
 	apiVersion ApiVersion
+	provider   Provider
 }
 
 // NewClient returns a new Lets Encrypt client
@@ -140,6 +141,7 @@ func NewClient(email string, kt KeyType, apiVer ApiVersion, provider ProviderOpt
 	return &Client{
 		client:     client,
 		apiVersion: apiVer,
+		provider:   provider.Provider,
 	}, nil
 }
 
@@ -150,7 +152,7 @@ func (c *Client) EnableDebug() {
 
 // Issue obtains a new SAN certificate from the Lets Encrypt CA
 func (c *Client) Issue(certName string, domains []string) (*AcmeCertificate, map[string]error) {
-	certRes, failures := c.client.ObtainCertificate(domains, true, nil)
+	certRes, failures := c.client.ObtainCertificate(domains, true, nil, false)
 	if len(failures) > 0 {
 		return nil, failures
 	}
@@ -172,7 +174,7 @@ func (c *Client) Renew(certName string) (*AcmeCertificate, error) {
 	}
 
 	certRes := acmeCert.CertificateResource
-	newCertRes, err := c.client.RenewCertificate(certRes, true)
+	newCertRes, err := c.client.RenewCertificate(certRes, true, false)
 	if err != nil {
 		return nil, err
 	}
@@ -310,6 +312,14 @@ func (c *Client) ConfigPath() string {
 	path := path.Join(StorageDir, strings.ToLower(string(c.apiVersion)))
 	maybeCreatePath(path)
 	return path
+}
+
+func (c *Client) ProviderName() string {
+	return string(c.provider)
+}
+
+func (c *Client) ApiVersion() string {
+	return string(c.apiVersion)
 }
 
 func (c *Client) CertPath(certName string) string {

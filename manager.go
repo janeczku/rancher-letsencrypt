@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	RENEW_BEFORE_DAYS = 14
+	RENEW_BEFORE_DAYS = 20
 )
 
 func (c *Context) Run() {
@@ -56,7 +56,14 @@ func (c *Context) startup() {
 		return
 	}
 
-	logrus.Infof("Trying to obtain SSL certificate (%s) from Let's Encrypt CA", strings.Join(c.Domains, ","))
+	if c.Acme.ProviderName() == "HTTP" {
+		logrus.Info("Using HTTP challenge: Sleeping for 120 seconds before requesting certificate")
+		logrus.Info("Make sure that HTTP requests for '/.well-known/acme-challenge' for all certificate " +
+			"domains are forwarded to the container running this application")
+		time.Sleep(120 * time.Second)
+	}
+
+	logrus.Infof("Trying to obtain SSL certificate (%s) from Let's Encrypt %s CA", strings.Join(c.Domains, ","), c.Acme.ApiVersion())
 
 	acmeCert, failures := c.Acme.Issue(c.CertificateName, c.Domains)
 	if len(failures) > 0 {
@@ -95,14 +102,14 @@ func (c *Context) updateRancherCert(privateKey, cert []byte) {
 	}
 	logrus.Infof("Updated Rancher certificate '%s'", c.CertificateName)
 
-	err = c.Rancher.UpgradeLoadBalancers(c.RancherCertId)
+	err = c.Rancher.UpdateLoadBalancers(c.RancherCertId)
 	if err != nil {
 		logrus.Fatalf("Failed to upgrade load balancers: %v", err)
 	}
 }
 
 func (c *Context) renew() {
-	logrus.Infof("Trying to obtain renewed SSL certificate (%s) from Let's Encrypt CA", strings.Join(c.Domains, ","))
+	logrus.Infof("Trying to obtain renewed SSL certificate (%s) from Let's Encrypt %s CA", strings.Join(c.Domains, ","), c.Acme.ApiVersion())
 
 	acmeCert, err := c.Acme.Renew(c.CertificateName)
 	if err != nil {
@@ -125,9 +132,9 @@ func (c *Context) timer() <-chan time.Time {
 
 	logrus.Infof("Certificate renewal scheduled for %s", next.Format("2006/01/02 15:04 MST"))
 
-	// Debug option forces renewal
-	if c.Debug {
-		logrus.Debug("Debug mode: Forced certificate renewal in 120 seconds")
+	// test mode forces renewal
+	if c.TestMode {
+		logrus.Debug("Test mode: Forced certificate renewal in 120 seconds")
 		left = 120 * time.Second
 	}
 

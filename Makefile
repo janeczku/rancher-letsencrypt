@@ -26,7 +26,7 @@ help:
 	@echo "make version - show app version"
 
 build: build-dir
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 godep go build -ldflags "-X main.Version=$(VERSION) -X main.Git=$(SHA)" -o build/$(PROJECT)-linux-amd64
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-X main.Version=$(VERSION) -X main.Git=$(SHA)" -o build/$(PROJECT)-linux-amd64
 
 deps:
 	go get github.com/tools/godep
@@ -36,7 +36,7 @@ vet:
 	scripts/vet
 
 test:
-	godep go test -v ./...
+	go test -v ./...
 
 release:
 	git tag -f `cat VERSION`
@@ -66,7 +66,7 @@ dist-dir:
 	@rm -rf dist && mkdir dist
 
 $(PLATFORMS):
-	CGO_ENABLED=0 GOOS=$@ GOARCH=$(ARCH) godep go build -ldflags "-X main.Version=$(VERSION) -X main.Git=$(SHA) -w -s" -a -o build/$(PROJECT)-$@-$(ARCH)/$(PROJECT)
+	CGO_ENABLED=0 GOOS=$@ GOARCH=$(ARCH) go build -ldflags "-X main.Version=$(VERSION) -X main.Git=$(SHA) -w -s" -a -o build/$(PROJECT)-$@-$(ARCH)/$(PROJECT)
 
 ci-dist: ci-compile dist-dir
 	$(eval FILES := $(shell ls build))

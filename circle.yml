@@ -40,7 +40,7 @@ deployment:
     commands:
       - make ci-release
       - curl --data "docker_tag=latest" -X POST ${DOCKER_HUB_URI}/${DOCKER_HUB_TOKEN}/
-      - sleep 60
+      - sleep 120
       - curl --data "source_type=Tag&source_name=${CIRCLE_TAG}" -X POST ${DOCKER_HUB_URI}/${DOCKER_HUB_TOKEN}/
       - echo `git name-rev --tags --name-only $(git rev-parse HEAD)`
       - echo tag ${CIRCLE_TAG}

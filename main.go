@@ -12,11 +12,13 @@ var (
 	Version string
 	Git     string
 
-	debug bool
+	debug    bool
+	testMode bool
 )
 
 func init() {
 	flag.BoolVar(&debug, "debug", false, "Enable debugging")
+	flag.BoolVar(&testMode, "test-mode", false, "Renew certificate every 120 seconds")
 	logrus.SetFormatter(&logrus.TextFormatter{DisableTimestamp: true})
 	logrus.SetOutput(os.Stdout)
 }
