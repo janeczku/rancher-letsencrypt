@@ -28,13 +28,15 @@ type Context struct {
 	ExpiryDate    time.Time
 	RancherCertId string
 
-	Debug bool
+	Debug    bool
+	TestMode bool
 }
 
 // InitContext initializes the application context from environmental variables
 func (c *Context) InitContext() {
 	var err error
 	c.Debug = debug
+	c.TestMode = testMode
 	cattleUrl := getEnvOption("CATTLE_URL", true)
 	cattleApiKey := getEnvOption("CATTLE_ACCESS_KEY", true)
 	cattleSecretKey := getEnvOption("CATTLE_SECRET_KEY", true)
@@ -93,6 +95,8 @@ func (c *Context) InitContext() {
 	if err != nil {
 		logrus.Fatalf("LetsEncrypt client: %v", err)
 	}
+
+	logrus.Infof("Using Let's Encrypt %s API", apiVersion)
 
 	// Enable debug mode
 	if c.Debug {

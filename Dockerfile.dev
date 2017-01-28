@@ -9,4 +9,4 @@ ADD build/rancher-letsencrypt-linux-amd64 /usr/bin/rancher-letsencrypt
 
 RUN chmod +x /usr/bin/rancher-letsencrypt
 
-ENTRYPOINT ["/usr/bin/rancher-letsencrypt", "-debug"]
+ENTRYPOINT ["/usr/bin/rancher-letsencrypt", "-debug", "-test-mode"]

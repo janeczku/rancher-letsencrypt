@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Sirupsen/logrus"
-	rancherClient "github.com/rancher/go-rancher/client"
+	rancherClient "github.com/rancher/go-rancher/v2"
 )
 
 // AddCertificate creates a new certificate resource using the given private key and PEM encoded certificate
@@ -24,7 +24,7 @@ func (r *Client) AddCertificate(name, descr string, privateKey, cert []byte) (*r
 		return nil, err
 	}
 
-	logrus.Debugf("Waiting for added certificate '%s' to become active", rancherCert.Name)
+	logrus.Debugf("Waiting for new certificate '%s' to become active", rancherCert.Name)
 
 	if err := r.WaitCertificate(rancherCert); err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (r *Client) UpdateCertificate(certId, descr string, privateKey, cert []byte
 
 // FindCertByName retrieves an existing certificate
 func (r *Client) FindCertByName(name string) (*rancherClient.Certificate, error) {
-	logrus.Debugf("Looking up Rancher certificate by name: '%s'", name)
+	logrus.Debugf("Looking up Rancher certificate by name: %s", name)
 
 	certificates, err := r.client.Certificate.List(&rancherClient.ListOpts{
 		Filters: map[string]interface{}{
@@ -75,7 +75,7 @@ func (r *Client) FindCertByName(name string) (*rancherClient.Certificate, error)
 		return nil, nil
 	}
 
-	logrus.Debugf("Found existing Rancher certificate by name: '%s'", name)
+	logrus.Debugf("Found existing Rancher certificate by name: %s", name)
 	return &certificates.Data[0], nil
 }
 
@@ -87,9 +87,9 @@ func (r *Client) GetCertById(certId string) (*rancherClient.Certificate, error) 
 	}
 
 	if rancherCert == nil {
-		return nil, fmt.Errorf("Rancher certificate with Id '%s' does not exist", certId)
+		return nil, fmt.Errorf("No such certificate with ID %s", certId)
 	}
 
-	logrus.Debugf("Got Rancher certificate '%s' by Id '%s'", rancherCert.Name, certId)
+	logrus.Debugf("Got Rancher certificate %s by ID %s", rancherCert.Name, certId)
 	return rancherCert, nil
 }

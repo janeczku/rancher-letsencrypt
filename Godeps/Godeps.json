@@ -2,9 +2,6 @@
 	"ImportPath": "github.com/janeczku/rancher-letsencrypt",
 	"GoVersion": "go1.6",
 	"GodepVersion": "v74",
-	"Packages": [
-		"./..."
-	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/JamesClonk/vultr/lib",
@@ -169,9 +166,14 @@
 			"Rev": "d2207178e10e4527e8f222fd8707982df8c3af17"
 		},
 		{
-			"ImportPath": "github.com/rancher/go-rancher/client",
-			"Comment": "v0.1.0-173-g37c17e4",
-			"Rev": "37c17e456a2d6dce279f54ee2f957797d30a20dc"
+			"ImportPath": "github.com/pkg/errors",
+			"Comment": "v0.8.0-2-g248dadf",
+			"Rev": "248dadf4e9068a0b3e79f02ed0a610d935de5302"
+		},
+		{
+			"ImportPath": "github.com/rancher/go-rancher/v2",
+			"Comment": "v0.1.0-241-g2c43ff3",
+			"Rev": "2c43ff300f3eafcbd7d0b89b10427fc630efdc1e"
 		},
 		{
 			"ImportPath": "github.com/weppos/dnsimple-go/dnsimple",

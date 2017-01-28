@@ -56,6 +56,7 @@ type AcmeCertificate struct {
 type Client struct {
 	client     *lego.Client
 	apiVersion ApiVersion
+	provider   Provider
 }
 
 // NewClient returns a new Lets Encrypt client
@@ -140,6 +141,7 @@ func NewClient(email string, kt KeyType, apiVer ApiVersion, provider ProviderOpt
 	return &Client{
 		client:     client,
 		apiVersion: apiVer,
+		provider:   provider.Provider,
 	}, nil
 }
 
@@ -310,6 +312,14 @@ func (c *Client) ConfigPath() string {
 	path := path.Join(StorageDir, strings.ToLower(string(c.apiVersion)))
 	maybeCreatePath(path)
 	return path
+}
+
+func (c *Client) ProviderName() string {
+	return string(c.provider)
+}
+
+func (c *Client) ApiVersion() string {
+	return string(c.apiVersion)
 }
 
 func (c *Client) CertPath(certName string) string {
