@@ -33,13 +33,20 @@ This application is distributed via the [Rancher Community Catalog](https://gith
 Enable the Community Catalog under `Admin` => `Settings` in the Rancher UI.
 Then locate the `Let's Encrypt` template in the Catalog section of the UI and follow the instructions.
 
-#### Accessing certificates and private keys from other services
-The created SSL certificate is stored in Rancher for usage in load balancers.    
-If you want to use it from other services (e.g. a Nginx container) you can opt to save the certificate and private key to a host path or volume.
-You can then access the certificate and key from other services as follows:    
-`<path_on_host or volume name>/<certificate name>/fullchain.pem`    
-`<path_on_host or volume name>/<certificate name>/privkey.pem`    
-where `<certificate name>` is the name you specified in the UI sanitized to consist of only the following characters: `[a-zA-Z0-9-_.]`.
+### Storing certificate in shared storage volume
+
+By default the created SSL certificate is stored in Rancher for usage in load balancers.  
+
+If you specify an existing volume storage driver (e.g. rancher-nfs) then the account data, certificate and private key will be stored in a stack scoped volume named `lets-encrypt`, allowing you to access them from other services in the same stack. See the [Storage Service documentation](https://docs.rancher.com/rancher/v1.3/en/rancher-services/storage-service/).
+
+#### Example
+
+When mounting the `lets-encrypt` storage volume to `/etc/letsencrypt` in another container, then production certificates and keys are located at:
+ 
+- `/etc/letsencrypt/production/certs/<certificate name>/fullchain.pem`
+- `/etc/letsencrypt/production/certs/<certificate name>/privkey.pem`
+
+where `<certificate name>` is the name of the certificate sanitized to consist of only the following characters: `[a-zA-Z0-9-_.]`.
 
 ### Provider specific usage
 
