@@ -17,13 +17,15 @@ A [Rancher](http://rancher.com/rancher/) service that obtains free SSL/TLS certi
 * Rancher Server >= v1.2.0
 * If using a DNS-based challenge, existing account with one of the supported DNS providers:
   * `AWS Route 53`
+  * `Azure DNS`
   * `CloudFlare`
   * `DigitalOcean`
   * `DNSimple`
   * `Dyn`
-  * `Vultr`
-  * `Ovh`
   * `Gandi`
+  * `Ovh`
+  * `Vultr`
+
 * If using the HTTP challenge, a proxy that routes `example.com/.well-known/acme-challenge` to `rancher-letsencrypt`.
 
 ### How to use
