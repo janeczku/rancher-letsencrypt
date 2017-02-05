@@ -23,6 +23,7 @@ A [Rancher](http://rancher.com/rancher/) service that obtains free SSL/TLS certi
   * `DNSimple`
   * `Dyn`
   * `Gandi`
+  * `NS1`
   * `Ovh`
   * `Vultr`
 
