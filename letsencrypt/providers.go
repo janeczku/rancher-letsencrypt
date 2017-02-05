@@ -11,6 +11,7 @@ import (
 	"github.com/xenolf/lego/providers/dns/dnsimple"
 	"github.com/xenolf/lego/providers/dns/dyn"
 	"github.com/xenolf/lego/providers/dns/gandi"
+	"github.com/xenolf/lego/providers/dns/ns1"
 	"github.com/xenolf/lego/providers/dns/ovh"
 	"github.com/xenolf/lego/providers/dns/route53"
 	"github.com/xenolf/lego/providers/dns/vultr"
@@ -20,6 +21,10 @@ import (
 // used by the Let's Encrypt client for domain validation
 type ProviderOpts struct {
 	Provider Provider
+
+	// AWS Route 53 credentials
+	AwsAccessKey string
+	AwsSecretKey string
 
 	// Azure credentials
 	AzureClientId       string
@@ -35,10 +40,6 @@ type ProviderOpts struct {
 	// DigitalOcean credentials
 	DoAccessToken string
 
-	// AWS Route 53 credentials
-	AwsAccessKey string
-	AwsSecretKey string
-
 	// DNSimple credentials
 	DNSimpleEmail string
 	DNSimpleKey   string
@@ -48,16 +49,19 @@ type ProviderOpts struct {
 	DynUserName     string
 	DynPassword     string
 
-	// Vultr credentials
-	VultrApiKey string
+	// Gandi credentials
+	GandiApiKey string
+
+	// NS1 credentials
+	NS1ApiKey string
 
 	// OVH credentials
 	OvhApplicationKey    string
 	OvhApplicationSecret string
 	OvhConsumerKey       string
 
-	// Gandi credentials
-	GandiApiKey string
+	// Vultr credentials
+	VultrApiKey string
 }
 
 type Provider string
@@ -66,12 +70,13 @@ const (
 	AZURE        = Provider("Azure")
 	CLOUDFLARE   = Provider("CloudFlare")
 	DIGITALOCEAN = Provider("DigitalOcean")
-	ROUTE53      = Provider("Route53")
 	DNSIMPLE     = Provider("DNSimple")
 	DYN          = Provider("Dyn")
-	VULTR        = Provider("Vultr")
-	OVH          = Provider("Ovh")
 	GANDI        = Provider("Gandi")
+	NS1          = Provider("NS1")
+	OVH          = Provider("Ovh")
+	ROUTE53      = Provider("Route53")
+	VULTR        = Provider("Vultr")
 	HTTP         = Provider("HTTP")
 )
 
@@ -84,12 +89,13 @@ var providerFactory = map[Provider]ProviderFactory{
 	AZURE:        ProviderFactory{makeAzureProvider, lego.DNS01},
 	CLOUDFLARE:   ProviderFactory{makeCloudflareProvider, lego.DNS01},
 	DIGITALOCEAN: ProviderFactory{makeDigitalOceanProvider, lego.DNS01},
-	ROUTE53:      ProviderFactory{makeRoute53Provider, lego.DNS01},
 	DNSIMPLE:     ProviderFactory{makeDNSimpleProvider, lego.DNS01},
 	DYN:          ProviderFactory{makeDynProvider, lego.DNS01},
-	VULTR:        ProviderFactory{makeVultrProvider, lego.DNS01},
-	OVH:          ProviderFactory{makeOvhProvider, lego.DNS01},
 	GANDI:        ProviderFactory{makeGandiProvider, lego.DNS01},
+	NS1:          ProviderFactory{makeNS1Provider, lego.DNS01},
+	OVH:          ProviderFactory{makeOvhProvider, lego.DNS01},
+	ROUTE53:      ProviderFactory{makeRoute53Provider, lego.DNS01},
+	VULTR:        ProviderFactory{makeVultrProvider, lego.DNS01},
 	HTTP:         ProviderFactory{makeHTTPProvider, lego.HTTP01},
 }
 
@@ -262,6 +268,19 @@ func makeAzureProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 
 	provider, err := azure.NewDNSProviderCredentials(opts.AzureClientId, opts.AzureClientSecret, opts.AzureSubscriptionId,
 		opts.AzureTenantId, opts.AzureResourceGroup)
+	if err != nil {
+		return nil, err
+	}
+	return provider, nil
+}
+
+// returns a preconfigured NS1 lego.ChallengeProvider
+func makeNS1Provider(opts ProviderOpts) (lego.ChallengeProvider, error) {
+	if len(opts.NS1ApiKey) == 0 {
+		return nil, fmt.Errorf("NS1 API key is not set")
+	}
+
+	provider, err := ns1.NewDNSProviderCredentials(opts.NS1ApiKey)
 	if err != nil {
 		return nil, err
 	}
