@@ -74,6 +74,11 @@ func (c *Context) InitContext() {
 
 	providerOpts := letsencrypt.ProviderOpts{
 		Provider:             letsencrypt.Provider(providerParam),
+		AzureClientId:        getEnvOption("AZURE_CLIENT_ID", false),
+		AzureClientSecret:    getEnvOption("AZURE_CLIENT_SECRET", false),
+		AzureSubscriptionId:  getEnvOption("AZURE_SUBSCRIPTION_ID", false),
+		AzureTenantId:        getEnvOption("AZURE_TENANT_ID", false),
+		AzureResourceGroup:   getEnvOption("AZURE_RESOURCE_GROUP", false),
 		CloudflareEmail:      getEnvOption("CLOUDFLARE_EMAIL", false),
 		CloudflareKey:        getEnvOption("CLOUDFLARE_KEY", false),
 		DoAccessToken:        getEnvOption("DO_ACCESS_TOKEN", false),

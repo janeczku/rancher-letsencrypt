@@ -5,6 +5,7 @@ import (
 	"os"
 
 	lego "github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/providers/dns/azure"
 	"github.com/xenolf/lego/providers/dns/cloudflare"
 	"github.com/xenolf/lego/providers/dns/digitalocean"
 	"github.com/xenolf/lego/providers/dns/dnsimple"
@@ -19,6 +20,13 @@ import (
 // used by the Let's Encrypt client for domain validation
 type ProviderOpts struct {
 	Provider Provider
+
+	// Azure credentials
+	AzureClientId       string
+	AzureClientSecret   string
+	AzureSubscriptionId string
+	AzureTenantId       string
+	AzureResourceGroup  string
 
 	// CloudFlare credentials
 	CloudflareEmail string
@@ -55,6 +63,7 @@ type ProviderOpts struct {
 type Provider string
 
 const (
+	AZURE        = Provider("Azure")
 	CLOUDFLARE   = Provider("CloudFlare")
 	DIGITALOCEAN = Provider("DigitalOcean")
 	ROUTE53      = Provider("Route53")
@@ -72,6 +81,7 @@ type ProviderFactory struct {
 }
 
 var providerFactory = map[Provider]ProviderFactory{
+	AZURE:        ProviderFactory{makeAzureProvider, lego.DNS01},
 	CLOUDFLARE:   ProviderFactory{makeCloudflareProvider, lego.DNS01},
 	DIGITALOCEAN: ProviderFactory{makeDigitalOceanProvider, lego.DNS01},
 	ROUTE53:      ProviderFactory{makeRoute53Provider, lego.DNS01},
@@ -229,5 +239,31 @@ func makeGandiProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 // returns a preconfigured HTTP lego.ChallengeProvider
 func makeHTTPProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 	provider := lego.NewHTTPProviderServer("", "")
+	return provider, nil
+}
+
+// returns a preconfigured Azure lego.ChallengeProvider
+func makeAzureProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
+	if len(opts.AzureClientId) == 0 {
+		return nil, fmt.Errorf("Azure Client ID is not set")
+	}
+	if len(opts.AzureClientSecret) == 0 {
+		return nil, fmt.Errorf("Azure Client Secret is not set")
+	}
+	if len(opts.AzureSubscriptionId) == 0 {
+		return nil, fmt.Errorf("Azure Subscription ID is not set")
+	}
+	if len(opts.AzureTenantId) == 0 {
+		return nil, fmt.Errorf("Azure Tenant ID is not set")
+	}
+	if len(opts.AzureResourceGroup) == 0 {
+		return nil, fmt.Errorf("Azure Resource Group is not set")
+	}
+
+	provider, err := azure.NewDNSProviderCredentials(opts.AzureClientId, opts.AzureClientSecret, opts.AzureSubscriptionId,
+		opts.AzureTenantId, opts.AzureResourceGroup)
+	if err != nil {
+		return nil, err
+	}
 	return provider, nil
 }
