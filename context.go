@@ -94,6 +94,7 @@ func (c *Context) InitContext() {
 		OvhApplicationSecret: getEnvOption("OVH_APPLICATION_SECRET", false),
 		OvhConsumerKey:       getEnvOption("OVH_CONSUMER_KEY", false),
 		GandiApiKey:          getEnvOption("GANDI_API_KEY", false),
+		NS1ApiKey:            getEnvOption("NS1_API_KEY", false),
 	}
 
 	c.Acme, err = letsencrypt.NewClient(emailParam, keyType, apiVersion, providerOpts)

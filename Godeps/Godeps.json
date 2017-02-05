@@ -245,6 +245,11 @@
 			"Rev": "f5d538caab6dc0c167d4e32990c79bbf9eff578c"
 		},
 		{
+			"ImportPath": "github.com/xenolf/lego/providers/dns/ns1",
+			"Comment": "v0.3.1-102-gf5d538c",
+			"Rev": "f5d538caab6dc0c167d4e32990c79bbf9eff578c"
+		},
+		{
 			"ImportPath": "github.com/xenolf/lego/providers/dns/ovh",
 			"Comment": "v0.3.1-102-gf5d538c",
 			"Rev": "f5d538caab6dc0c167d4e32990c79bbf9eff578c"
@@ -275,6 +280,36 @@
 			"ImportPath": "gopkg.in/ini.v1",
 			"Comment": "v1.24.0",
 			"Rev": "e3c2d47c61e5333f9aa2974695dd94396eb69c75"
+		},
+		{
+			"ImportPath": "gopkg.in/ns1/ns1-go.v2/rest",
+			"Comment": "v1-79-gd8d10b7",
+			"Rev": "d8d10b7f448291ddbdce48d4594fb1b667014c8b"
+		},
+		{
+			"ImportPath": "gopkg.in/ns1/ns1-go.v2/rest/model/account",
+			"Comment": "v1-79-gd8d10b7",
+			"Rev": "d8d10b7f448291ddbdce48d4594fb1b667014c8b"
+		},
+		{
+			"ImportPath": "gopkg.in/ns1/ns1-go.v2/rest/model/data",
+			"Comment": "v1-79-gd8d10b7",
+			"Rev": "d8d10b7f448291ddbdce48d4594fb1b667014c8b"
+		},
+		{
+			"ImportPath": "gopkg.in/ns1/ns1-go.v2/rest/model/dns",
+			"Comment": "v1-79-gd8d10b7",
+			"Rev": "d8d10b7f448291ddbdce48d4594fb1b667014c8b"
+		},
+		{
+			"ImportPath": "gopkg.in/ns1/ns1-go.v2/rest/model/filter",
+			"Comment": "v1-79-gd8d10b7",
+			"Rev": "d8d10b7f448291ddbdce48d4594fb1b667014c8b"
+		},
+		{
+			"ImportPath": "gopkg.in/ns1/ns1-go.v2/rest/model/monitor",
+			"Comment": "v1-79-gd8d10b7",
+			"Rev": "d8d10b7f448291ddbdce48d4594fb1b667014c8b"
 		},
 		{
 			"ImportPath": "gopkg.in/square/go-jose.v1",
