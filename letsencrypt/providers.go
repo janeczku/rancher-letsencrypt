@@ -5,6 +5,7 @@ import (
 	"os"
 
 	lego "github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/providers/dns/auroradns"
 	"github.com/xenolf/lego/providers/dns/azure"
 	"github.com/xenolf/lego/providers/dns/cloudflare"
 	"github.com/xenolf/lego/providers/dns/digitalocean"
@@ -21,6 +22,11 @@ import (
 // used by the Let's Encrypt client for domain validation
 type ProviderOpts struct {
 	Provider Provider
+
+	// Aurora credentials
+	AuroraUserId   string
+	AuroraKey      string
+	AuroraEndpoint string
 
 	// AWS Route 53 credentials
 	AwsAccessKey string
@@ -67,6 +73,7 @@ type ProviderOpts struct {
 type Provider string
 
 const (
+	AURORA       = Provider("Aurora")
 	AZURE        = Provider("Azure")
 	CLOUDFLARE   = Provider("CloudFlare")
 	DIGITALOCEAN = Provider("DigitalOcean")
@@ -86,6 +93,7 @@ type ProviderFactory struct {
 }
 
 var providerFactory = map[Provider]ProviderFactory{
+	AURORA:       ProviderFactory{makeAuroraProvider, lego.DNS01},
 	AZURE:        ProviderFactory{makeAzureProvider, lego.DNS01},
 	CLOUDFLARE:   ProviderFactory{makeCloudflareProvider, lego.DNS01},
 	DIGITALOCEAN: ProviderFactory{makeDigitalOceanProvider, lego.DNS01},
@@ -109,6 +117,31 @@ func getProvider(opts ProviderOpts) (lego.ChallengeProvider, lego.Challenge, err
 	}
 	irrelevant := lego.DNS01
 	return nil, irrelevant, fmt.Errorf("Unsupported provider: %s", opts.Provider)
+}
+
+// returns a preconfigured Aurora lego.ChallengeProvider
+func makeAuroraProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
+	if len(opts.AuroraUserId) == 0 {
+		return nil, fmt.Errorf("Aurora User Id is not set")
+	}
+
+	if len(opts.AuroraKey) == 0 {
+		return nil, fmt.Errorf("Aurora Key is not set")
+	}
+
+	endpoint := opts.AuroraEndpoint
+	if len(endpoint) == 0 {
+		endpoint = "https://api.auroradns.eu"
+	}
+
+	provider, err := auroradns.NewDNSProviderCredentials(endpoint, opts.AuroraUserId,
+		opts.AuroraKey)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return provider, nil
 }
 
 // returns a preconfigured CloudFlare lego.ChallengeProvider
