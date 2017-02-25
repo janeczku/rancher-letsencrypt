@@ -197,7 +197,6 @@
 			"ImportPath": "github.com/edeckers/auroradnsclient/zones",
 			"Comment": "v1.0.1",
 			"Rev": "8b777c170cfd377aa16bb4368f093017dddef3f9"
->>>>>>> 7b808b4... Add support for AuroraDNS
 		},
 		{
 			"ImportPath": "github.com/go-ini/ini",
@@ -277,6 +276,11 @@
 		},
 		{
 			"ImportPath": "github.com/xenolf/lego/providers/dns/gandi",
+			"Comment": "v0.3.1-102-gf5d538c",
+			"Rev": "f5d538caab6dc0c167d4e32990c79bbf9eff578c"
+		},
+		{
+			"ImportPath": "github.com/xenolf/lego/providers/dns/googlecloud",
 			"Comment": "v0.3.1-102-gf5d538c",
 			"Rev": "f5d538caab6dc0c167d4e32990c79bbf9eff578c"
 		},
