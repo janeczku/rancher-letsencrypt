@@ -12,6 +12,7 @@ import (
 	"github.com/xenolf/lego/providers/dns/dnsimple"
 	"github.com/xenolf/lego/providers/dns/dyn"
 	"github.com/xenolf/lego/providers/dns/gandi"
+	"github.com/xenolf/lego/providers/dns/namecheap"
 	"github.com/xenolf/lego/providers/dns/ns1"
 	"github.com/xenolf/lego/providers/dns/ovh"
 	"github.com/xenolf/lego/providers/dns/route53"
@@ -58,6 +59,10 @@ type ProviderOpts struct {
 	// Gandi credentials
 	GandiApiKey string
 
+	// Namecheap credentials
+	NamecheapApiUser string
+	NamecheapApiKey  string
+
 	// NS1 credentials
 	NS1ApiKey string
 
@@ -80,6 +85,7 @@ const (
 	DNSIMPLE     = Provider("DNSimple")
 	DYN          = Provider("Dyn")
 	GANDI        = Provider("Gandi")
+	NAMECHEAP    = Provider("Namecheap")
 	NS1          = Provider("NS1")
 	OVH          = Provider("Ovh")
 	ROUTE53      = Provider("Route53")
@@ -100,6 +106,7 @@ var providerFactory = map[Provider]ProviderFactory{
 	DNSIMPLE:     ProviderFactory{makeDNSimpleProvider, lego.DNS01},
 	DYN:          ProviderFactory{makeDynProvider, lego.DNS01},
 	GANDI:        ProviderFactory{makeGandiProvider, lego.DNS01},
+	NAMECHEAP:    ProviderFactory{makeNamecheapProvider, lego.DNS01},
 	NS1:          ProviderFactory{makeNS1Provider, lego.DNS01},
 	OVH:          ProviderFactory{makeOvhProvider, lego.DNS01},
 	ROUTE53:      ProviderFactory{makeRoute53Provider, lego.DNS01},
@@ -314,6 +321,23 @@ func makeNS1Provider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 	}
 
 	provider, err := ns1.NewDNSProviderCredentials(opts.NS1ApiKey)
+	if err != nil {
+		return nil, err
+	}
+	return provider, nil
+}
+
+// returns a preconfigured Namecheap lego.ChallengeProvider
+func makeNamecheapProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
+	if len(opts.NamecheapApiUser) == 0 {
+		return nil, fmt.Errorf("Namecheap API user is not set")
+	}
+
+	if len(opts.NamecheapApiKey) == 0 {
+		return nil, fmt.Errorf("Namecheap API key is not set")
+	}
+
+	provider, err := namecheap.NewDNSProviderCredentials(opts.NamecheapApiUser, opts.NamecheapApiKey)
 	if err != nil {
 		return nil, err
 	}
