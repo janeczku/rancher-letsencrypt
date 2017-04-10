@@ -1,7 +1,7 @@
 {
 	"ImportPath": "github.com/janeczku/rancher-letsencrypt",
 	"GoVersion": "go1.6",
-	"GodepVersion": "v74",
+	"GodepVersion": "v79",
 	"Deps": [
 		{
 			"ImportPath": "github.com/Azure/azure-sdk-for-go/arm/dns",
@@ -246,12 +246,12 @@
 			"Rev": "f5d538caab6dc0c167d4e32990c79bbf9eff578c"
 		},
 		{
-			"ImportPath": "github.com/xenolf/lego/providers/dns/azure",
+			"ImportPath": "github.com/xenolf/lego/providers/dns/auroradns",
 			"Comment": "v0.3.1-102-gf5d538c",
 			"Rev": "f5d538caab6dc0c167d4e32990c79bbf9eff578c"
 		},
 		{
-			"ImportPath": "github.com/xenolf/lego/providers/dns/auroradns",
+			"ImportPath": "github.com/xenolf/lego/providers/dns/azure",
 			"Comment": "v0.3.1-102-gf5d538c",
 			"Rev": "f5d538caab6dc0c167d4e32990c79bbf9eff578c"
 		},
@@ -277,6 +277,11 @@
 		},
 		{
 			"ImportPath": "github.com/xenolf/lego/providers/dns/gandi",
+			"Comment": "v0.3.1-102-gf5d538c",
+			"Rev": "f5d538caab6dc0c167d4e32990c79bbf9eff578c"
+		},
+		{
+			"ImportPath": "github.com/xenolf/lego/providers/dns/namecheap",
 			"Comment": "v0.3.1-102-gf5d538c",
 			"Rev": "f5d538caab6dc0c167d4e32990c79bbf9eff578c"
 		},
