@@ -197,7 +197,6 @@
 			"ImportPath": "github.com/edeckers/auroradnsclient/zones",
 			"Comment": "v1.0.1",
 			"Rev": "8b777c170cfd377aa16bb4368f093017dddef3f9"
->>>>>>> 7b808b4... Add support for AuroraDNS
 		},
 		{
 			"ImportPath": "github.com/go-ini/ini",
