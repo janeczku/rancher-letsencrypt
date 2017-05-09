@@ -2,6 +2,7 @@ package letsencrypt
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 
 	lego "github.com/xenolf/lego/acme"
@@ -14,6 +15,7 @@ import (
 	"github.com/xenolf/lego/providers/dns/gandi"
 	"github.com/xenolf/lego/providers/dns/ns1"
 	"github.com/xenolf/lego/providers/dns/ovh"
+	"github.com/xenolf/lego/providers/dns/pdns"
 	"github.com/xenolf/lego/providers/dns/route53"
 	"github.com/xenolf/lego/providers/dns/vultr"
 )
@@ -68,6 +70,10 @@ type ProviderOpts struct {
 
 	// Vultr credentials
 	VultrApiKey string
+
+	// PowerDNS credentials
+	PDNSApiKey string
+	PDNSApiURL string
 }
 
 type Provider string
@@ -85,6 +91,7 @@ const (
 	ROUTE53      = Provider("Route53")
 	VULTR        = Provider("Vultr")
 	HTTP         = Provider("HTTP")
+	PDNS         = Provider("PowerDNS")
 )
 
 type ProviderFactory struct {
@@ -104,6 +111,7 @@ var providerFactory = map[Provider]ProviderFactory{
 	OVH:          ProviderFactory{makeOvhProvider, lego.DNS01},
 	ROUTE53:      ProviderFactory{makeRoute53Provider, lego.DNS01},
 	VULTR:        ProviderFactory{makeVultrProvider, lego.DNS01},
+	PDNS:         ProviderFactory{makePDNSProvider, lego.DNS01},
 	HTTP:         ProviderFactory{makeHTTPProvider, lego.HTTP01},
 }
 
@@ -314,6 +322,27 @@ func makeNS1Provider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 	}
 
 	provider, err := ns1.NewDNSProviderCredentials(opts.NS1ApiKey)
+	if err != nil {
+		return nil, err
+	}
+	return provider, nil
+}
+
+// returns a preconfigured PDNS lego.ChallengeProvider
+func makePDNSProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
+	if len(opts.PDNSApiKey) == 0 {
+		return nil, fmt.Errorf("PDNS_API_KEY is not set")
+	}
+	if len(opts.PDNSApiURL) == 0 {
+		return nil, fmt.Errorf("PDNS_API_URL is not set")
+	}
+
+	apiURL, err := url.Parse(opts.PDNSApiURL)
+	if err != nil {
+		return nil, err
+	}
+
+	provider, err := pdns.NewDNSProviderCredentials(apiURL, opts.PDNSApiKey)
 	if err != nil {
 		return nil, err
 	}
