@@ -91,6 +91,7 @@ const (
 	TypeEUI64      uint16 = 109
 	TypeURI        uint16 = 256
 	TypeCAA        uint16 = 257
+	TypeAVC        uint16 = 258
 
 	TypeTKEY uint16 = 249
 	TypeTSIG uint16 = 250
@@ -144,7 +145,7 @@ const (
 	OpcodeUpdate = 5
 )
 
-// Headers is the wire format for the DNS packet header.
+// Header is the wire format for the DNS packet header.
 type Header struct {
 	Id                                 uint16
 	Bits                               uint16
@@ -529,6 +530,13 @@ type SPF struct {
 }
 
 func (rr *SPF) String() string { return rr.Hdr.String() + sprintTxt(rr.Txt) }
+
+type AVC struct {
+	Hdr RR_Header
+	Txt []string `dns:"txt"`
+}
+
+func (rr *AVC) String() string { return rr.Hdr.String() + sprintTxt(rr.Txt) }
 
 type SRV struct {
 	Hdr      RR_Header

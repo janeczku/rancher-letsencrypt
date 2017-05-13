@@ -19,6 +19,8 @@ type Project struct {
 
 	HealthState string `json:"healthState,omitempty" yaml:"health_state,omitempty"`
 
+	HostRemoveDelaySeconds int64 `json:"hostRemoveDelaySeconds,omitempty" yaml:"host_remove_delay_seconds,omitempty"`
+
 	Kind string `json:"kind,omitempty" yaml:"kind,omitempty"`
 
 	Members []ProjectMember `json:"members,omitempty" yaml:"members,omitempty"`
@@ -26,6 +28,8 @@ type Project struct {
 	Name string `json:"name,omitempty" yaml:"name,omitempty"`
 
 	Orchestration string `json:"orchestration,omitempty" yaml:"orchestration,omitempty"`
+
+	ProjectLinks []string `json:"projectLinks,omitempty" yaml:"project_links,omitempty"`
 
 	ProjectTemplateId string `json:"projectTemplateId,omitempty" yaml:"project_template_id,omitempty"`
 

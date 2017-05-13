@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/request"
 )
@@ -37,6 +38,7 @@ const opAssociateVPCWithHostedZone = "AssociateVPCWithHostedZone"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/AssociateVPCWithHostedZone
 func (c *Route53) AssociateVPCWithHostedZoneRequest(input *AssociateVPCWithHostedZoneInput) (req *request.Request, output *AssociateVPCWithHostedZoneOutput) {
 	op := &request.Operation{
 		Name:       opAssociateVPCWithHostedZone,
@@ -48,9 +50,8 @@ func (c *Route53) AssociateVPCWithHostedZoneRequest(input *AssociateVPCWithHoste
 		input = &AssociateVPCWithHostedZoneInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &AssociateVPCWithHostedZoneOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -58,20 +59,19 @@ func (c *Route53) AssociateVPCWithHostedZoneRequest(input *AssociateVPCWithHoste
 //
 // Associates an Amazon VPC with a private hosted zone.
 //
-// The VPC and the hosted zone must already exist, and you must have created
-// a private hosted zone. You cannot convert a public hosted zone into a private
-// hosted zone.
+// To perform the association, the VPC and the private hosted zone must already
+// exist. You can't convert a public hosted zone into a private hosted zone.
 //
 // Send a POST request to the /2013-04-01/hostedzone/hosted zone ID/associatevpc
-// resource. The request body must include an XML document with a AssociateVPCWithHostedZoneRequest
-// element. The response returns the AssociateVPCWithHostedZoneResponse element.
+// resource. The request body must include a document with an AssociateVPCWithHostedZoneRequest
+// element. The response contains a ChangeInfo data type that you can use to
+// track the progress of the request.
 //
-// If you used different accounts to create the hosted zone and to create the
-// Amazon VPCs that you want to associate with the hosted zone, we need to update
-// account permissions for you. For more information, see Associating Amazon
-// VPCs and Private Hosted Zones That You Create with Different AWS Accounts
-// (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/hosted-zone-private-associate-vpcs-different-accounts.html)
-// in the Amazon Route 53 Developer Guide.
+// If you want to associate a VPC that was created by using one AWS account
+// with a private hosted zone that was created by using a different account,
+// the AWS account that created the private hosted zone must first submit a
+// CreateVPCAssociationAuthorization request. Then the account that created
+// the VPC must submit an AssociateVPCWithHostedZone request.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -81,34 +81,54 @@ func (c *Route53) AssociateVPCWithHostedZoneRequest(input *AssociateVPCWithHoste
 // API operation AssociateVPCWithHostedZone for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchHostedZone
+//   * ErrCodeNoSuchHostedZone "NoSuchHostedZone"
 //   No hosted zone exists with the ID that you specified.
 //
-//   * InvalidVPCId
-//   The hosted zone you are trying to create for your VPC_ID does not belong
-//   to you. Amazon Route 53 returns this error when the VPC specified by VPCId
-//   does not belong to you.
+//   * ErrCodeNotAuthorizedException "NotAuthorizedException"
+//   Associating the specified VPC with the specified hosted zone has not been
+//   authorized.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidVPCId "InvalidVPCId"
+//   The VPC ID that you specified either isn't a valid ID or the current account
+//   is not authorized to access this VPC.
+//
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * PublicZoneVPCAssociation
-//   The hosted zone specified in HostedZoneId is a public hosted zone.
+//   * ErrCodePublicZoneVPCAssociation "PublicZoneVPCAssociation"
+//   You're trying to associate a VPC with a public hosted zone. Amazon Route
+//   53 doesn't support associating a VPC with a public hosted zone.
 //
-//   * ConflictingDomainExists
+//   * ErrCodeConflictingDomainExists "ConflictingDomainExists"
 //   You specified an Amazon VPC that you're already using for another hosted
 //   zone, and the domain that you specified for one of the hosted zones is a
 //   subdomain of the domain that you specified for the other hosted zone. For
-//   example, you cannot use the same Amazon VPC for the hosted zones for example.com
+//   example, you can't use the same Amazon VPC for the hosted zones for example.com
 //   and test.example.com.
 //
-//   * LimitsExceeded
+//   * ErrCodeLimitsExceeded "LimitsExceeded"
 //   The limits specified for a resource have been exceeded.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/AssociateVPCWithHostedZone
 func (c *Route53) AssociateVPCWithHostedZone(input *AssociateVPCWithHostedZoneInput) (*AssociateVPCWithHostedZoneOutput, error) {
 	req, out := c.AssociateVPCWithHostedZoneRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// AssociateVPCWithHostedZoneWithContext is the same as AssociateVPCWithHostedZone with the addition of
+// the ability to pass a context and additional request options.
+//
+// See AssociateVPCWithHostedZone for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) AssociateVPCWithHostedZoneWithContext(ctx aws.Context, input *AssociateVPCWithHostedZoneInput, opts ...request.Option) (*AssociateVPCWithHostedZoneOutput, error) {
+	req, out := c.AssociateVPCWithHostedZoneRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opChangeResourceRecordSets = "ChangeResourceRecordSets"
@@ -137,6 +157,7 @@ const opChangeResourceRecordSets = "ChangeResourceRecordSets"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ChangeResourceRecordSets
 func (c *Route53) ChangeResourceRecordSetsRequest(input *ChangeResourceRecordSetsInput) (req *request.Request, output *ChangeResourceRecordSetsOutput) {
 	op := &request.Operation{
 		Name:       opChangeResourceRecordSets,
@@ -148,9 +169,8 @@ func (c *Route53) ChangeResourceRecordSetsRequest(input *ChangeResourceRecordSet
 		input = &ChangeResourceRecordSetsInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &ChangeResourceRecordSetsOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -160,6 +180,8 @@ func (c *Route53) ChangeResourceRecordSetsRequest(input *ChangeResourceRecordSet
 // Route 53 servers. Send a POST request to:
 //
 // /2013-04-01/hostedzone/Amazon Route 53 hosted Zone ID/rrset resource.
+//
+// Change Batches and Transactional Changes
 //
 // The request body must include a document with a ChangeResourceRecordSetsRequest
 // element. The request body contains a list of change items, known as a change
@@ -176,10 +198,12 @@ func (c *Route53) ChangeResourceRecordSetsRequest(input *ChangeResourceRecordSet
 // fails, then both changes (plus any other changes in the batch) fail, and
 // the original CNAME record continues to exist.
 //
-// Due to the nature of transactional changes, you cannot delete the same resource
+// Due to the nature of transactional changes, you can't delete the same resource
 // record set more than once in a single change batch. If you attempt to delete
 // the same change batch more than once, Amazon Route 53 returns an InvalidChangeBatch
 // error.
+//
+// Traffic Flow
 //
 // To create resource record sets for complex routing configurations, use either
 // the traffic flow visual editor in the Amazon Route 53 console or the API
@@ -191,33 +215,41 @@ func (c *Route53) ChangeResourceRecordSetsRequest(input *ChangeResourceRecordSet
 // see Using Traffic Flow to Route DNS Traffic (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/traffic-flow.html)
 // in the Amazon Route 53 Developer Guide.
 //
+// Create, Delete, and Upsert
+//
 // Use ChangeResourceRecordsSetsRequest to perform the following actions:
 //
 //    * CREATE: Creates a resource record set that has the specified values.
 //
 //    * DELETE: Deletes an existing resource record set that has the specified
-//    values for Name, Type, Set Identifier (for code latency, weighted, geolocation,
-//    and failover resource record sets), and TTL (except alias resource record
-//    sets, for which the TTL is determined by the AWS resource you're routing
-//    queries to).
+//    values.
 //
 //    * UPSERT: If a resource record set does not already exist, AWS creates
 //    it. If a resource set does exist, Amazon Route 53 updates it with the
-//    values in the request. Amazon Route 53 can update an existing resource
-//    record set only when all of the following values match: Name, Type, and
-//    Set Identifier (for weighted, latency, geolocation, and failover resource
-//    record sets).
+//    values in the request.
 //
-// In response to a ChangeResourceRecordSets request, the DNS data is changed
-// on all Amazon Route 53 DNS servers. Initially, the status of a change is
-// PENDING, meaning the change has not yet propagated to all the authoritative
-// Amazon Route 53 DNS servers. When the change is propagated to all hosts,
-// the change returns a status of INSYNC.
+// Syntaxes for Creating, Updating, and Deleting Resource Record Sets
 //
-// After sending a change request, confirm your change has propagated to all
-// Amazon Route 53 DNS servers. Changes generally propagate to all Amazon Route
-// 53 name servers in a few minutes. In rare circumstances, propagation can
-// take up to 30 minutes. For more information, see GetChange.
+// The syntax for a request depends on the type of resource record set that
+// you want to create, delete, or update, such as weighted, alias, or failover.
+// The XML elements in your request must appear in the order listed in the syntax.
+//
+// For an example for each type of resource record set, see "Examples."
+//
+// Don't refer to the syntax in the "Parameter Syntax" section, which includes
+// all of the elements for every kind of resource record set that you can create,
+// delete, or update by using ChangeResourceRecordSets.
+//
+// Change Propagation to Amazon Route 53 DNS Servers
+//
+// When you submit a ChangeResourceRecordSets request, Amazon Route 53 propagates
+// your changes to all of the Amazon Route 53 authoritative DNS servers. While
+// your changes are propagating, GetChange returns a status of PENDING. When
+// propagation is complete, GetChange returns a status of INSYNC. Changes generally
+// propagate to all Amazon Route 53 name servers in a few minutes. In rare circumstances,
+// propagation can take up to 30 minutes. For more information, see GetChange.
+//
+// Limits on ChangeResourceRecordSets Requests
 //
 // For information about the limits on a ChangeResourceRecordSets request, see
 // Limits (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/DNSLimitations.html)
@@ -231,31 +263,47 @@ func (c *Route53) ChangeResourceRecordSetsRequest(input *ChangeResourceRecordSet
 // API operation ChangeResourceRecordSets for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchHostedZone
+//   * ErrCodeNoSuchHostedZone "NoSuchHostedZone"
 //   No hosted zone exists with the ID that you specified.
 //
-//   * NoSuchHealthCheck
+//   * ErrCodeNoSuchHealthCheck "NoSuchHealthCheck"
 //   No health check exists with the ID that you specified in the DeleteHealthCheck
 //   request.
 //
-//   * InvalidChangeBatch
+//   * ErrCodeInvalidChangeBatch "InvalidChangeBatch"
 //   This exception contains a list of messages that might contain one or more
 //   error messages. Each error message indicates one error in the change batch.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * PriorRequestNotComplete
+//   * ErrCodePriorRequestNotComplete "PriorRequestNotComplete"
 //   If Amazon Route 53 can't process a request before the next request arrives,
 //   it will reject subsequent requests for the same hosted zone and return an
 //   HTTP 400 error (Bad request). If Amazon Route 53 returns this error repeatedly
 //   for the same request, we recommend that you wait, in intervals of increasing
 //   duration, before you try the request again.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ChangeResourceRecordSets
 func (c *Route53) ChangeResourceRecordSets(input *ChangeResourceRecordSetsInput) (*ChangeResourceRecordSetsOutput, error) {
 	req, out := c.ChangeResourceRecordSetsRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// ChangeResourceRecordSetsWithContext is the same as ChangeResourceRecordSets with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ChangeResourceRecordSets for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) ChangeResourceRecordSetsWithContext(ctx aws.Context, input *ChangeResourceRecordSetsInput, opts ...request.Option) (*ChangeResourceRecordSetsOutput, error) {
+	req, out := c.ChangeResourceRecordSetsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opChangeTagsForResource = "ChangeTagsForResource"
@@ -284,6 +332,7 @@ const opChangeTagsForResource = "ChangeTagsForResource"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ChangeTagsForResource
 func (c *Route53) ChangeTagsForResourceRequest(input *ChangeTagsForResourceInput) (req *request.Request, output *ChangeTagsForResourceOutput) {
 	op := &request.Operation{
 		Name:       opChangeTagsForResource,
@@ -295,9 +344,8 @@ func (c *Route53) ChangeTagsForResourceRequest(input *ChangeTagsForResourceInput
 		input = &ChangeTagsForResourceInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &ChangeTagsForResourceOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -317,30 +365,46 @@ func (c *Route53) ChangeTagsForResourceRequest(input *ChangeTagsForResourceInput
 // API operation ChangeTagsForResource for usage and error information.
 //
 // Returned Error Codes:
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * NoSuchHealthCheck
+//   * ErrCodeNoSuchHealthCheck "NoSuchHealthCheck"
 //   No health check exists with the ID that you specified in the DeleteHealthCheck
 //   request.
 //
-//   * NoSuchHostedZone
+//   * ErrCodeNoSuchHostedZone "NoSuchHostedZone"
 //   No hosted zone exists with the ID that you specified.
 //
-//   * PriorRequestNotComplete
+//   * ErrCodePriorRequestNotComplete "PriorRequestNotComplete"
 //   If Amazon Route 53 can't process a request before the next request arrives,
 //   it will reject subsequent requests for the same hosted zone and return an
 //   HTTP 400 error (Bad request). If Amazon Route 53 returns this error repeatedly
 //   for the same request, we recommend that you wait, in intervals of increasing
 //   duration, before you try the request again.
 //
-//   * ThrottlingException
-
+//   * ErrCodeThrottlingException "ThrottlingException"
+//   The limit on the number of requests per second was exceeded.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ChangeTagsForResource
 func (c *Route53) ChangeTagsForResource(input *ChangeTagsForResourceInput) (*ChangeTagsForResourceOutput, error) {
 	req, out := c.ChangeTagsForResourceRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// ChangeTagsForResourceWithContext is the same as ChangeTagsForResource with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ChangeTagsForResource for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) ChangeTagsForResourceWithContext(ctx aws.Context, input *ChangeTagsForResourceInput, opts ...request.Option) (*ChangeTagsForResourceOutput, error) {
+	req, out := c.ChangeTagsForResourceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opCreateHealthCheck = "CreateHealthCheck"
@@ -369,6 +433,7 @@ const opCreateHealthCheck = "CreateHealthCheck"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateHealthCheck
 func (c *Route53) CreateHealthCheckRequest(input *CreateHealthCheckInput) (req *request.Request, output *CreateHealthCheckOutput) {
 	op := &request.Operation{
 		Name:       opCreateHealthCheck,
@@ -380,9 +445,8 @@ func (c *Route53) CreateHealthCheckRequest(input *CreateHealthCheckInput) (req *
 		input = &CreateHealthCheckInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &CreateHealthCheckOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -391,17 +455,17 @@ func (c *Route53) CreateHealthCheckRequest(input *CreateHealthCheckInput) (req *
 // Creates a new health check.
 //
 // To create a new health check, send a POST request to the /2013-04-01/healthcheck
-// resource. The request body must include an XML document with a CreateHealthCheckRequest
+// resource. The request body must include a document with a CreateHealthCheckRequest
 // element. The response returns the CreateHealthCheckResponse element, containing
 // the health check ID specified when adding health check to a resource record
 // set. For information about adding health checks to resource record sets,
 // see ResourceRecordSet$HealthCheckId in ChangeResourceRecordSets.
 //
-// If you are registering Amazon EC2 instances with an Elastic Load Balancing
-// (ELB) load balancer, do not create Amazon Route 53 health checks for the
-// Amazon EC2 instances. When you register an Amazon EC2 instance with a load
-// balancer, you configure settings for an ELB health check, which performs
-// a similar function to an Amazon Route 53 health check.
+// If you're registering EC2 instances with an Elastic Load Balancing (ELB)
+// load balancer, do not create Amazon Route 53 health checks for the EC2 instances.
+// When you register an EC2 instance with a load balancer, you configure settings
+// for an ELB health check, which performs a similar function to an Amazon Route
+// 53 health check.
 //
 // You can associate health checks with failover resource record sets in a private
 // hosted zone. Note the following:
@@ -419,7 +483,7 @@ func (c *Route53) CreateHealthCheckRequest(input *CreateHealthCheckInput) (req *
 //    of the Amazon EC2 StatusCheckFailed metric, add an alarm to the metric,
 //    and then create a health check that is based on the state of the alarm.
 //    For information about creating CloudWatch metrics and alarms by using
-//    the CloudWatch console, see the Amazon CloudWatch Developer Guide (http://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/WhatIsCloudWatch.html).
+//    the CloudWatch console, see the Amazon CloudWatch User Guide (http://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/WhatIsCloudWatch.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -429,24 +493,39 @@ func (c *Route53) CreateHealthCheckRequest(input *CreateHealthCheckInput) (req *
 // API operation CreateHealthCheck for usage and error information.
 //
 // Returned Error Codes:
-//   * TooManyHealthChecks
+//   * ErrCodeTooManyHealthChecks "TooManyHealthChecks"
 //   You have reached the maximum number of active health checks for an AWS account.
 //   The default limit is 100. To request a higher limit, create a case (http://aws.amazon.com/route53-request)
 //   with the AWS Support Center.
 //
-//   * HealthCheckAlreadyExists
-//   The health check you're attempting to create already exists.
+//   * ErrCodeHealthCheckAlreadyExists "HealthCheckAlreadyExists"
+//   The health check you're attempting to create already exists. Amazon Route
+//   53 returns this error when a health check has already been created with the
+//   specified value for CallerReference.
 //
-//   Amazon Route 53 returns this error when a health check has already been created
-//   with the specified value for CallerReference.
-//
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateHealthCheck
 func (c *Route53) CreateHealthCheck(input *CreateHealthCheckInput) (*CreateHealthCheckOutput, error) {
 	req, out := c.CreateHealthCheckRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// CreateHealthCheckWithContext is the same as CreateHealthCheck with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateHealthCheck for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) CreateHealthCheckWithContext(ctx aws.Context, input *CreateHealthCheckInput, opts ...request.Option) (*CreateHealthCheckOutput, error) {
+	req, out := c.CreateHealthCheckRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opCreateHostedZone = "CreateHostedZone"
@@ -475,6 +554,7 @@ const opCreateHostedZone = "CreateHostedZone"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateHostedZone
 func (c *Route53) CreateHostedZoneRequest(input *CreateHostedZoneInput) (req *request.Request, output *CreateHostedZoneOutput) {
 	op := &request.Operation{
 		Name:       opCreateHostedZone,
@@ -486,9 +566,8 @@ func (c *Route53) CreateHostedZoneRequest(input *CreateHostedZoneInput) (req *re
 		input = &CreateHostedZoneInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &CreateHostedZoneOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -498,21 +577,21 @@ func (c *Route53) CreateHostedZoneRequest(input *CreateHostedZoneInput) (req *re
 // (DNS) routes traffic on the Internet for a domain, such as example.com, and
 // its subdomains.
 //
-// Public hosted zones cannot be converted to a private hosted zone or vice
-// versa. Instead, create a new hosted zone with the same name and create new
-// resource record sets.
+// Public hosted zones can't be converted to a private hosted zone or vice versa.
+// Instead, create a new hosted zone with the same name and create new resource
+// record sets.
 //
 // Send a POST request to the /2013-04-01/hostedzone resource. The request body
-// must include an XML document with a CreateHostedZoneRequest element. The
-// response returns the CreateHostedZoneResponse element containing metadata
-// about the hosted zone.
+// must include a document with a CreateHostedZoneRequest element. The response
+// returns the CreateHostedZoneResponse element containing metadata about the
+// hosted zone.
 //
 // Fore more information about charges for hosted zones, see Amazon Route 53
 // Pricing (http://aws.amazon.com/route53/pricing/).
 //
 // Note the following:
 //
-//    * You cannot create a hosted zone for a top-level domain (TLD).
+//    * You can't create a hosted zone for a top-level domain (TLD).
 //
 //    * Amazon Route 53 automatically creates a default SOA record and four
 //    NS records for the zone. For more information about SOA and NS records,
@@ -543,51 +622,66 @@ func (c *Route53) CreateHostedZoneRequest(input *CreateHostedZoneInput) (req *re
 // API operation CreateHostedZone for usage and error information.
 //
 // Returned Error Codes:
-//   * InvalidDomainName
+//   * ErrCodeInvalidDomainName "InvalidDomainName"
 //   The specified domain name is not valid.
 //
-//   * HostedZoneAlreadyExists
-//   The hosted zone you are trying to create already exists. Amazon Route 53
-//   returns this error when a hosted zone has already been created with the specified
+//   * ErrCodeHostedZoneAlreadyExists "HostedZoneAlreadyExists"
+//   The hosted zone you're trying to create already exists. Amazon Route 53 returns
+//   this error when a hosted zone has already been created with the specified
 //   CallerReference.
 //
-//   * TooManyHostedZones
-//   This hosted zone cannot be created because the hosted zone limit is exceeded.
+//   * ErrCodeTooManyHostedZones "TooManyHostedZones"
+//   This hosted zone can't be created because the hosted zone limit is exceeded.
 //   To request a limit increase, go to the Amazon Route 53 Contact Us (http://aws.amazon.com/route53-request/)
 //   page.
 //
-//   * InvalidVPCId
-//   The hosted zone you are trying to create for your VPC_ID does not belong
-//   to you. Amazon Route 53 returns this error when the VPC specified by VPCId
-//   does not belong to you.
+//   * ErrCodeInvalidVPCId "InvalidVPCId"
+//   The VPC ID that you specified either isn't a valid ID or the current account
+//   is not authorized to access this VPC.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * DelegationSetNotAvailable
+//   * ErrCodeDelegationSetNotAvailable "DelegationSetNotAvailable"
 //   You can create a hosted zone that has the same name as an existing hosted
 //   zone (example.com is common), but there is a limit to the number of hosted
 //   zones that have the same name. If you get this error, Amazon Route 53 has
 //   reached that limit. If you own the domain name and Amazon Route 53 generates
 //   this error, contact Customer Support.
 //
-//   * ConflictingDomainExists
+//   * ErrCodeConflictingDomainExists "ConflictingDomainExists"
 //   You specified an Amazon VPC that you're already using for another hosted
 //   zone, and the domain that you specified for one of the hosted zones is a
 //   subdomain of the domain that you specified for the other hosted zone. For
-//   example, you cannot use the same Amazon VPC for the hosted zones for example.com
+//   example, you can't use the same Amazon VPC for the hosted zones for example.com
 //   and test.example.com.
 //
-//   * NoSuchDelegationSet
+//   * ErrCodeNoSuchDelegationSet "NoSuchDelegationSet"
 //   A reusable delegation set with the specified ID does not exist.
 //
-//   * DelegationSetNotReusable
+//   * ErrCodeDelegationSetNotReusable "DelegationSetNotReusable"
 //   A reusable delegation set with the specified ID does not exist.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateHostedZone
 func (c *Route53) CreateHostedZone(input *CreateHostedZoneInput) (*CreateHostedZoneOutput, error) {
 	req, out := c.CreateHostedZoneRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// CreateHostedZoneWithContext is the same as CreateHostedZone with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateHostedZone for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) CreateHostedZoneWithContext(ctx aws.Context, input *CreateHostedZoneInput, opts ...request.Option) (*CreateHostedZoneOutput, error) {
+	req, out := c.CreateHostedZoneRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opCreateReusableDelegationSet = "CreateReusableDelegationSet"
@@ -616,6 +710,7 @@ const opCreateReusableDelegationSet = "CreateReusableDelegationSet"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateReusableDelegationSet
 func (c *Route53) CreateReusableDelegationSetRequest(input *CreateReusableDelegationSetInput) (req *request.Request, output *CreateReusableDelegationSetOutput) {
 	op := &request.Operation{
 		Name:       opCreateReusableDelegationSet,
@@ -627,9 +722,8 @@ func (c *Route53) CreateReusableDelegationSetRequest(input *CreateReusableDelega
 		input = &CreateReusableDelegationSetInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &CreateReusableDelegationSetOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -640,10 +734,9 @@ func (c *Route53) CreateReusableDelegationSetRequest(input *CreateReusableDelega
 // marks the delegation set associated with that zone as reusable
 //
 // Send a POST request to the /2013-04-01/delegationset resource. The request
-// body must include an XML document with a CreateReusableDelegationSetRequest
-// element.
+// body must include a document with a CreateReusableDelegationSetRequest element.
 //
-// A reusable delegation set cannot be associated with a private hosted zone/
+// A reusable delegation set can't be associated with a private hosted zone/
 //
 // For more information, including a procedure on how to create and configure
 // a reusable delegation set (also known as white label name servers), see Configuring
@@ -657,36 +750,52 @@ func (c *Route53) CreateReusableDelegationSetRequest(input *CreateReusableDelega
 // API operation CreateReusableDelegationSet for usage and error information.
 //
 // Returned Error Codes:
-//   * DelegationSetAlreadyCreated
+//   * ErrCodeDelegationSetAlreadyCreated "DelegationSetAlreadyCreated"
 //   A delegation set with the same owner and caller reference combination has
 //   already been created.
 //
-//   * LimitsExceeded
+//   * ErrCodeLimitsExceeded "LimitsExceeded"
 //   The limits specified for a resource have been exceeded.
 //
-//   * HostedZoneNotFound
-//   The specified HostedZone cannot be found.
+//   * ErrCodeHostedZoneNotFound "HostedZoneNotFound"
+//   The specified HostedZone can't be found.
 //
-//   * InvalidArgument
-//   Parameter name and problem.
+//   * ErrCodeInvalidArgument "InvalidArgument"
+//   Parameter name is invalid.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * DelegationSetNotAvailable
+//   * ErrCodeDelegationSetNotAvailable "DelegationSetNotAvailable"
 //   You can create a hosted zone that has the same name as an existing hosted
 //   zone (example.com is common), but there is a limit to the number of hosted
 //   zones that have the same name. If you get this error, Amazon Route 53 has
 //   reached that limit. If you own the domain name and Amazon Route 53 generates
 //   this error, contact Customer Support.
 //
-//   * DelegationSetAlreadyReusable
+//   * ErrCodeDelegationSetAlreadyReusable "DelegationSetAlreadyReusable"
 //   The specified delegation set has already been marked as reusable.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateReusableDelegationSet
 func (c *Route53) CreateReusableDelegationSet(input *CreateReusableDelegationSetInput) (*CreateReusableDelegationSetOutput, error) {
 	req, out := c.CreateReusableDelegationSetRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// CreateReusableDelegationSetWithContext is the same as CreateReusableDelegationSet with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateReusableDelegationSet for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) CreateReusableDelegationSetWithContext(ctx aws.Context, input *CreateReusableDelegationSetInput, opts ...request.Option) (*CreateReusableDelegationSetOutput, error) {
+	req, out := c.CreateReusableDelegationSetRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opCreateTrafficPolicy = "CreateTrafficPolicy"
@@ -715,6 +824,7 @@ const opCreateTrafficPolicy = "CreateTrafficPolicy"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateTrafficPolicy
 func (c *Route53) CreateTrafficPolicyRequest(input *CreateTrafficPolicyInput) (req *request.Request, output *CreateTrafficPolicyOutput) {
 	op := &request.Operation{
 		Name:       opCreateTrafficPolicy,
@@ -726,9 +836,8 @@ func (c *Route53) CreateTrafficPolicyRequest(input *CreateTrafficPolicyInput) (r
 		input = &CreateTrafficPolicyInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &CreateTrafficPolicyOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -751,25 +860,41 @@ func (c *Route53) CreateTrafficPolicyRequest(input *CreateTrafficPolicyInput) (r
 // API operation CreateTrafficPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * TooManyTrafficPolicies
+//   * ErrCodeTooManyTrafficPolicies "TooManyTrafficPolicies"
 //   You've created the maximum number of traffic policies that can be created
 //   for the current AWS account. You can request an increase to the limit on
 //   the Contact Us (http://aws.amazon.com/route53-request/) page.
 //
-//   * TrafficPolicyAlreadyExists
+//   * ErrCodeTrafficPolicyAlreadyExists "TrafficPolicyAlreadyExists"
 //   A traffic policy that has the same value for Name already exists.
 //
-//   * InvalidTrafficPolicyDocument
+//   * ErrCodeInvalidTrafficPolicyDocument "InvalidTrafficPolicyDocument"
 //   The format of the traffic policy document that you specified in the Document
 //   element is invalid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateTrafficPolicy
 func (c *Route53) CreateTrafficPolicy(input *CreateTrafficPolicyInput) (*CreateTrafficPolicyOutput, error) {
 	req, out := c.CreateTrafficPolicyRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// CreateTrafficPolicyWithContext is the same as CreateTrafficPolicy with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateTrafficPolicy for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) CreateTrafficPolicyWithContext(ctx aws.Context, input *CreateTrafficPolicyInput, opts ...request.Option) (*CreateTrafficPolicyOutput, error) {
+	req, out := c.CreateTrafficPolicyRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opCreateTrafficPolicyInstance = "CreateTrafficPolicyInstance"
@@ -798,6 +923,7 @@ const opCreateTrafficPolicyInstance = "CreateTrafficPolicyInstance"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateTrafficPolicyInstance
 func (c *Route53) CreateTrafficPolicyInstanceRequest(input *CreateTrafficPolicyInstanceInput) (req *request.Request, output *CreateTrafficPolicyInstanceOutput) {
 	op := &request.Operation{
 		Name:       opCreateTrafficPolicyInstance,
@@ -809,9 +935,8 @@ func (c *Route53) CreateTrafficPolicyInstanceRequest(input *CreateTrafficPolicyI
 		input = &CreateTrafficPolicyInstanceInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &CreateTrafficPolicyInstanceOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -837,27 +962,43 @@ func (c *Route53) CreateTrafficPolicyInstanceRequest(input *CreateTrafficPolicyI
 // API operation CreateTrafficPolicyInstance for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchHostedZone
+//   * ErrCodeNoSuchHostedZone "NoSuchHostedZone"
 //   No hosted zone exists with the ID that you specified.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * TooManyTrafficPolicyInstances
+//   * ErrCodeTooManyTrafficPolicyInstances "TooManyTrafficPolicyInstances"
 //   You've created the maximum number of traffic policy instances that can be
 //   created for the current AWS account. You can request an increase to the limit
 //   on the Contact Us (http://aws.amazon.com/route53-request/) page.
 //
-//   * NoSuchTrafficPolicy
+//   * ErrCodeNoSuchTrafficPolicy "NoSuchTrafficPolicy"
 //   No traffic policy exists with the specified ID.
 //
-//   * TrafficPolicyInstanceAlreadyExists
+//   * ErrCodeTrafficPolicyInstanceAlreadyExists "TrafficPolicyInstanceAlreadyExists"
 //   Traffic policy instance with given Id already exists.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateTrafficPolicyInstance
 func (c *Route53) CreateTrafficPolicyInstance(input *CreateTrafficPolicyInstanceInput) (*CreateTrafficPolicyInstanceOutput, error) {
 	req, out := c.CreateTrafficPolicyInstanceRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// CreateTrafficPolicyInstanceWithContext is the same as CreateTrafficPolicyInstance with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateTrafficPolicyInstance for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) CreateTrafficPolicyInstanceWithContext(ctx aws.Context, input *CreateTrafficPolicyInstanceInput, opts ...request.Option) (*CreateTrafficPolicyInstanceOutput, error) {
+	req, out := c.CreateTrafficPolicyInstanceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opCreateTrafficPolicyVersion = "CreateTrafficPolicyVersion"
@@ -886,6 +1027,7 @@ const opCreateTrafficPolicyVersion = "CreateTrafficPolicyVersion"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateTrafficPolicyVersion
 func (c *Route53) CreateTrafficPolicyVersionRequest(input *CreateTrafficPolicyVersionInput) (req *request.Request, output *CreateTrafficPolicyVersionOutput) {
 	op := &request.Operation{
 		Name:       opCreateTrafficPolicyVersion,
@@ -897,9 +1039,8 @@ func (c *Route53) CreateTrafficPolicyVersionRequest(input *CreateTrafficPolicyVe
 		input = &CreateTrafficPolicyVersionInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &CreateTrafficPolicyVersionOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -927,24 +1068,151 @@ func (c *Route53) CreateTrafficPolicyVersionRequest(input *CreateTrafficPolicyVe
 // API operation CreateTrafficPolicyVersion for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchTrafficPolicy
+//   * ErrCodeNoSuchTrafficPolicy "NoSuchTrafficPolicy"
 //   No traffic policy exists with the specified ID.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * ConcurrentModification
+//   * ErrCodeConcurrentModification "ConcurrentModification"
 //   Another user submitted a request to update the object at the same time that
 //   you did. Retry the request.
 //
-//   * InvalidTrafficPolicyDocument
+//   * ErrCodeInvalidTrafficPolicyDocument "InvalidTrafficPolicyDocument"
 //   The format of the traffic policy document that you specified in the Document
 //   element is invalid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateTrafficPolicyVersion
 func (c *Route53) CreateTrafficPolicyVersion(input *CreateTrafficPolicyVersionInput) (*CreateTrafficPolicyVersionOutput, error) {
 	req, out := c.CreateTrafficPolicyVersionRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// CreateTrafficPolicyVersionWithContext is the same as CreateTrafficPolicyVersion with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateTrafficPolicyVersion for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) CreateTrafficPolicyVersionWithContext(ctx aws.Context, input *CreateTrafficPolicyVersionInput, opts ...request.Option) (*CreateTrafficPolicyVersionOutput, error) {
+	req, out := c.CreateTrafficPolicyVersionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opCreateVPCAssociationAuthorization = "CreateVPCAssociationAuthorization"
+
+// CreateVPCAssociationAuthorizationRequest generates a "aws/request.Request" representing the
+// client's request for the CreateVPCAssociationAuthorization operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See CreateVPCAssociationAuthorization for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateVPCAssociationAuthorization method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateVPCAssociationAuthorizationRequest method.
+//    req, resp := client.CreateVPCAssociationAuthorizationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateVPCAssociationAuthorization
+func (c *Route53) CreateVPCAssociationAuthorizationRequest(input *CreateVPCAssociationAuthorizationInput) (req *request.Request, output *CreateVPCAssociationAuthorizationOutput) {
+	op := &request.Operation{
+		Name:       opCreateVPCAssociationAuthorization,
+		HTTPMethod: "POST",
+		HTTPPath:   "/2013-04-01/hostedzone/{Id}/authorizevpcassociation",
+	}
+
+	if input == nil {
+		input = &CreateVPCAssociationAuthorizationInput{}
+	}
+
+	output = &CreateVPCAssociationAuthorizationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateVPCAssociationAuthorization API operation for Amazon Route 53.
+//
+// Authorizes the AWS account that created a specified VPC to submit an AssociateVPCWithHostedZone
+// request to associate the VPC with a specified hosted zone that was created
+// by a different account. To submit a CreateVPCAssociationAuthorization request,
+// you must use the account that created the hosted zone. After you authorize
+// the association, use the account that created the VPC to submit an AssociateVPCWithHostedZone
+// request.
+//
+// If you want to associate multiple VPCs that you created by using one account
+// with a hosted zone that you created by using a different account, you must
+// submit one authorization request for each VPC.
+//
+// Send a POST request to the /2013-04-01/hostedzone/hosted zone ID/authorizevpcassociation
+// resource. The request body must include a document with a CreateVPCAssociationAuthorizationRequest
+// element. The response contains information about the authorization.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Route 53's
+// API operation CreateVPCAssociationAuthorization for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeConcurrentModification "ConcurrentModification"
+//   Another user submitted a request to update the object at the same time that
+//   you did. Retry the request.
+//
+//   * ErrCodeTooManyVPCAssociationAuthorizations "TooManyVPCAssociationAuthorizations"
+//   You've created the maximum number of authorizations that can be created for
+//   the specified hosted zone. To authorize another VPC to be associated with
+//   the hosted zone, submit a DeleteVPCAssociationAuthorization request to remove
+//   an existing authorization. To get a list of existing authorizations, submit
+//   a ListVPCAssociationAuthorizations request.
+//
+//   * ErrCodeNoSuchHostedZone "NoSuchHostedZone"
+//   No hosted zone exists with the ID that you specified.
+//
+//   * ErrCodeInvalidVPCId "InvalidVPCId"
+//   The VPC ID that you specified either isn't a valid ID or the current account
+//   is not authorized to access this VPC.
+//
+//   * ErrCodeInvalidInput "InvalidInput"
+//   The input is not valid.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateVPCAssociationAuthorization
+func (c *Route53) CreateVPCAssociationAuthorization(input *CreateVPCAssociationAuthorizationInput) (*CreateVPCAssociationAuthorizationOutput, error) {
+	req, out := c.CreateVPCAssociationAuthorizationRequest(input)
+	return out, req.Send()
+}
+
+// CreateVPCAssociationAuthorizationWithContext is the same as CreateVPCAssociationAuthorization with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateVPCAssociationAuthorization for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) CreateVPCAssociationAuthorizationWithContext(ctx aws.Context, input *CreateVPCAssociationAuthorizationInput, opts ...request.Option) (*CreateVPCAssociationAuthorizationOutput, error) {
+	req, out := c.CreateVPCAssociationAuthorizationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opDeleteHealthCheck = "DeleteHealthCheck"
@@ -973,6 +1241,7 @@ const opDeleteHealthCheck = "DeleteHealthCheck"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteHealthCheck
 func (c *Route53) DeleteHealthCheckRequest(input *DeleteHealthCheckInput) (req *request.Request, output *DeleteHealthCheckOutput) {
 	op := &request.Operation{
 		Name:       opDeleteHealthCheck,
@@ -984,9 +1253,8 @@ func (c *Route53) DeleteHealthCheckRequest(input *DeleteHealthCheckInput) (req *
 		input = &DeleteHealthCheckInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &DeleteHealthCheckOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -998,7 +1266,7 @@ func (c *Route53) DeleteHealthCheckRequest(input *DeleteHealthCheckInput) (req *
 // Amazon Route 53 does not prevent you from deleting a health check even if
 // the health check is associated with one or more resource record sets. If
 // you delete a health check and you don't update the associated resource record
-// sets, the future status of the health check cannot be predicted and may change.
+// sets, the future status of the health check can't be predicted and may change.
 // This will affect the routing of DNS queries for your DNS failover configuration.
 // For more information, see Replacing and Deleting Health Checks (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/health-checks-creating-deleting.html#health-checks-deleting.html)
 // in the Amazon Route 53 Developer Guide.
@@ -1011,22 +1279,38 @@ func (c *Route53) DeleteHealthCheckRequest(input *DeleteHealthCheckInput) (req *
 // API operation DeleteHealthCheck for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchHealthCheck
+//   * ErrCodeNoSuchHealthCheck "NoSuchHealthCheck"
 //   No health check exists with the ID that you specified in the DeleteHealthCheck
 //   request.
 //
-//   * HealthCheckInUse
+//   * ErrCodeHealthCheckInUse "HealthCheckInUse"
 //   The health check ID for this health check is referenced in the HealthCheckId
 //   element in one of the resource record sets in one of the hosted zones that
 //   are owned by the current AWS account.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteHealthCheck
 func (c *Route53) DeleteHealthCheck(input *DeleteHealthCheckInput) (*DeleteHealthCheckOutput, error) {
 	req, out := c.DeleteHealthCheckRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// DeleteHealthCheckWithContext is the same as DeleteHealthCheck with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteHealthCheck for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) DeleteHealthCheckWithContext(ctx aws.Context, input *DeleteHealthCheckInput, opts ...request.Option) (*DeleteHealthCheckOutput, error) {
+	req, out := c.DeleteHealthCheckRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opDeleteHostedZone = "DeleteHostedZone"
@@ -1055,6 +1339,7 @@ const opDeleteHostedZone = "DeleteHostedZone"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteHostedZone
 func (c *Route53) DeleteHostedZoneRequest(input *DeleteHostedZoneInput) (req *request.Request, output *DeleteHostedZoneOutput) {
 	op := &request.Operation{
 		Name:       opDeleteHostedZone,
@@ -1066,9 +1351,8 @@ func (c *Route53) DeleteHostedZoneRequest(input *DeleteHostedZoneInput) (req *re
 		input = &DeleteHostedZoneInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &DeleteHostedZoneOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -1092,29 +1376,45 @@ func (c *Route53) DeleteHostedZoneRequest(input *DeleteHostedZoneInput) (req *re
 // API operation DeleteHostedZone for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchHostedZone
+//   * ErrCodeNoSuchHostedZone "NoSuchHostedZone"
 //   No hosted zone exists with the ID that you specified.
 //
-//   * HostedZoneNotEmpty
+//   * ErrCodeHostedZoneNotEmpty "HostedZoneNotEmpty"
 //   The hosted zone contains resource records that are not SOA or NS records.
 //
-//   * PriorRequestNotComplete
+//   * ErrCodePriorRequestNotComplete "PriorRequestNotComplete"
 //   If Amazon Route 53 can't process a request before the next request arrives,
 //   it will reject subsequent requests for the same hosted zone and return an
 //   HTTP 400 error (Bad request). If Amazon Route 53 returns this error repeatedly
 //   for the same request, we recommend that you wait, in intervals of increasing
 //   duration, before you try the request again.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * InvalidDomainName
+//   * ErrCodeInvalidDomainName "InvalidDomainName"
 //   The specified domain name is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteHostedZone
 func (c *Route53) DeleteHostedZone(input *DeleteHostedZoneInput) (*DeleteHostedZoneOutput, error) {
 	req, out := c.DeleteHostedZoneRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// DeleteHostedZoneWithContext is the same as DeleteHostedZone with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteHostedZone for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) DeleteHostedZoneWithContext(ctx aws.Context, input *DeleteHostedZoneInput, opts ...request.Option) (*DeleteHostedZoneOutput, error) {
+	req, out := c.DeleteHostedZoneRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opDeleteReusableDelegationSet = "DeleteReusableDelegationSet"
@@ -1143,6 +1443,7 @@ const opDeleteReusableDelegationSet = "DeleteReusableDelegationSet"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteReusableDelegationSet
 func (c *Route53) DeleteReusableDelegationSetRequest(input *DeleteReusableDelegationSetInput) (req *request.Request, output *DeleteReusableDelegationSetOutput) {
 	op := &request.Operation{
 		Name:       opDeleteReusableDelegationSet,
@@ -1154,9 +1455,8 @@ func (c *Route53) DeleteReusableDelegationSetRequest(input *DeleteReusableDelega
 		input = &DeleteReusableDelegationSetInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &DeleteReusableDelegationSetOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -1180,23 +1480,39 @@ func (c *Route53) DeleteReusableDelegationSetRequest(input *DeleteReusableDelega
 // API operation DeleteReusableDelegationSet for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchDelegationSet
+//   * ErrCodeNoSuchDelegationSet "NoSuchDelegationSet"
 //   A reusable delegation set with the specified ID does not exist.
 //
-//   * DelegationSetInUse
+//   * ErrCodeDelegationSetInUse "DelegationSetInUse"
 //   The specified delegation contains associated hosted zones which must be deleted
 //   before the reusable delegation set can be deleted.
 //
-//   * DelegationSetNotReusable
+//   * ErrCodeDelegationSetNotReusable "DelegationSetNotReusable"
 //   A reusable delegation set with the specified ID does not exist.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteReusableDelegationSet
 func (c *Route53) DeleteReusableDelegationSet(input *DeleteReusableDelegationSetInput) (*DeleteReusableDelegationSetOutput, error) {
 	req, out := c.DeleteReusableDelegationSetRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// DeleteReusableDelegationSetWithContext is the same as DeleteReusableDelegationSet with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteReusableDelegationSet for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) DeleteReusableDelegationSetWithContext(ctx aws.Context, input *DeleteReusableDelegationSetInput, opts ...request.Option) (*DeleteReusableDelegationSetOutput, error) {
+	req, out := c.DeleteReusableDelegationSetRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opDeleteTrafficPolicy = "DeleteTrafficPolicy"
@@ -1225,6 +1541,7 @@ const opDeleteTrafficPolicy = "DeleteTrafficPolicy"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteTrafficPolicy
 func (c *Route53) DeleteTrafficPolicyRequest(input *DeleteTrafficPolicyInput) (req *request.Request, output *DeleteTrafficPolicyOutput) {
 	op := &request.Operation{
 		Name:       opDeleteTrafficPolicy,
@@ -1236,9 +1553,8 @@ func (c *Route53) DeleteTrafficPolicyRequest(input *DeleteTrafficPolicyInput) (r
 		input = &DeleteTrafficPolicyInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &DeleteTrafficPolicyOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -1256,24 +1572,40 @@ func (c *Route53) DeleteTrafficPolicyRequest(input *DeleteTrafficPolicyInput) (r
 // API operation DeleteTrafficPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchTrafficPolicy
+//   * ErrCodeNoSuchTrafficPolicy "NoSuchTrafficPolicy"
 //   No traffic policy exists with the specified ID.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * TrafficPolicyInUse
+//   * ErrCodeTrafficPolicyInUse "TrafficPolicyInUse"
 //   One or more traffic policy instances were created by using the specified
 //   traffic policy.
 //
-//   * ConcurrentModification
+//   * ErrCodeConcurrentModification "ConcurrentModification"
 //   Another user submitted a request to update the object at the same time that
 //   you did. Retry the request.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteTrafficPolicy
 func (c *Route53) DeleteTrafficPolicy(input *DeleteTrafficPolicyInput) (*DeleteTrafficPolicyOutput, error) {
 	req, out := c.DeleteTrafficPolicyRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// DeleteTrafficPolicyWithContext is the same as DeleteTrafficPolicy with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteTrafficPolicy for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) DeleteTrafficPolicyWithContext(ctx aws.Context, input *DeleteTrafficPolicyInput, opts ...request.Option) (*DeleteTrafficPolicyOutput, error) {
+	req, out := c.DeleteTrafficPolicyRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opDeleteTrafficPolicyInstance = "DeleteTrafficPolicyInstance"
@@ -1302,6 +1634,7 @@ const opDeleteTrafficPolicyInstance = "DeleteTrafficPolicyInstance"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteTrafficPolicyInstance
 func (c *Route53) DeleteTrafficPolicyInstanceRequest(input *DeleteTrafficPolicyInstanceInput) (req *request.Request, output *DeleteTrafficPolicyInstanceOutput) {
 	op := &request.Operation{
 		Name:       opDeleteTrafficPolicyInstance,
@@ -1313,9 +1646,8 @@ func (c *Route53) DeleteTrafficPolicyInstanceRequest(input *DeleteTrafficPolicyI
 		input = &DeleteTrafficPolicyInstanceInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &DeleteTrafficPolicyInstanceOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -1338,23 +1670,147 @@ func (c *Route53) DeleteTrafficPolicyInstanceRequest(input *DeleteTrafficPolicyI
 // API operation DeleteTrafficPolicyInstance for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchTrafficPolicyInstance
+//   * ErrCodeNoSuchTrafficPolicyInstance "NoSuchTrafficPolicyInstance"
 //   No traffic policy instance exists with the specified ID.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * PriorRequestNotComplete
+//   * ErrCodePriorRequestNotComplete "PriorRequestNotComplete"
 //   If Amazon Route 53 can't process a request before the next request arrives,
 //   it will reject subsequent requests for the same hosted zone and return an
 //   HTTP 400 error (Bad request). If Amazon Route 53 returns this error repeatedly
 //   for the same request, we recommend that you wait, in intervals of increasing
 //   duration, before you try the request again.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteTrafficPolicyInstance
 func (c *Route53) DeleteTrafficPolicyInstance(input *DeleteTrafficPolicyInstanceInput) (*DeleteTrafficPolicyInstanceOutput, error) {
 	req, out := c.DeleteTrafficPolicyInstanceRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// DeleteTrafficPolicyInstanceWithContext is the same as DeleteTrafficPolicyInstance with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteTrafficPolicyInstance for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) DeleteTrafficPolicyInstanceWithContext(ctx aws.Context, input *DeleteTrafficPolicyInstanceInput, opts ...request.Option) (*DeleteTrafficPolicyInstanceOutput, error) {
+	req, out := c.DeleteTrafficPolicyInstanceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteVPCAssociationAuthorization = "DeleteVPCAssociationAuthorization"
+
+// DeleteVPCAssociationAuthorizationRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteVPCAssociationAuthorization operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DeleteVPCAssociationAuthorization for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteVPCAssociationAuthorization method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteVPCAssociationAuthorizationRequest method.
+//    req, resp := client.DeleteVPCAssociationAuthorizationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteVPCAssociationAuthorization
+func (c *Route53) DeleteVPCAssociationAuthorizationRequest(input *DeleteVPCAssociationAuthorizationInput) (req *request.Request, output *DeleteVPCAssociationAuthorizationOutput) {
+	op := &request.Operation{
+		Name:       opDeleteVPCAssociationAuthorization,
+		HTTPMethod: "POST",
+		HTTPPath:   "/2013-04-01/hostedzone/{Id}/deauthorizevpcassociation",
+	}
+
+	if input == nil {
+		input = &DeleteVPCAssociationAuthorizationInput{}
+	}
+
+	output = &DeleteVPCAssociationAuthorizationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteVPCAssociationAuthorization API operation for Amazon Route 53.
+//
+// Removes authorization to submit an AssociateVPCWithHostedZone request to
+// associate a specified VPC with a hosted zone that was created by a different
+// account. You must use the account that created the hosted zone to submit
+// a DeleteVPCAssociationAuthorization request.
+//
+// Sending this request only prevents the AWS account that created the VPC from
+// associating the VPC with the Amazon Route 53 hosted zone in the future. If
+// the VPC is already associated with the hosted zone, DeleteVPCAssociationAuthorization
+// won't disassociate the VPC from the hosted zone. If you want to delete an
+// existing association, use DisassociateVPCFromHostedZone.
+//
+// Send a DELETE request to the /2013-04-01/hostedzone/hosted zone ID/deauthorizevpcassociation
+// resource. The request body must include a document with a DeleteVPCAssociationAuthorizationRequest
+// element.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Route 53's
+// API operation DeleteVPCAssociationAuthorization for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeConcurrentModification "ConcurrentModification"
+//   Another user submitted a request to update the object at the same time that
+//   you did. Retry the request.
+//
+//   * ErrCodeVPCAssociationAuthorizationNotFound "VPCAssociationAuthorizationNotFound"
+//   The VPC that you specified is not authorized to be associated with the hosted
+//   zone.
+//
+//   * ErrCodeNoSuchHostedZone "NoSuchHostedZone"
+//   No hosted zone exists with the ID that you specified.
+//
+//   * ErrCodeInvalidVPCId "InvalidVPCId"
+//   The VPC ID that you specified either isn't a valid ID or the current account
+//   is not authorized to access this VPC.
+//
+//   * ErrCodeInvalidInput "InvalidInput"
+//   The input is not valid.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteVPCAssociationAuthorization
+func (c *Route53) DeleteVPCAssociationAuthorization(input *DeleteVPCAssociationAuthorizationInput) (*DeleteVPCAssociationAuthorizationOutput, error) {
+	req, out := c.DeleteVPCAssociationAuthorizationRequest(input)
+	return out, req.Send()
+}
+
+// DeleteVPCAssociationAuthorizationWithContext is the same as DeleteVPCAssociationAuthorization with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteVPCAssociationAuthorization for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) DeleteVPCAssociationAuthorizationWithContext(ctx aws.Context, input *DeleteVPCAssociationAuthorizationInput, opts ...request.Option) (*DeleteVPCAssociationAuthorizationOutput, error) {
+	req, out := c.DeleteVPCAssociationAuthorizationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opDisassociateVPCFromHostedZone = "DisassociateVPCFromHostedZone"
@@ -1383,6 +1839,7 @@ const opDisassociateVPCFromHostedZone = "DisassociateVPCFromHostedZone"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DisassociateVPCFromHostedZone
 func (c *Route53) DisassociateVPCFromHostedZoneRequest(input *DisassociateVPCFromHostedZoneInput) (req *request.Request, output *DisassociateVPCFromHostedZoneOutput) {
 	op := &request.Operation{
 		Name:       opDisassociateVPCFromHostedZone,
@@ -1394,9 +1851,8 @@ func (c *Route53) DisassociateVPCFromHostedZoneRequest(input *DisassociateVPCFro
 		input = &DisassociateVPCFromHostedZoneInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &DisassociateVPCFromHostedZoneOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -1404,12 +1860,14 @@ func (c *Route53) DisassociateVPCFromHostedZoneRequest(input *DisassociateVPCFro
 //
 // Disassociates a VPC from a Amazon Route 53 private hosted zone.
 //
-// Send a POST request to the /2013-04-01/hostedzone/hosted zone ID/disassociatevpc
-// resource. The request body must include an XML document with a DisassociateVPCFromHostedZoneRequest
-// element. The response returns the DisassociateVPCFromHostedZoneResponse element.
+// You can't disassociate the last VPC from a private hosted zone.
 //
-// You can only disassociate a VPC from a private hosted zone when two or more
-// VPCs are associated with that hosted zone. You cannot convert a private hosted
+// Send a POST request to the /2013-04-01/hostedzone/hosted zone ID/disassociatevpc
+// resource. The request body must include a document with a DisassociateVPCFromHostedZoneRequest
+// element. The response includes a DisassociateVPCFromHostedZoneResponse element.
+//
+// You can't disassociate a VPC from a private hosted zone when only one VPC
+// is associated with the hosted zone. You also can't convert a private hosted
 // zone into a public hosted zone.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -1420,29 +1878,44 @@ func (c *Route53) DisassociateVPCFromHostedZoneRequest(input *DisassociateVPCFro
 // API operation DisassociateVPCFromHostedZone for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchHostedZone
+//   * ErrCodeNoSuchHostedZone "NoSuchHostedZone"
 //   No hosted zone exists with the ID that you specified.
 //
-//   * InvalidVPCId
-//   The hosted zone you are trying to create for your VPC_ID does not belong
-//   to you. Amazon Route 53 returns this error when the VPC specified by VPCId
-//   does not belong to you.
+//   * ErrCodeInvalidVPCId "InvalidVPCId"
+//   The VPC ID that you specified either isn't a valid ID or the current account
+//   is not authorized to access this VPC.
 //
-//   * VPCAssociationNotFound
+//   * ErrCodeVPCAssociationNotFound "VPCAssociationNotFound"
 //   The specified VPC and hosted zone are not currently associated.
 //
-//   * LastVPCAssociation
-//   Only one VPC is currently associated with the hosted zone. You cannot convert
-//   a private hosted zone into a public hosted zone by disassociating the last
-//   VPC from a hosted zone.
+//   * ErrCodeLastVPCAssociation "LastVPCAssociation"
+//   The VPC that you're trying to disassociate from the private hosted zone is
+//   the last VPC that is associated with the hosted zone. Amazon Route 53 doesn't
+//   support disassociating the last VPC from a hosted zone.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DisassociateVPCFromHostedZone
 func (c *Route53) DisassociateVPCFromHostedZone(input *DisassociateVPCFromHostedZoneInput) (*DisassociateVPCFromHostedZoneOutput, error) {
 	req, out := c.DisassociateVPCFromHostedZoneRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// DisassociateVPCFromHostedZoneWithContext is the same as DisassociateVPCFromHostedZone with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DisassociateVPCFromHostedZone for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) DisassociateVPCFromHostedZoneWithContext(ctx aws.Context, input *DisassociateVPCFromHostedZoneInput, opts ...request.Option) (*DisassociateVPCFromHostedZoneOutput, error) {
+	req, out := c.DisassociateVPCFromHostedZoneRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opGetChange = "GetChange"
@@ -1471,6 +1944,7 @@ const opGetChange = "GetChange"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetChange
 func (c *Route53) GetChangeRequest(input *GetChangeInput) (req *request.Request, output *GetChangeOutput) {
 	op := &request.Operation{
 		Name:       opGetChange,
@@ -1482,9 +1956,8 @@ func (c *Route53) GetChangeRequest(input *GetChangeInput) (req *request.Request,
 		input = &GetChangeInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &GetChangeOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -1508,86 +1981,32 @@ func (c *Route53) GetChangeRequest(input *GetChangeInput) (req *request.Request,
 // API operation GetChange for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchChange
+//   * ErrCodeNoSuchChange "NoSuchChange"
 //   A change with the specified change ID does not exist.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetChange
 func (c *Route53) GetChange(input *GetChangeInput) (*GetChangeOutput, error) {
 	req, out := c.GetChangeRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
 }
 
-const opGetChangeDetails = "GetChangeDetails"
-
-// GetChangeDetailsRequest generates a "aws/request.Request" representing the
-// client's request for the GetChangeDetails operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// GetChangeWithContext is the same as GetChange with the addition of
+// the ability to pass a context and additional request options.
 //
-// See GetChangeDetails for usage and error information.
+// See GetChange for details on how to use this API operation.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetChangeDetails method directly
-// instead.
-//
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
-//
-//    // Example sending a request using the GetChangeDetailsRequest method.
-//    req, resp := client.GetChangeDetailsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
-//
-func (c *Route53) GetChangeDetailsRequest(input *GetChangeDetailsInput) (req *request.Request, output *GetChangeDetailsOutput) {
-	if c.Client.Config.Logger != nil {
-		c.Client.Config.Logger.Log("This operation, GetChangeDetails, has been deprecated")
-	}
-	op := &request.Operation{
-		Name:       opGetChangeDetails,
-		HTTPMethod: "GET",
-		HTTPPath:   "/2013-04-01/changedetails/{Id}",
-	}
-
-	if input == nil {
-		input = &GetChangeDetailsInput{}
-	}
-
-	req = c.newRequest(op, input, output)
-	output = &GetChangeDetailsOutput{}
-	req.Data = output
-	return
-}
-
-// GetChangeDetails API operation for Amazon Route 53.
-//
-// Returns the status and changes of a change batch request.
-//
-// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
-// with awserr.Error's Code and Message methods to get detailed information about
-// the error.
-//
-// See the AWS API reference guide for Amazon Route 53's
-// API operation GetChangeDetails for usage and error information.
-//
-// Returned Error Codes:
-//   * NoSuchChange
-//   A change with the specified change ID does not exist.
-//
-//   * InvalidInput
-//   The input is not valid.
-//
-func (c *Route53) GetChangeDetails(input *GetChangeDetailsInput) (*GetChangeDetailsOutput, error) {
-	req, out := c.GetChangeDetailsRequest(input)
-	err := req.Send()
-	return out, err
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) GetChangeWithContext(ctx aws.Context, input *GetChangeInput, opts ...request.Option) (*GetChangeOutput, error) {
+	req, out := c.GetChangeRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opGetCheckerIpRanges = "GetCheckerIpRanges"
@@ -1616,6 +2035,7 @@ const opGetCheckerIpRanges = "GetCheckerIpRanges"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetCheckerIpRanges
 func (c *Route53) GetCheckerIpRangesRequest(input *GetCheckerIpRangesInput) (req *request.Request, output *GetCheckerIpRangesOutput) {
 	op := &request.Operation{
 		Name:       opGetCheckerIpRanges,
@@ -1627,19 +2047,17 @@ func (c *Route53) GetCheckerIpRangesRequest(input *GetCheckerIpRangesInput) (req
 		input = &GetCheckerIpRangesInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &GetCheckerIpRangesOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
 // GetCheckerIpRanges API operation for Amazon Route 53.
 //
-// Retrieves a list of the IP ranges used by Amazon Route 53 health checkers
-// to check the health of your resources. Send a GET request to the /Amazon
-// Route 53 API version/checkeripranges resource. Use these IP addresses to
-// configure router and firewall rules to allow health checkers to check the
-// health of your resources.
+// GetCheckerIpRanges still works, but we recommend that you download ip-ranges.json,
+// which includes IP address ranges for all AWS services. For more information,
+// see IP Address Ranges of Amazon Route 53 Servers (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/route-53-ip-addresses.html)
+// in the Amazon Route 53 Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1647,10 +2065,26 @@ func (c *Route53) GetCheckerIpRangesRequest(input *GetCheckerIpRangesInput) (req
 //
 // See the AWS API reference guide for Amazon Route 53's
 // API operation GetCheckerIpRanges for usage and error information.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetCheckerIpRanges
 func (c *Route53) GetCheckerIpRanges(input *GetCheckerIpRangesInput) (*GetCheckerIpRangesOutput, error) {
 	req, out := c.GetCheckerIpRangesRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// GetCheckerIpRangesWithContext is the same as GetCheckerIpRanges with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetCheckerIpRanges for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) GetCheckerIpRangesWithContext(ctx aws.Context, input *GetCheckerIpRangesInput, opts ...request.Option) (*GetCheckerIpRangesOutput, error) {
+	req, out := c.GetCheckerIpRangesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opGetGeoLocation = "GetGeoLocation"
@@ -1679,6 +2113,7 @@ const opGetGeoLocation = "GetGeoLocation"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetGeoLocation
 func (c *Route53) GetGeoLocationRequest(input *GetGeoLocationInput) (req *request.Request, output *GetGeoLocationOutput) {
 	op := &request.Operation{
 		Name:       opGetGeoLocation,
@@ -1690,9 +2125,8 @@ func (c *Route53) GetGeoLocationRequest(input *GetGeoLocationInput) (req *reques
 		input = &GetGeoLocationInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &GetGeoLocationOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -1710,16 +2144,32 @@ func (c *Route53) GetGeoLocationRequest(input *GetGeoLocationInput) (req *reques
 // API operation GetGeoLocation for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchGeoLocation
+//   * ErrCodeNoSuchGeoLocation "NoSuchGeoLocation"
 //   Amazon Route 53 doesn't support the specified geolocation.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetGeoLocation
 func (c *Route53) GetGeoLocation(input *GetGeoLocationInput) (*GetGeoLocationOutput, error) {
 	req, out := c.GetGeoLocationRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// GetGeoLocationWithContext is the same as GetGeoLocation with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetGeoLocation for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) GetGeoLocationWithContext(ctx aws.Context, input *GetGeoLocationInput, opts ...request.Option) (*GetGeoLocationOutput, error) {
+	req, out := c.GetGeoLocationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opGetHealthCheck = "GetHealthCheck"
@@ -1748,6 +2198,7 @@ const opGetHealthCheck = "GetHealthCheck"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheck
 func (c *Route53) GetHealthCheckRequest(input *GetHealthCheckInput) (req *request.Request, output *GetHealthCheckOutput) {
 	op := &request.Operation{
 		Name:       opGetHealthCheck,
@@ -1759,9 +2210,8 @@ func (c *Route53) GetHealthCheckRequest(input *GetHealthCheckInput) (req *reques
 		input = &GetHealthCheckInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &GetHealthCheckOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -1781,21 +2231,37 @@ func (c *Route53) GetHealthCheckRequest(input *GetHealthCheckInput) (req *reques
 // API operation GetHealthCheck for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchHealthCheck
+//   * ErrCodeNoSuchHealthCheck "NoSuchHealthCheck"
 //   No health check exists with the ID that you specified in the DeleteHealthCheck
 //   request.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * IncompatibleVersion
-//   The resource you are trying to access is unsupported on this Amazon Route
-//   53 endpoint. Please consider using a newer endpoint or a tool that does so.
+//   * ErrCodeIncompatibleVersion "IncompatibleVersion"
+//   The resource you're trying to access is unsupported on this Amazon Route
+//   53 endpoint.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheck
 func (c *Route53) GetHealthCheck(input *GetHealthCheckInput) (*GetHealthCheckOutput, error) {
 	req, out := c.GetHealthCheckRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// GetHealthCheckWithContext is the same as GetHealthCheck with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetHealthCheck for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) GetHealthCheckWithContext(ctx aws.Context, input *GetHealthCheckInput, opts ...request.Option) (*GetHealthCheckOutput, error) {
+	req, out := c.GetHealthCheckRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opGetHealthCheckCount = "GetHealthCheckCount"
@@ -1824,6 +2290,7 @@ const opGetHealthCheckCount = "GetHealthCheckCount"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckCount
 func (c *Route53) GetHealthCheckCountRequest(input *GetHealthCheckCountInput) (req *request.Request, output *GetHealthCheckCountOutput) {
 	op := &request.Operation{
 		Name:       opGetHealthCheckCount,
@@ -1835,9 +2302,8 @@ func (c *Route53) GetHealthCheckCountRequest(input *GetHealthCheckCountInput) (r
 		input = &GetHealthCheckCountInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &GetHealthCheckCountOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -1852,10 +2318,26 @@ func (c *Route53) GetHealthCheckCountRequest(input *GetHealthCheckCountInput) (r
 //
 // See the AWS API reference guide for Amazon Route 53's
 // API operation GetHealthCheckCount for usage and error information.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckCount
 func (c *Route53) GetHealthCheckCount(input *GetHealthCheckCountInput) (*GetHealthCheckCountOutput, error) {
 	req, out := c.GetHealthCheckCountRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// GetHealthCheckCountWithContext is the same as GetHealthCheckCount with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetHealthCheckCount for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) GetHealthCheckCountWithContext(ctx aws.Context, input *GetHealthCheckCountInput, opts ...request.Option) (*GetHealthCheckCountOutput, error) {
+	req, out := c.GetHealthCheckCountRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opGetHealthCheckLastFailureReason = "GetHealthCheckLastFailureReason"
@@ -1884,6 +2366,7 @@ const opGetHealthCheckLastFailureReason = "GetHealthCheckLastFailureReason"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckLastFailureReason
 func (c *Route53) GetHealthCheckLastFailureReasonRequest(input *GetHealthCheckLastFailureReasonInput) (req *request.Request, output *GetHealthCheckLastFailureReasonOutput) {
 	op := &request.Operation{
 		Name:       opGetHealthCheckLastFailureReason,
@@ -1895,9 +2378,8 @@ func (c *Route53) GetHealthCheckLastFailureReasonRequest(input *GetHealthCheckLa
 		input = &GetHealthCheckLastFailureReasonInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &GetHealthCheckLastFailureReasonOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -1916,17 +2398,33 @@ func (c *Route53) GetHealthCheckLastFailureReasonRequest(input *GetHealthCheckLa
 // API operation GetHealthCheckLastFailureReason for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchHealthCheck
+//   * ErrCodeNoSuchHealthCheck "NoSuchHealthCheck"
 //   No health check exists with the ID that you specified in the DeleteHealthCheck
 //   request.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckLastFailureReason
 func (c *Route53) GetHealthCheckLastFailureReason(input *GetHealthCheckLastFailureReasonInput) (*GetHealthCheckLastFailureReasonOutput, error) {
 	req, out := c.GetHealthCheckLastFailureReasonRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// GetHealthCheckLastFailureReasonWithContext is the same as GetHealthCheckLastFailureReason with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetHealthCheckLastFailureReason for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) GetHealthCheckLastFailureReasonWithContext(ctx aws.Context, input *GetHealthCheckLastFailureReasonInput, opts ...request.Option) (*GetHealthCheckLastFailureReasonOutput, error) {
+	req, out := c.GetHealthCheckLastFailureReasonRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opGetHealthCheckStatus = "GetHealthCheckStatus"
@@ -1955,6 +2453,7 @@ const opGetHealthCheckStatus = "GetHealthCheckStatus"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckStatus
 func (c *Route53) GetHealthCheckStatusRequest(input *GetHealthCheckStatusInput) (req *request.Request, output *GetHealthCheckStatusOutput) {
 	op := &request.Operation{
 		Name:       opGetHealthCheckStatus,
@@ -1966,9 +2465,8 @@ func (c *Route53) GetHealthCheckStatusRequest(input *GetHealthCheckStatusInput) 
 		input = &GetHealthCheckStatusInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &GetHealthCheckStatusOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -1986,17 +2484,33 @@ func (c *Route53) GetHealthCheckStatusRequest(input *GetHealthCheckStatusInput) 
 // API operation GetHealthCheckStatus for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchHealthCheck
+//   * ErrCodeNoSuchHealthCheck "NoSuchHealthCheck"
 //   No health check exists with the ID that you specified in the DeleteHealthCheck
 //   request.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckStatus
 func (c *Route53) GetHealthCheckStatus(input *GetHealthCheckStatusInput) (*GetHealthCheckStatusOutput, error) {
 	req, out := c.GetHealthCheckStatusRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// GetHealthCheckStatusWithContext is the same as GetHealthCheckStatus with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetHealthCheckStatus for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) GetHealthCheckStatusWithContext(ctx aws.Context, input *GetHealthCheckStatusInput, opts ...request.Option) (*GetHealthCheckStatusOutput, error) {
+	req, out := c.GetHealthCheckStatusRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opGetHostedZone = "GetHostedZone"
@@ -2025,6 +2539,7 @@ const opGetHostedZone = "GetHostedZone"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHostedZone
 func (c *Route53) GetHostedZoneRequest(input *GetHostedZoneInput) (req *request.Request, output *GetHostedZoneOutput) {
 	op := &request.Operation{
 		Name:       opGetHostedZone,
@@ -2036,9 +2551,8 @@ func (c *Route53) GetHostedZoneRequest(input *GetHostedZoneInput) (req *request.
 		input = &GetHostedZoneInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &GetHostedZoneOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -2056,16 +2570,32 @@ func (c *Route53) GetHostedZoneRequest(input *GetHostedZoneInput) (req *request.
 // API operation GetHostedZone for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchHostedZone
+//   * ErrCodeNoSuchHostedZone "NoSuchHostedZone"
 //   No hosted zone exists with the ID that you specified.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHostedZone
 func (c *Route53) GetHostedZone(input *GetHostedZoneInput) (*GetHostedZoneOutput, error) {
 	req, out := c.GetHostedZoneRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// GetHostedZoneWithContext is the same as GetHostedZone with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetHostedZone for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) GetHostedZoneWithContext(ctx aws.Context, input *GetHostedZoneInput, opts ...request.Option) (*GetHostedZoneOutput, error) {
+	req, out := c.GetHostedZoneRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opGetHostedZoneCount = "GetHostedZoneCount"
@@ -2094,6 +2624,7 @@ const opGetHostedZoneCount = "GetHostedZoneCount"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHostedZoneCount
 func (c *Route53) GetHostedZoneCountRequest(input *GetHostedZoneCountInput) (req *request.Request, output *GetHostedZoneCountOutput) {
 	op := &request.Operation{
 		Name:       opGetHostedZoneCount,
@@ -2105,9 +2636,8 @@ func (c *Route53) GetHostedZoneCountRequest(input *GetHostedZoneCountInput) (req
 		input = &GetHostedZoneCountInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &GetHostedZoneCountOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -2124,13 +2654,29 @@ func (c *Route53) GetHostedZoneCountRequest(input *GetHostedZoneCountInput) (req
 // API operation GetHostedZoneCount for usage and error information.
 //
 // Returned Error Codes:
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHostedZoneCount
 func (c *Route53) GetHostedZoneCount(input *GetHostedZoneCountInput) (*GetHostedZoneCountOutput, error) {
 	req, out := c.GetHostedZoneCountRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// GetHostedZoneCountWithContext is the same as GetHostedZoneCount with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetHostedZoneCount for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) GetHostedZoneCountWithContext(ctx aws.Context, input *GetHostedZoneCountInput, opts ...request.Option) (*GetHostedZoneCountOutput, error) {
+	req, out := c.GetHostedZoneCountRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opGetReusableDelegationSet = "GetReusableDelegationSet"
@@ -2159,6 +2705,7 @@ const opGetReusableDelegationSet = "GetReusableDelegationSet"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetReusableDelegationSet
 func (c *Route53) GetReusableDelegationSetRequest(input *GetReusableDelegationSetInput) (req *request.Request, output *GetReusableDelegationSetOutput) {
 	op := &request.Operation{
 		Name:       opGetReusableDelegationSet,
@@ -2170,9 +2717,8 @@ func (c *Route53) GetReusableDelegationSetRequest(input *GetReusableDelegationSe
 		input = &GetReusableDelegationSetInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &GetReusableDelegationSetOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -2189,19 +2735,35 @@ func (c *Route53) GetReusableDelegationSetRequest(input *GetReusableDelegationSe
 // API operation GetReusableDelegationSet for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchDelegationSet
+//   * ErrCodeNoSuchDelegationSet "NoSuchDelegationSet"
 //   A reusable delegation set with the specified ID does not exist.
 //
-//   * DelegationSetNotReusable
+//   * ErrCodeDelegationSetNotReusable "DelegationSetNotReusable"
 //   A reusable delegation set with the specified ID does not exist.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetReusableDelegationSet
 func (c *Route53) GetReusableDelegationSet(input *GetReusableDelegationSetInput) (*GetReusableDelegationSetOutput, error) {
 	req, out := c.GetReusableDelegationSetRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// GetReusableDelegationSetWithContext is the same as GetReusableDelegationSet with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetReusableDelegationSet for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) GetReusableDelegationSetWithContext(ctx aws.Context, input *GetReusableDelegationSetInput, opts ...request.Option) (*GetReusableDelegationSetOutput, error) {
+	req, out := c.GetReusableDelegationSetRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opGetTrafficPolicy = "GetTrafficPolicy"
@@ -2230,6 +2792,7 @@ const opGetTrafficPolicy = "GetTrafficPolicy"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetTrafficPolicy
 func (c *Route53) GetTrafficPolicyRequest(input *GetTrafficPolicyInput) (req *request.Request, output *GetTrafficPolicyOutput) {
 	op := &request.Operation{
 		Name:       opGetTrafficPolicy,
@@ -2241,9 +2804,8 @@ func (c *Route53) GetTrafficPolicyRequest(input *GetTrafficPolicyInput) (req *re
 		input = &GetTrafficPolicyInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &GetTrafficPolicyOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -2261,16 +2823,32 @@ func (c *Route53) GetTrafficPolicyRequest(input *GetTrafficPolicyInput) (req *re
 // API operation GetTrafficPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchTrafficPolicy
+//   * ErrCodeNoSuchTrafficPolicy "NoSuchTrafficPolicy"
 //   No traffic policy exists with the specified ID.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetTrafficPolicy
 func (c *Route53) GetTrafficPolicy(input *GetTrafficPolicyInput) (*GetTrafficPolicyOutput, error) {
 	req, out := c.GetTrafficPolicyRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// GetTrafficPolicyWithContext is the same as GetTrafficPolicy with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetTrafficPolicy for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) GetTrafficPolicyWithContext(ctx aws.Context, input *GetTrafficPolicyInput, opts ...request.Option) (*GetTrafficPolicyOutput, error) {
+	req, out := c.GetTrafficPolicyRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opGetTrafficPolicyInstance = "GetTrafficPolicyInstance"
@@ -2299,6 +2877,7 @@ const opGetTrafficPolicyInstance = "GetTrafficPolicyInstance"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetTrafficPolicyInstance
 func (c *Route53) GetTrafficPolicyInstanceRequest(input *GetTrafficPolicyInstanceInput) (req *request.Request, output *GetTrafficPolicyInstanceOutput) {
 	op := &request.Operation{
 		Name:       opGetTrafficPolicyInstance,
@@ -2310,9 +2889,8 @@ func (c *Route53) GetTrafficPolicyInstanceRequest(input *GetTrafficPolicyInstanc
 		input = &GetTrafficPolicyInstanceInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &GetTrafficPolicyInstanceOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -2339,16 +2917,32 @@ func (c *Route53) GetTrafficPolicyInstanceRequest(input *GetTrafficPolicyInstanc
 // API operation GetTrafficPolicyInstance for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchTrafficPolicyInstance
+//   * ErrCodeNoSuchTrafficPolicyInstance "NoSuchTrafficPolicyInstance"
 //   No traffic policy instance exists with the specified ID.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetTrafficPolicyInstance
 func (c *Route53) GetTrafficPolicyInstance(input *GetTrafficPolicyInstanceInput) (*GetTrafficPolicyInstanceOutput, error) {
 	req, out := c.GetTrafficPolicyInstanceRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// GetTrafficPolicyInstanceWithContext is the same as GetTrafficPolicyInstance with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetTrafficPolicyInstance for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) GetTrafficPolicyInstanceWithContext(ctx aws.Context, input *GetTrafficPolicyInstanceInput, opts ...request.Option) (*GetTrafficPolicyInstanceOutput, error) {
+	req, out := c.GetTrafficPolicyInstanceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opGetTrafficPolicyInstanceCount = "GetTrafficPolicyInstanceCount"
@@ -2377,6 +2971,7 @@ const opGetTrafficPolicyInstanceCount = "GetTrafficPolicyInstanceCount"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetTrafficPolicyInstanceCount
 func (c *Route53) GetTrafficPolicyInstanceCountRequest(input *GetTrafficPolicyInstanceCountInput) (req *request.Request, output *GetTrafficPolicyInstanceCountOutput) {
 	op := &request.Operation{
 		Name:       opGetTrafficPolicyInstanceCount,
@@ -2388,9 +2983,8 @@ func (c *Route53) GetTrafficPolicyInstanceCountRequest(input *GetTrafficPolicyIn
 		input = &GetTrafficPolicyInstanceCountInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &GetTrafficPolicyInstanceCountOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -2408,152 +3002,26 @@ func (c *Route53) GetTrafficPolicyInstanceCountRequest(input *GetTrafficPolicyIn
 //
 // See the AWS API reference guide for Amazon Route 53's
 // API operation GetTrafficPolicyInstanceCount for usage and error information.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetTrafficPolicyInstanceCount
 func (c *Route53) GetTrafficPolicyInstanceCount(input *GetTrafficPolicyInstanceCountInput) (*GetTrafficPolicyInstanceCountOutput, error) {
 	req, out := c.GetTrafficPolicyInstanceCountRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
 }
 
-const opListChangeBatchesByHostedZone = "ListChangeBatchesByHostedZone"
-
-// ListChangeBatchesByHostedZoneRequest generates a "aws/request.Request" representing the
-// client's request for the ListChangeBatchesByHostedZone operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// GetTrafficPolicyInstanceCountWithContext is the same as GetTrafficPolicyInstanceCount with the addition of
+// the ability to pass a context and additional request options.
 //
-// See ListChangeBatchesByHostedZone for usage and error information.
+// See GetTrafficPolicyInstanceCount for details on how to use this API operation.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListChangeBatchesByHostedZone method directly
-// instead.
-//
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
-//
-//    // Example sending a request using the ListChangeBatchesByHostedZoneRequest method.
-//    req, resp := client.ListChangeBatchesByHostedZoneRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
-//
-func (c *Route53) ListChangeBatchesByHostedZoneRequest(input *ListChangeBatchesByHostedZoneInput) (req *request.Request, output *ListChangeBatchesByHostedZoneOutput) {
-	if c.Client.Config.Logger != nil {
-		c.Client.Config.Logger.Log("This operation, ListChangeBatchesByHostedZone, has been deprecated")
-	}
-	op := &request.Operation{
-		Name:       opListChangeBatchesByHostedZone,
-		HTTPMethod: "GET",
-		HTTPPath:   "/2013-04-01/hostedzone/{Id}/changes",
-	}
-
-	if input == nil {
-		input = &ListChangeBatchesByHostedZoneInput{}
-	}
-
-	req = c.newRequest(op, input, output)
-	output = &ListChangeBatchesByHostedZoneOutput{}
-	req.Data = output
-	return
-}
-
-// ListChangeBatchesByHostedZone API operation for Amazon Route 53.
-//
-// Gets the list of ChangeBatches in a given time period for a given hosted
-// zone.
-//
-// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
-// with awserr.Error's Code and Message methods to get detailed information about
-// the error.
-//
-// See the AWS API reference guide for Amazon Route 53's
-// API operation ListChangeBatchesByHostedZone for usage and error information.
-//
-// Returned Error Codes:
-//   * NoSuchHostedZone
-//   No hosted zone exists with the ID that you specified.
-//
-//   * InvalidInput
-//   The input is not valid.
-//
-func (c *Route53) ListChangeBatchesByHostedZone(input *ListChangeBatchesByHostedZoneInput) (*ListChangeBatchesByHostedZoneOutput, error) {
-	req, out := c.ListChangeBatchesByHostedZoneRequest(input)
-	err := req.Send()
-	return out, err
-}
-
-const opListChangeBatchesByRRSet = "ListChangeBatchesByRRSet"
-
-// ListChangeBatchesByRRSetRequest generates a "aws/request.Request" representing the
-// client's request for the ListChangeBatchesByRRSet operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
-//
-// See ListChangeBatchesByRRSet for usage and error information.
-//
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListChangeBatchesByRRSet method directly
-// instead.
-//
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
-//
-//    // Example sending a request using the ListChangeBatchesByRRSetRequest method.
-//    req, resp := client.ListChangeBatchesByRRSetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
-//
-func (c *Route53) ListChangeBatchesByRRSetRequest(input *ListChangeBatchesByRRSetInput) (req *request.Request, output *ListChangeBatchesByRRSetOutput) {
-	if c.Client.Config.Logger != nil {
-		c.Client.Config.Logger.Log("This operation, ListChangeBatchesByRRSet, has been deprecated")
-	}
-	op := &request.Operation{
-		Name:       opListChangeBatchesByRRSet,
-		HTTPMethod: "GET",
-		HTTPPath:   "/2013-04-01/hostedzone/{Id}/rrsChanges",
-	}
-
-	if input == nil {
-		input = &ListChangeBatchesByRRSetInput{}
-	}
-
-	req = c.newRequest(op, input, output)
-	output = &ListChangeBatchesByRRSetOutput{}
-	req.Data = output
-	return
-}
-
-// ListChangeBatchesByRRSet API operation for Amazon Route 53.
-//
-// Gets the list of ChangeBatches in a given time period for a given hosted
-// zone and RRSet.
-//
-// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
-// with awserr.Error's Code and Message methods to get detailed information about
-// the error.
-//
-// See the AWS API reference guide for Amazon Route 53's
-// API operation ListChangeBatchesByRRSet for usage and error information.
-//
-// Returned Error Codes:
-//   * NoSuchHostedZone
-//   No hosted zone exists with the ID that you specified.
-//
-//   * InvalidInput
-//   The input is not valid.
-//
-func (c *Route53) ListChangeBatchesByRRSet(input *ListChangeBatchesByRRSetInput) (*ListChangeBatchesByRRSetOutput, error) {
-	req, out := c.ListChangeBatchesByRRSetRequest(input)
-	err := req.Send()
-	return out, err
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) GetTrafficPolicyInstanceCountWithContext(ctx aws.Context, input *GetTrafficPolicyInstanceCountInput, opts ...request.Option) (*GetTrafficPolicyInstanceCountOutput, error) {
+	req, out := c.GetTrafficPolicyInstanceCountRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opListGeoLocations = "ListGeoLocations"
@@ -2582,6 +3050,7 @@ const opListGeoLocations = "ListGeoLocations"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListGeoLocations
 func (c *Route53) ListGeoLocationsRequest(input *ListGeoLocationsInput) (req *request.Request, output *ListGeoLocationsOutput) {
 	op := &request.Operation{
 		Name:       opListGeoLocations,
@@ -2593,9 +3062,8 @@ func (c *Route53) ListGeoLocationsRequest(input *ListGeoLocationsInput) (req *re
 		input = &ListGeoLocationsInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &ListGeoLocationsOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -2618,13 +3086,29 @@ func (c *Route53) ListGeoLocationsRequest(input *ListGeoLocationsInput) (req *re
 // API operation ListGeoLocations for usage and error information.
 //
 // Returned Error Codes:
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListGeoLocations
 func (c *Route53) ListGeoLocations(input *ListGeoLocationsInput) (*ListGeoLocationsOutput, error) {
 	req, out := c.ListGeoLocationsRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// ListGeoLocationsWithContext is the same as ListGeoLocations with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListGeoLocations for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) ListGeoLocationsWithContext(ctx aws.Context, input *ListGeoLocationsInput, opts ...request.Option) (*ListGeoLocationsOutput, error) {
+	req, out := c.ListGeoLocationsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opListHealthChecks = "ListHealthChecks"
@@ -2653,6 +3137,7 @@ const opListHealthChecks = "ListHealthChecks"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListHealthChecks
 func (c *Route53) ListHealthChecksRequest(input *ListHealthChecksInput) (req *request.Request, output *ListHealthChecksOutput) {
 	op := &request.Operation{
 		Name:       opListHealthChecks,
@@ -2670,9 +3155,8 @@ func (c *Route53) ListHealthChecksRequest(input *ListHealthChecksInput) (req *re
 		input = &ListHealthChecksInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &ListHealthChecksOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -2696,17 +3180,33 @@ func (c *Route53) ListHealthChecksRequest(input *ListHealthChecksInput) (req *re
 // API operation ListHealthChecks for usage and error information.
 //
 // Returned Error Codes:
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * IncompatibleVersion
-//   The resource you are trying to access is unsupported on this Amazon Route
-//   53 endpoint. Please consider using a newer endpoint or a tool that does so.
+//   * ErrCodeIncompatibleVersion "IncompatibleVersion"
+//   The resource you're trying to access is unsupported on this Amazon Route
+//   53 endpoint.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListHealthChecks
 func (c *Route53) ListHealthChecks(input *ListHealthChecksInput) (*ListHealthChecksOutput, error) {
 	req, out := c.ListHealthChecksRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// ListHealthChecksWithContext is the same as ListHealthChecks with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListHealthChecks for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) ListHealthChecksWithContext(ctx aws.Context, input *ListHealthChecksInput, opts ...request.Option) (*ListHealthChecksOutput, error) {
+	req, out := c.ListHealthChecksRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 // ListHealthChecksPages iterates over the pages of a ListHealthChecks operation,
@@ -2726,12 +3226,37 @@ func (c *Route53) ListHealthChecks(input *ListHealthChecksInput) (*ListHealthChe
 //            return pageNum <= 3
 //        })
 //
-func (c *Route53) ListHealthChecksPages(input *ListHealthChecksInput, fn func(p *ListHealthChecksOutput, lastPage bool) (shouldContinue bool)) error {
-	page, _ := c.ListHealthChecksRequest(input)
-	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
-	return page.EachPage(func(p interface{}, lastPage bool) bool {
-		return fn(p.(*ListHealthChecksOutput), lastPage)
-	})
+func (c *Route53) ListHealthChecksPages(input *ListHealthChecksInput, fn func(*ListHealthChecksOutput, bool) bool) error {
+	return c.ListHealthChecksPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListHealthChecksPagesWithContext same as ListHealthChecksPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) ListHealthChecksPagesWithContext(ctx aws.Context, input *ListHealthChecksInput, fn func(*ListHealthChecksOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListHealthChecksInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListHealthChecksRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*ListHealthChecksOutput), !p.HasNextPage())
+	}
+	return p.Err()
 }
 
 const opListHostedZones = "ListHostedZones"
@@ -2760,6 +3285,7 @@ const opListHostedZones = "ListHostedZones"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListHostedZones
 func (c *Route53) ListHostedZonesRequest(input *ListHostedZonesInput) (req *request.Request, output *ListHostedZonesOutput) {
 	op := &request.Operation{
 		Name:       opListHostedZones,
@@ -2777,9 +3303,8 @@ func (c *Route53) ListHostedZonesRequest(input *ListHostedZonesInput) (req *requ
 		input = &ListHostedZonesInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &ListHostedZonesOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -2820,19 +3345,35 @@ func (c *Route53) ListHostedZonesRequest(input *ListHostedZonesInput) (req *requ
 // API operation ListHostedZones for usage and error information.
 //
 // Returned Error Codes:
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * NoSuchDelegationSet
+//   * ErrCodeNoSuchDelegationSet "NoSuchDelegationSet"
 //   A reusable delegation set with the specified ID does not exist.
 //
-//   * DelegationSetNotReusable
+//   * ErrCodeDelegationSetNotReusable "DelegationSetNotReusable"
 //   A reusable delegation set with the specified ID does not exist.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListHostedZones
 func (c *Route53) ListHostedZones(input *ListHostedZonesInput) (*ListHostedZonesOutput, error) {
 	req, out := c.ListHostedZonesRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// ListHostedZonesWithContext is the same as ListHostedZones with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListHostedZones for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) ListHostedZonesWithContext(ctx aws.Context, input *ListHostedZonesInput, opts ...request.Option) (*ListHostedZonesOutput, error) {
+	req, out := c.ListHostedZonesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 // ListHostedZonesPages iterates over the pages of a ListHostedZones operation,
@@ -2852,12 +3393,37 @@ func (c *Route53) ListHostedZones(input *ListHostedZonesInput) (*ListHostedZones
 //            return pageNum <= 3
 //        })
 //
-func (c *Route53) ListHostedZonesPages(input *ListHostedZonesInput, fn func(p *ListHostedZonesOutput, lastPage bool) (shouldContinue bool)) error {
-	page, _ := c.ListHostedZonesRequest(input)
-	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
-	return page.EachPage(func(p interface{}, lastPage bool) bool {
-		return fn(p.(*ListHostedZonesOutput), lastPage)
-	})
+func (c *Route53) ListHostedZonesPages(input *ListHostedZonesInput, fn func(*ListHostedZonesOutput, bool) bool) error {
+	return c.ListHostedZonesPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListHostedZonesPagesWithContext same as ListHostedZonesPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) ListHostedZonesPagesWithContext(ctx aws.Context, input *ListHostedZonesInput, fn func(*ListHostedZonesOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListHostedZonesInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListHostedZonesRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*ListHostedZonesOutput), !p.HasNextPage())
+	}
+	return p.Err()
 }
 
 const opListHostedZonesByName = "ListHostedZonesByName"
@@ -2886,6 +3452,7 @@ const opListHostedZonesByName = "ListHostedZonesByName"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListHostedZonesByName
 func (c *Route53) ListHostedZonesByNameRequest(input *ListHostedZonesByNameInput) (req *request.Request, output *ListHostedZonesByNameOutput) {
 	op := &request.Operation{
 		Name:       opListHostedZonesByName,
@@ -2897,9 +3464,8 @@ func (c *Route53) ListHostedZonesByNameRequest(input *ListHostedZonesByNameInput
 		input = &ListHostedZonesByNameInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &ListHostedZonesByNameOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -2965,16 +3531,32 @@ func (c *Route53) ListHostedZonesByNameRequest(input *ListHostedZonesByNameInput
 // API operation ListHostedZonesByName for usage and error information.
 //
 // Returned Error Codes:
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * InvalidDomainName
+//   * ErrCodeInvalidDomainName "InvalidDomainName"
 //   The specified domain name is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListHostedZonesByName
 func (c *Route53) ListHostedZonesByName(input *ListHostedZonesByNameInput) (*ListHostedZonesByNameOutput, error) {
 	req, out := c.ListHostedZonesByNameRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// ListHostedZonesByNameWithContext is the same as ListHostedZonesByName with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListHostedZonesByName for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) ListHostedZonesByNameWithContext(ctx aws.Context, input *ListHostedZonesByNameInput, opts ...request.Option) (*ListHostedZonesByNameOutput, error) {
+	req, out := c.ListHostedZonesByNameRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opListResourceRecordSets = "ListResourceRecordSets"
@@ -3003,6 +3585,7 @@ const opListResourceRecordSets = "ListResourceRecordSets"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListResourceRecordSets
 func (c *Route53) ListResourceRecordSetsRequest(input *ListResourceRecordSetsInput) (req *request.Request, output *ListResourceRecordSetsOutput) {
 	op := &request.Operation{
 		Name:       opListResourceRecordSets,
@@ -3020,9 +3603,8 @@ func (c *Route53) ListResourceRecordSetsRequest(input *ListResourceRecordSetsInp
 		input = &ListResourceRecordSetsInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &ListResourceRecordSetsOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -3076,16 +3658,32 @@ func (c *Route53) ListResourceRecordSetsRequest(input *ListResourceRecordSetsInp
 // API operation ListResourceRecordSets for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchHostedZone
+//   * ErrCodeNoSuchHostedZone "NoSuchHostedZone"
 //   No hosted zone exists with the ID that you specified.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListResourceRecordSets
 func (c *Route53) ListResourceRecordSets(input *ListResourceRecordSetsInput) (*ListResourceRecordSetsOutput, error) {
 	req, out := c.ListResourceRecordSetsRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// ListResourceRecordSetsWithContext is the same as ListResourceRecordSets with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListResourceRecordSets for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) ListResourceRecordSetsWithContext(ctx aws.Context, input *ListResourceRecordSetsInput, opts ...request.Option) (*ListResourceRecordSetsOutput, error) {
+	req, out := c.ListResourceRecordSetsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 // ListResourceRecordSetsPages iterates over the pages of a ListResourceRecordSets operation,
@@ -3105,12 +3703,37 @@ func (c *Route53) ListResourceRecordSets(input *ListResourceRecordSetsInput) (*L
 //            return pageNum <= 3
 //        })
 //
-func (c *Route53) ListResourceRecordSetsPages(input *ListResourceRecordSetsInput, fn func(p *ListResourceRecordSetsOutput, lastPage bool) (shouldContinue bool)) error {
-	page, _ := c.ListResourceRecordSetsRequest(input)
-	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
-	return page.EachPage(func(p interface{}, lastPage bool) bool {
-		return fn(p.(*ListResourceRecordSetsOutput), lastPage)
-	})
+func (c *Route53) ListResourceRecordSetsPages(input *ListResourceRecordSetsInput, fn func(*ListResourceRecordSetsOutput, bool) bool) error {
+	return c.ListResourceRecordSetsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListResourceRecordSetsPagesWithContext same as ListResourceRecordSetsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) ListResourceRecordSetsPagesWithContext(ctx aws.Context, input *ListResourceRecordSetsInput, fn func(*ListResourceRecordSetsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListResourceRecordSetsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListResourceRecordSetsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*ListResourceRecordSetsOutput), !p.HasNextPage())
+	}
+	return p.Err()
 }
 
 const opListReusableDelegationSets = "ListReusableDelegationSets"
@@ -3139,6 +3762,7 @@ const opListReusableDelegationSets = "ListReusableDelegationSets"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListReusableDelegationSets
 func (c *Route53) ListReusableDelegationSetsRequest(input *ListReusableDelegationSetsInput) (req *request.Request, output *ListReusableDelegationSetsOutput) {
 	op := &request.Operation{
 		Name:       opListReusableDelegationSets,
@@ -3150,9 +3774,8 @@ func (c *Route53) ListReusableDelegationSetsRequest(input *ListReusableDelegatio
 		input = &ListReusableDelegationSetsInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &ListReusableDelegationSetsOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -3177,13 +3800,29 @@ func (c *Route53) ListReusableDelegationSetsRequest(input *ListReusableDelegatio
 // API operation ListReusableDelegationSets for usage and error information.
 //
 // Returned Error Codes:
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListReusableDelegationSets
 func (c *Route53) ListReusableDelegationSets(input *ListReusableDelegationSetsInput) (*ListReusableDelegationSetsOutput, error) {
 	req, out := c.ListReusableDelegationSetsRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// ListReusableDelegationSetsWithContext is the same as ListReusableDelegationSets with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListReusableDelegationSets for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) ListReusableDelegationSetsWithContext(ctx aws.Context, input *ListReusableDelegationSetsInput, opts ...request.Option) (*ListReusableDelegationSetsOutput, error) {
+	req, out := c.ListReusableDelegationSetsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opListTagsForResource = "ListTagsForResource"
@@ -3212,6 +3851,7 @@ const opListTagsForResource = "ListTagsForResource"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTagsForResource
 func (c *Route53) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
 	op := &request.Operation{
 		Name:       opListTagsForResource,
@@ -3223,9 +3863,8 @@ func (c *Route53) ListTagsForResourceRequest(input *ListTagsForResourceInput) (r
 		input = &ListTagsForResourceInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &ListTagsForResourceOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -3245,30 +3884,46 @@ func (c *Route53) ListTagsForResourceRequest(input *ListTagsForResourceInput) (r
 // API operation ListTagsForResource for usage and error information.
 //
 // Returned Error Codes:
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * NoSuchHealthCheck
+//   * ErrCodeNoSuchHealthCheck "NoSuchHealthCheck"
 //   No health check exists with the ID that you specified in the DeleteHealthCheck
 //   request.
 //
-//   * NoSuchHostedZone
+//   * ErrCodeNoSuchHostedZone "NoSuchHostedZone"
 //   No hosted zone exists with the ID that you specified.
 //
-//   * PriorRequestNotComplete
+//   * ErrCodePriorRequestNotComplete "PriorRequestNotComplete"
 //   If Amazon Route 53 can't process a request before the next request arrives,
 //   it will reject subsequent requests for the same hosted zone and return an
 //   HTTP 400 error (Bad request). If Amazon Route 53 returns this error repeatedly
 //   for the same request, we recommend that you wait, in intervals of increasing
 //   duration, before you try the request again.
 //
-//   * ThrottlingException
-
+//   * ErrCodeThrottlingException "ThrottlingException"
+//   The limit on the number of requests per second was exceeded.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTagsForResource
 func (c *Route53) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
 	req, out := c.ListTagsForResourceRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// ListTagsForResourceWithContext is the same as ListTagsForResource with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListTagsForResource for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) ListTagsForResourceWithContext(ctx aws.Context, input *ListTagsForResourceInput, opts ...request.Option) (*ListTagsForResourceOutput, error) {
+	req, out := c.ListTagsForResourceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opListTagsForResources = "ListTagsForResources"
@@ -3297,6 +3952,7 @@ const opListTagsForResources = "ListTagsForResources"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTagsForResources
 func (c *Route53) ListTagsForResourcesRequest(input *ListTagsForResourcesInput) (req *request.Request, output *ListTagsForResourcesOutput) {
 	op := &request.Operation{
 		Name:       opListTagsForResources,
@@ -3308,9 +3964,8 @@ func (c *Route53) ListTagsForResourcesRequest(input *ListTagsForResourcesInput) 
 		input = &ListTagsForResourcesInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &ListTagsForResourcesOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -3330,30 +3985,46 @@ func (c *Route53) ListTagsForResourcesRequest(input *ListTagsForResourcesInput) 
 // API operation ListTagsForResources for usage and error information.
 //
 // Returned Error Codes:
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * NoSuchHealthCheck
+//   * ErrCodeNoSuchHealthCheck "NoSuchHealthCheck"
 //   No health check exists with the ID that you specified in the DeleteHealthCheck
 //   request.
 //
-//   * NoSuchHostedZone
+//   * ErrCodeNoSuchHostedZone "NoSuchHostedZone"
 //   No hosted zone exists with the ID that you specified.
 //
-//   * PriorRequestNotComplete
+//   * ErrCodePriorRequestNotComplete "PriorRequestNotComplete"
 //   If Amazon Route 53 can't process a request before the next request arrives,
 //   it will reject subsequent requests for the same hosted zone and return an
 //   HTTP 400 error (Bad request). If Amazon Route 53 returns this error repeatedly
 //   for the same request, we recommend that you wait, in intervals of increasing
 //   duration, before you try the request again.
 //
-//   * ThrottlingException
-
+//   * ErrCodeThrottlingException "ThrottlingException"
+//   The limit on the number of requests per second was exceeded.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTagsForResources
 func (c *Route53) ListTagsForResources(input *ListTagsForResourcesInput) (*ListTagsForResourcesOutput, error) {
 	req, out := c.ListTagsForResourcesRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// ListTagsForResourcesWithContext is the same as ListTagsForResources with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListTagsForResources for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) ListTagsForResourcesWithContext(ctx aws.Context, input *ListTagsForResourcesInput, opts ...request.Option) (*ListTagsForResourcesOutput, error) {
+	req, out := c.ListTagsForResourcesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opListTrafficPolicies = "ListTrafficPolicies"
@@ -3382,6 +4053,7 @@ const opListTrafficPolicies = "ListTrafficPolicies"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicies
 func (c *Route53) ListTrafficPoliciesRequest(input *ListTrafficPoliciesInput) (req *request.Request, output *ListTrafficPoliciesOutput) {
 	op := &request.Operation{
 		Name:       opListTrafficPolicies,
@@ -3393,9 +4065,8 @@ func (c *Route53) ListTrafficPoliciesRequest(input *ListTrafficPoliciesInput) (r
 		input = &ListTrafficPoliciesInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &ListTrafficPoliciesOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -3444,13 +4115,29 @@ func (c *Route53) ListTrafficPoliciesRequest(input *ListTrafficPoliciesInput) (r
 // API operation ListTrafficPolicies for usage and error information.
 //
 // Returned Error Codes:
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicies
 func (c *Route53) ListTrafficPolicies(input *ListTrafficPoliciesInput) (*ListTrafficPoliciesOutput, error) {
 	req, out := c.ListTrafficPoliciesRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// ListTrafficPoliciesWithContext is the same as ListTrafficPolicies with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListTrafficPolicies for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) ListTrafficPoliciesWithContext(ctx aws.Context, input *ListTrafficPoliciesInput, opts ...request.Option) (*ListTrafficPoliciesOutput, error) {
+	req, out := c.ListTrafficPoliciesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opListTrafficPolicyInstances = "ListTrafficPolicyInstances"
@@ -3479,6 +4166,7 @@ const opListTrafficPolicyInstances = "ListTrafficPolicyInstances"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyInstances
 func (c *Route53) ListTrafficPolicyInstancesRequest(input *ListTrafficPolicyInstancesInput) (req *request.Request, output *ListTrafficPolicyInstancesOutput) {
 	op := &request.Operation{
 		Name:       opListTrafficPolicyInstances,
@@ -3490,9 +4178,8 @@ func (c *Route53) ListTrafficPolicyInstancesRequest(input *ListTrafficPolicyInst
 		input = &ListTrafficPolicyInstancesInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &ListTrafficPolicyInstancesOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -3547,16 +4234,32 @@ func (c *Route53) ListTrafficPolicyInstancesRequest(input *ListTrafficPolicyInst
 // API operation ListTrafficPolicyInstances for usage and error information.
 //
 // Returned Error Codes:
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * NoSuchTrafficPolicyInstance
+//   * ErrCodeNoSuchTrafficPolicyInstance "NoSuchTrafficPolicyInstance"
 //   No traffic policy instance exists with the specified ID.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyInstances
 func (c *Route53) ListTrafficPolicyInstances(input *ListTrafficPolicyInstancesInput) (*ListTrafficPolicyInstancesOutput, error) {
 	req, out := c.ListTrafficPolicyInstancesRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// ListTrafficPolicyInstancesWithContext is the same as ListTrafficPolicyInstances with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListTrafficPolicyInstances for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) ListTrafficPolicyInstancesWithContext(ctx aws.Context, input *ListTrafficPolicyInstancesInput, opts ...request.Option) (*ListTrafficPolicyInstancesOutput, error) {
+	req, out := c.ListTrafficPolicyInstancesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opListTrafficPolicyInstancesByHostedZone = "ListTrafficPolicyInstancesByHostedZone"
@@ -3585,6 +4288,7 @@ const opListTrafficPolicyInstancesByHostedZone = "ListTrafficPolicyInstancesByHo
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyInstancesByHostedZone
 func (c *Route53) ListTrafficPolicyInstancesByHostedZoneRequest(input *ListTrafficPolicyInstancesByHostedZoneInput) (req *request.Request, output *ListTrafficPolicyInstancesByHostedZoneOutput) {
 	op := &request.Operation{
 		Name:       opListTrafficPolicyInstancesByHostedZone,
@@ -3596,9 +4300,8 @@ func (c *Route53) ListTrafficPolicyInstancesByHostedZoneRequest(input *ListTraff
 		input = &ListTrafficPolicyInstancesByHostedZoneInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &ListTrafficPolicyInstancesByHostedZoneOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -3653,19 +4356,35 @@ func (c *Route53) ListTrafficPolicyInstancesByHostedZoneRequest(input *ListTraff
 // API operation ListTrafficPolicyInstancesByHostedZone for usage and error information.
 //
 // Returned Error Codes:
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * NoSuchTrafficPolicyInstance
+//   * ErrCodeNoSuchTrafficPolicyInstance "NoSuchTrafficPolicyInstance"
 //   No traffic policy instance exists with the specified ID.
 //
-//   * NoSuchHostedZone
+//   * ErrCodeNoSuchHostedZone "NoSuchHostedZone"
 //   No hosted zone exists with the ID that you specified.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyInstancesByHostedZone
 func (c *Route53) ListTrafficPolicyInstancesByHostedZone(input *ListTrafficPolicyInstancesByHostedZoneInput) (*ListTrafficPolicyInstancesByHostedZoneOutput, error) {
 	req, out := c.ListTrafficPolicyInstancesByHostedZoneRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// ListTrafficPolicyInstancesByHostedZoneWithContext is the same as ListTrafficPolicyInstancesByHostedZone with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListTrafficPolicyInstancesByHostedZone for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) ListTrafficPolicyInstancesByHostedZoneWithContext(ctx aws.Context, input *ListTrafficPolicyInstancesByHostedZoneInput, opts ...request.Option) (*ListTrafficPolicyInstancesByHostedZoneOutput, error) {
+	req, out := c.ListTrafficPolicyInstancesByHostedZoneRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opListTrafficPolicyInstancesByPolicy = "ListTrafficPolicyInstancesByPolicy"
@@ -3694,6 +4413,7 @@ const opListTrafficPolicyInstancesByPolicy = "ListTrafficPolicyInstancesByPolicy
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyInstancesByPolicy
 func (c *Route53) ListTrafficPolicyInstancesByPolicyRequest(input *ListTrafficPolicyInstancesByPolicyInput) (req *request.Request, output *ListTrafficPolicyInstancesByPolicyOutput) {
 	op := &request.Operation{
 		Name:       opListTrafficPolicyInstancesByPolicy,
@@ -3705,9 +4425,8 @@ func (c *Route53) ListTrafficPolicyInstancesByPolicyRequest(input *ListTrafficPo
 		input = &ListTrafficPolicyInstancesByPolicyInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &ListTrafficPolicyInstancesByPolicyOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -3761,19 +4480,35 @@ func (c *Route53) ListTrafficPolicyInstancesByPolicyRequest(input *ListTrafficPo
 // API operation ListTrafficPolicyInstancesByPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * NoSuchTrafficPolicyInstance
+//   * ErrCodeNoSuchTrafficPolicyInstance "NoSuchTrafficPolicyInstance"
 //   No traffic policy instance exists with the specified ID.
 //
-//   * NoSuchTrafficPolicy
+//   * ErrCodeNoSuchTrafficPolicy "NoSuchTrafficPolicy"
 //   No traffic policy exists with the specified ID.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyInstancesByPolicy
 func (c *Route53) ListTrafficPolicyInstancesByPolicy(input *ListTrafficPolicyInstancesByPolicyInput) (*ListTrafficPolicyInstancesByPolicyOutput, error) {
 	req, out := c.ListTrafficPolicyInstancesByPolicyRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// ListTrafficPolicyInstancesByPolicyWithContext is the same as ListTrafficPolicyInstancesByPolicy with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListTrafficPolicyInstancesByPolicy for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) ListTrafficPolicyInstancesByPolicyWithContext(ctx aws.Context, input *ListTrafficPolicyInstancesByPolicyInput, opts ...request.Option) (*ListTrafficPolicyInstancesByPolicyOutput, error) {
+	req, out := c.ListTrafficPolicyInstancesByPolicyRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opListTrafficPolicyVersions = "ListTrafficPolicyVersions"
@@ -3802,6 +4537,7 @@ const opListTrafficPolicyVersions = "ListTrafficPolicyVersions"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyVersions
 func (c *Route53) ListTrafficPolicyVersionsRequest(input *ListTrafficPolicyVersionsInput) (req *request.Request, output *ListTrafficPolicyVersionsOutput) {
 	op := &request.Operation{
 		Name:       opListTrafficPolicyVersions,
@@ -3813,9 +4549,8 @@ func (c *Route53) ListTrafficPolicyVersionsRequest(input *ListTrafficPolicyVersi
 		input = &ListTrafficPolicyVersionsInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &ListTrafficPolicyVersionsOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -3864,16 +4599,137 @@ func (c *Route53) ListTrafficPolicyVersionsRequest(input *ListTrafficPolicyVersi
 // API operation ListTrafficPolicyVersions for usage and error information.
 //
 // Returned Error Codes:
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * NoSuchTrafficPolicy
+//   * ErrCodeNoSuchTrafficPolicy "NoSuchTrafficPolicy"
 //   No traffic policy exists with the specified ID.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyVersions
 func (c *Route53) ListTrafficPolicyVersions(input *ListTrafficPolicyVersionsInput) (*ListTrafficPolicyVersionsOutput, error) {
 	req, out := c.ListTrafficPolicyVersionsRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// ListTrafficPolicyVersionsWithContext is the same as ListTrafficPolicyVersions with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListTrafficPolicyVersions for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) ListTrafficPolicyVersionsWithContext(ctx aws.Context, input *ListTrafficPolicyVersionsInput, opts ...request.Option) (*ListTrafficPolicyVersionsOutput, error) {
+	req, out := c.ListTrafficPolicyVersionsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opListVPCAssociationAuthorizations = "ListVPCAssociationAuthorizations"
+
+// ListVPCAssociationAuthorizationsRequest generates a "aws/request.Request" representing the
+// client's request for the ListVPCAssociationAuthorizations operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See ListVPCAssociationAuthorizations for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListVPCAssociationAuthorizations method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListVPCAssociationAuthorizationsRequest method.
+//    req, resp := client.ListVPCAssociationAuthorizationsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListVPCAssociationAuthorizations
+func (c *Route53) ListVPCAssociationAuthorizationsRequest(input *ListVPCAssociationAuthorizationsInput) (req *request.Request, output *ListVPCAssociationAuthorizationsOutput) {
+	op := &request.Operation{
+		Name:       opListVPCAssociationAuthorizations,
+		HTTPMethod: "GET",
+		HTTPPath:   "/2013-04-01/hostedzone/{Id}/authorizevpcassociation",
+	}
+
+	if input == nil {
+		input = &ListVPCAssociationAuthorizationsInput{}
+	}
+
+	output = &ListVPCAssociationAuthorizationsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListVPCAssociationAuthorizations API operation for Amazon Route 53.
+//
+// Gets a list of the VPCs that were created by other accounts and that can
+// be associated with a specified hosted zone because you've submitted one or
+// more CreateVPCAssociationAuthorization requests.
+//
+// Send a GET request to the /2013-04-01/hostedzone/hosted zone ID/authorizevpcassociation
+// resource. The response to this request includes a VPCs element with a VPC
+// child element for each VPC that can be associated with the hosted zone.
+//
+// Amazon Route 53 returns up to 50 VPCs per page. To return fewer VPCs per
+// page, include the MaxResults parameter:
+//
+// /2013-04-01/hostedzone/hosted zone ID/authorizevpcassociation?MaxItems=VPCs
+// per page
+//
+// If the response includes a NextToken element, there are more VPCs to list.
+// To get the next page of VPCs, submit another ListVPCAssociationAuthorizations
+// request, and include the value of the NextToken element from the response
+// in the NextToken request parameter:
+//
+// /2013-04-01/hostedzone/hosted zone ID/authorizevpcassociation?MaxItems=VPCs
+// per page&NextToken=
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Route 53's
+// API operation ListVPCAssociationAuthorizations for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeNoSuchHostedZone "NoSuchHostedZone"
+//   No hosted zone exists with the ID that you specified.
+//
+//   * ErrCodeInvalidInput "InvalidInput"
+//   The input is not valid.
+//
+//   * ErrCodeInvalidPaginationToken "InvalidPaginationToken"
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListVPCAssociationAuthorizations
+func (c *Route53) ListVPCAssociationAuthorizations(input *ListVPCAssociationAuthorizationsInput) (*ListVPCAssociationAuthorizationsOutput, error) {
+	req, out := c.ListVPCAssociationAuthorizationsRequest(input)
+	return out, req.Send()
+}
+
+// ListVPCAssociationAuthorizationsWithContext is the same as ListVPCAssociationAuthorizations with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListVPCAssociationAuthorizations for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) ListVPCAssociationAuthorizationsWithContext(ctx aws.Context, input *ListVPCAssociationAuthorizationsInput, opts ...request.Option) (*ListVPCAssociationAuthorizationsOutput, error) {
+	req, out := c.ListVPCAssociationAuthorizationsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opTestDNSAnswer = "TestDNSAnswer"
@@ -3902,6 +4758,7 @@ const opTestDNSAnswer = "TestDNSAnswer"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/TestDNSAnswer
 func (c *Route53) TestDNSAnswerRequest(input *TestDNSAnswerInput) (req *request.Request, output *TestDNSAnswerOutput) {
 	op := &request.Operation{
 		Name:       opTestDNSAnswer,
@@ -3913,9 +4770,8 @@ func (c *Route53) TestDNSAnswerRequest(input *TestDNSAnswerInput) (req *request.
 		input = &TestDNSAnswerInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &TestDNSAnswerOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -3933,16 +4789,32 @@ func (c *Route53) TestDNSAnswerRequest(input *TestDNSAnswerInput) (req *request.
 // API operation TestDNSAnswer for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchHostedZone
+//   * ErrCodeNoSuchHostedZone "NoSuchHostedZone"
 //   No hosted zone exists with the ID that you specified.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/TestDNSAnswer
 func (c *Route53) TestDNSAnswer(input *TestDNSAnswerInput) (*TestDNSAnswerOutput, error) {
 	req, out := c.TestDNSAnswerRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// TestDNSAnswerWithContext is the same as TestDNSAnswer with the addition of
+// the ability to pass a context and additional request options.
+//
+// See TestDNSAnswer for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) TestDNSAnswerWithContext(ctx aws.Context, input *TestDNSAnswerInput, opts ...request.Option) (*TestDNSAnswerOutput, error) {
+	req, out := c.TestDNSAnswerRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opUpdateHealthCheck = "UpdateHealthCheck"
@@ -3971,6 +4843,7 @@ const opUpdateHealthCheck = "UpdateHealthCheck"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateHealthCheck
 func (c *Route53) UpdateHealthCheckRequest(input *UpdateHealthCheckInput) (req *request.Request, output *UpdateHealthCheckOutput) {
 	op := &request.Operation{
 		Name:       opUpdateHealthCheck,
@@ -3982,9 +4855,8 @@ func (c *Route53) UpdateHealthCheckRequest(input *UpdateHealthCheckInput) (req *
 		input = &UpdateHealthCheckInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &UpdateHealthCheckOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -3993,7 +4865,7 @@ func (c *Route53) UpdateHealthCheckRequest(input *UpdateHealthCheckInput) (req *
 // Updates an existing health check.
 //
 // Send a POST request to the /2013-04-01/healthcheck/health check ID resource.
-// The request body must include an XML document with an UpdateHealthCheckRequest
+// The request body must include a document with an UpdateHealthCheckRequest
 // element. For more information about updating health checks, see Creating,
 // Updating, and Deleting Health Checks (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/health-checks-creating-deleting.html)
 // in the Amazon Route 53 Developer Guide.
@@ -4006,21 +4878,37 @@ func (c *Route53) UpdateHealthCheckRequest(input *UpdateHealthCheckInput) (req *
 // API operation UpdateHealthCheck for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchHealthCheck
+//   * ErrCodeNoSuchHealthCheck "NoSuchHealthCheck"
 //   No health check exists with the ID that you specified in the DeleteHealthCheck
 //   request.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * HealthCheckVersionMismatch
+//   * ErrCodeHealthCheckVersionMismatch "HealthCheckVersionMismatch"
 //   The value of HealthCheckVersion in the request doesn't match the value of
 //   HealthCheckVersion in the health check.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateHealthCheck
 func (c *Route53) UpdateHealthCheck(input *UpdateHealthCheckInput) (*UpdateHealthCheckOutput, error) {
 	req, out := c.UpdateHealthCheckRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// UpdateHealthCheckWithContext is the same as UpdateHealthCheck with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateHealthCheck for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) UpdateHealthCheckWithContext(ctx aws.Context, input *UpdateHealthCheckInput, opts ...request.Option) (*UpdateHealthCheckOutput, error) {
+	req, out := c.UpdateHealthCheckRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opUpdateHostedZoneComment = "UpdateHostedZoneComment"
@@ -4049,6 +4937,7 @@ const opUpdateHostedZoneComment = "UpdateHostedZoneComment"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateHostedZoneComment
 func (c *Route53) UpdateHostedZoneCommentRequest(input *UpdateHostedZoneCommentInput) (req *request.Request, output *UpdateHostedZoneCommentOutput) {
 	op := &request.Operation{
 		Name:       opUpdateHostedZoneComment,
@@ -4060,9 +4949,8 @@ func (c *Route53) UpdateHostedZoneCommentRequest(input *UpdateHostedZoneCommentI
 		input = &UpdateHostedZoneCommentInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &UpdateHostedZoneCommentOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -4079,16 +4967,32 @@ func (c *Route53) UpdateHostedZoneCommentRequest(input *UpdateHostedZoneCommentI
 // API operation UpdateHostedZoneComment for usage and error information.
 //
 // Returned Error Codes:
-//   * NoSuchHostedZone
+//   * ErrCodeNoSuchHostedZone "NoSuchHostedZone"
 //   No hosted zone exists with the ID that you specified.
 //
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateHostedZoneComment
 func (c *Route53) UpdateHostedZoneComment(input *UpdateHostedZoneCommentInput) (*UpdateHostedZoneCommentOutput, error) {
 	req, out := c.UpdateHostedZoneCommentRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// UpdateHostedZoneCommentWithContext is the same as UpdateHostedZoneComment with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateHostedZoneComment for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) UpdateHostedZoneCommentWithContext(ctx aws.Context, input *UpdateHostedZoneCommentInput, opts ...request.Option) (*UpdateHostedZoneCommentOutput, error) {
+	req, out := c.UpdateHostedZoneCommentRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opUpdateTrafficPolicyComment = "UpdateTrafficPolicyComment"
@@ -4117,6 +5021,7 @@ const opUpdateTrafficPolicyComment = "UpdateTrafficPolicyComment"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateTrafficPolicyComment
 func (c *Route53) UpdateTrafficPolicyCommentRequest(input *UpdateTrafficPolicyCommentInput) (req *request.Request, output *UpdateTrafficPolicyCommentOutput) {
 	op := &request.Operation{
 		Name:       opUpdateTrafficPolicyComment,
@@ -4128,9 +5033,8 @@ func (c *Route53) UpdateTrafficPolicyCommentRequest(input *UpdateTrafficPolicyCo
 		input = &UpdateTrafficPolicyCommentInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &UpdateTrafficPolicyCommentOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -4151,20 +5055,36 @@ func (c *Route53) UpdateTrafficPolicyCommentRequest(input *UpdateTrafficPolicyCo
 // API operation UpdateTrafficPolicyComment for usage and error information.
 //
 // Returned Error Codes:
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * NoSuchTrafficPolicy
+//   * ErrCodeNoSuchTrafficPolicy "NoSuchTrafficPolicy"
 //   No traffic policy exists with the specified ID.
 //
-//   * ConcurrentModification
+//   * ErrCodeConcurrentModification "ConcurrentModification"
 //   Another user submitted a request to update the object at the same time that
 //   you did. Retry the request.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateTrafficPolicyComment
 func (c *Route53) UpdateTrafficPolicyComment(input *UpdateTrafficPolicyCommentInput) (*UpdateTrafficPolicyCommentOutput, error) {
 	req, out := c.UpdateTrafficPolicyCommentRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// UpdateTrafficPolicyCommentWithContext is the same as UpdateTrafficPolicyComment with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateTrafficPolicyComment for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) UpdateTrafficPolicyCommentWithContext(ctx aws.Context, input *UpdateTrafficPolicyCommentInput, opts ...request.Option) (*UpdateTrafficPolicyCommentOutput, error) {
+	req, out := c.UpdateTrafficPolicyCommentRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 const opUpdateTrafficPolicyInstance = "UpdateTrafficPolicyInstance"
@@ -4193,6 +5113,7 @@ const opUpdateTrafficPolicyInstance = "UpdateTrafficPolicyInstance"
 //        fmt.Println(resp)
 //    }
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateTrafficPolicyInstance
 func (c *Route53) UpdateTrafficPolicyInstanceRequest(input *UpdateTrafficPolicyInstanceInput) (req *request.Request, output *UpdateTrafficPolicyInstanceOutput) {
 	op := &request.Operation{
 		Name:       opUpdateTrafficPolicyInstance,
@@ -4204,9 +5125,8 @@ func (c *Route53) UpdateTrafficPolicyInstanceRequest(input *UpdateTrafficPolicyI
 		input = &UpdateTrafficPolicyInstanceInput{}
 	}
 
-	req = c.newRequest(op, input, output)
 	output = &UpdateTrafficPolicyInstanceOutput{}
-	req.Data = output
+	req = c.newRequest(op, input, output)
 	return
 }
 
@@ -4244,36 +5164,53 @@ func (c *Route53) UpdateTrafficPolicyInstanceRequest(input *UpdateTrafficPolicyI
 // API operation UpdateTrafficPolicyInstance for usage and error information.
 //
 // Returned Error Codes:
-//   * InvalidInput
+//   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
 //
-//   * NoSuchTrafficPolicy
+//   * ErrCodeNoSuchTrafficPolicy "NoSuchTrafficPolicy"
 //   No traffic policy exists with the specified ID.
 //
-//   * NoSuchTrafficPolicyInstance
+//   * ErrCodeNoSuchTrafficPolicyInstance "NoSuchTrafficPolicyInstance"
 //   No traffic policy instance exists with the specified ID.
 //
-//   * PriorRequestNotComplete
+//   * ErrCodePriorRequestNotComplete "PriorRequestNotComplete"
 //   If Amazon Route 53 can't process a request before the next request arrives,
 //   it will reject subsequent requests for the same hosted zone and return an
 //   HTTP 400 error (Bad request). If Amazon Route 53 returns this error repeatedly
 //   for the same request, we recommend that you wait, in intervals of increasing
 //   duration, before you try the request again.
 //
-//   * ConflictingTypes
+//   * ErrCodeConflictingTypes "ConflictingTypes"
 //   You tried to update a traffic policy instance by using a traffic policy version
 //   that has a different DNS type than the current type for the instance. You
 //   specified the type in the JSON document in the CreateTrafficPolicy or CreateTrafficPolicyVersionrequest.
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateTrafficPolicyInstance
 func (c *Route53) UpdateTrafficPolicyInstance(input *UpdateTrafficPolicyInstanceInput) (*UpdateTrafficPolicyInstanceOutput, error) {
 	req, out := c.UpdateTrafficPolicyInstanceRequest(input)
-	err := req.Send()
-	return out, err
+	return out, req.Send()
+}
+
+// UpdateTrafficPolicyInstanceWithContext is the same as UpdateTrafficPolicyInstance with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateTrafficPolicyInstance for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Route53) UpdateTrafficPolicyInstanceWithContext(ctx aws.Context, input *UpdateTrafficPolicyInstanceInput, opts ...request.Option) (*UpdateTrafficPolicyInstanceOutput, error) {
+	req, out := c.UpdateTrafficPolicyInstanceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
 }
 
 // A complex type that identifies the CloudWatch alarm that you want Amazon
 // Route 53 health checkers to use to determine whether this health check is
 // healthy.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/AlarmIdentifier
 type AlarmIdentifier struct {
 	_ struct{} `type:"structure"`
 
@@ -4288,7 +5225,8 @@ type AlarmIdentifier struct {
 	// healthy.
 	//
 	// For the current list of CloudWatch regions, see Amazon CloudWatch (http://docs.aws.amazon.com/general/latest/gr/rande.html#cw_region)
-	// in AWS Regions and Endpoints in the Amazon Web Services General Reference.
+	// in the AWS Regions and Endpoints chapter of the Amazon Web Services General
+	// Reference.
 	//
 	// Region is a required field
 	Region *string `min:"1" type:"string" required:"true" enum:"CloudWatchRegion"`
@@ -4326,85 +5264,96 @@ func (s *AlarmIdentifier) Validate() error {
 	return nil
 }
 
+// SetName sets the Name field's value.
+func (s *AlarmIdentifier) SetName(v string) *AlarmIdentifier {
+	s.Name = &v
+	return s
+}
+
+// SetRegion sets the Region field's value.
+func (s *AlarmIdentifier) SetRegion(v string) *AlarmIdentifier {
+	s.Region = &v
+	return s
+}
+
 // Alias resource record sets only: Information about the CloudFront distribution,
 // Elastic Beanstalk environment, ELB load balancer, Amazon S3 bucket, or Amazon
-// Route 53 resource record set to which you are redirecting queries. The Elastic
+// Route 53 resource record set that you're redirecting queries to. An Elastic
 // Beanstalk environment must have a regionalized subdomain.
 //
 // When creating resource record sets for a private hosted zone, note the following:
 //
-//    * Resource record sets cannot be created for CloudFront distributions
-//    in a private hosted zone.
+//    * Resource record sets can't be created for CloudFront distributions in
+//    a private hosted zone.
 //
 //    * Creating geolocation alias resource record sets or latency alias resource
 //    record sets in a private hosted zone is unsupported.
 //
 //    * For information about creating failover resource record sets in a private
 //    hosted zone, see Configuring Failover in a Private Hosted Zone (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-private-hosted-zones.html).
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/AliasTarget
 type AliasTarget struct {
 	_ struct{} `type:"structure"`
 
 	// Alias resource record sets only: The value that you specify depends on where
 	// you want to route queries:
 	//
-	//    * A CloudFront distribution: Specify the domain name that CloudFront assigned
-	//    when you created your distribution.
+	// CloudFront distributionSpecify the domain name that CloudFront assigned when
+	// you created your distribution.
 	//
 	// Your CloudFront distribution must include an alternate domain name that matches
-	//    the name of the resource record set. For example, if the name of the resource
-	//    record set is acme.example.com, your CloudFront distribution must include
-	//    acme.example.com as one of the alternate domain names. For more information,
-	//    see Using Alternate Domain Names (CNAMEs) (http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/CNAMEs.html)
-	//    in the Amazon CloudFront Developer Guide.
+	// the name of the resource record set. For example, if the name of the resource
+	// record set is acme.example.com, your CloudFront distribution must include
+	// acme.example.com as one of the alternate domain names. For more information,
+	// see Using Alternate Domain Names (CNAMEs) (http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/CNAMEs.html)
+	// in the Amazon CloudFront Developer Guide.
 	//
-	//    * Elastic Beanstalk environment: Specify the CNAME attribute for the environment.
-	//    (The environment must have a regionalized domain name.) You can use the
-	//    following methods to get the value of the CNAME attribute:
+	// Elastic Beanstalk environmentSpecify the CNAME attribute for the environment.
+	// (The environment must have a regionalized domain name.) You can use the following
+	// methods to get the value of the CNAME attribute:
 	//
-	// AWS Managment Console: For information about how to get the value by using
-	//    the console, see Using Custom Domains with Elastic Beanstalk (http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/customdomains.html)
-	//    in the AWS Elastic Beanstalk Developer Guide.
+	// AWS Management Console: For information about how to get the value by using
+	// the console, see Using Custom Domains with AWS Elastic Beanstalk (http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/customdomains.html)
+	// in the AWS Elastic Beanstalk Developer Guide.
 	//
-	// Elastic Load Balancing API: Use the DescribeEnvironments action to get the
-	//    value of the CNAME attribute. For more information, see DescribeEnvironments
-	//    (http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/API_DescribeEnvironments.html)
-	//    in the AWS Elastic Beanstalk API Reference.
+	// Elastic Beanstalk API: Use the DescribeEnvironments action to get the value
+	// of the CNAME attribute. For more information, see DescribeEnvironments (http://docs.aws.amazon.com/elasticbeanstalk/latest/api/API_DescribeEnvironments.html)
+	// in the AWS Elastic Beanstalk API Reference.
 	//
 	// AWS CLI: Use the describe-environments command to get the value of the CNAME
-	//    attribute. For more information, see describe-environments (http://docs.aws.amazon.com/cli/latest/reference/elasticbeanstalk/describe-environments.html)
-	//    in the AWS Command Line Interface Reference.
+	// attribute. For more information, see describe-environments (http://docs.aws.amazon.com/cli/latest/reference/elasticbeanstalk/describe-environments.html)
+	// in the AWS Command Line Interface Reference.
 	//
-	//    * An ELB load balancer: Specify the DNS name associated with the load
-	//    balancer. Get the DNS name by using the AWS Management Console, the ELB
-	//    API, or the AWS CLI. Use the same method to get values for HostedZoneId
-	//    and DNSName. If you get one value from the console and the other value
-	//    from the API or the CLI, creating the resource record set will fail.
+	// ELB load balancerSpecify the DNS name that is associated with the load balancer.
+	// Get the DNS name by using the AWS Management Console, the ELB API, or the
+	// AWS CLI.
 	//
-	// AWS Management Console: Go to the Amazon EC2 page, click Load Balancers in
-	//    the navigation pane, choose the load balancer, choose the Description
-	//    tab, and get the value of the DNS Name field that begins with dualstack.
-	//    Use the same process to get the Hosted Zone ID. See HostedZone$Id.
+	// AWS Management Console: Go to the EC2 page, choose Load Balancers in the
+	// navigation pane, choose the load balancer, choose the Description tab, and
+	// get the value of the DNS name field. (If you're routing traffic to a Classic
+	// Load Balancer, get the value that begins with dualstack.)
 	//
-	// Elastic Load Balancing API: Use DescribeLoadBalancers (http://docs.aws.amazon.com/ElasticLoadBalancing/latest/APIReference/API_DescribeLoadBalancers.html)
-	//    to get the value of CanonicalHostedZoneName. Use the same process to get
-	//    the CanonicalHostedZoneNameId. See HostedZone$Id.
+	// Elastic Load Balancing API: Use DescribeLoadBalancers to get the value of
+	// DNSName. For more information, see the applicable guide:
 	//
-	// AWS CLI: Use describe-load-balancers (http://docs.aws.amazon.com/ElasticLoadBalancing/latest/APIReference/API_DescribeLoadBalancers.html)
-	//    to get the value of CanonicalHostedZoneName. Use the same process to get
-	//    the CanonicalHostedZoneNameId. See HostedZoneId.
+	// Classic Load Balancer: DescribeLoadBalancers (http://docs.aws.amazon.com/elasticloadbalancing/2012-06-01/APIReference/API_DescribeLoadBalancers.html)
 	//
-	//    * An Amazon S3 bucket that is configured as a static website: Specify
-	//    the domain name of the Amazon S3 website endpoint in which you created
-	//    the bucket; for example, s3-website-us-east-1.amazonaws.com. For more
-	//    information about valid values, see the table Amazon Simple Storage Service
-	//    (S3) Website Endpoints (http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region)
-	//    in the Amazon Web Services General Reference. For more information about
-	//    using Amazon S3 buckets for websites, see Hosting a Static Website on
-	//    Amazon S3 (http://docs.aws.amazon.com/AmazonS3/latest/dev/WebsiteHosting.html)
-	//    in the Amazon Simple Storage Service Developer Guide.
+	// Application Load Balancer: DescribeLoadBalancers (http://docs.aws.amazon.com/elasticloadbalancing/latest/APIReference/API_DescribeLoadBalancers.html)
 	//
-	//    * Another Amazon Route 53 resource record set: Specify the value of the
-	//    Name element for a resource record set in the current hosted zone.
+	// AWS CLI: Use describe-load-balancers (http://docs.aws.amazon.com/cli/latest/reference/elb/describe-load-balancers.html)
+	// to get the value of DNSName.
+	//
+	// Amazon S3 bucket that is configured as a static websiteSpecify the domain
+	// name of the Amazon S3 website endpoint in which you created the bucket, for
+	// example, s3-website-us-east-2.amazonaws.com. For more information about valid
+	// values, see the table Amazon Simple Storage Service (S3) Website Endpoints
+	// (http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region) in the
+	// Amazon Web Services General Reference. For more information about using S3
+	// buckets for websites, see Getting Started with Amazon Route 53 (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/getting-started.html)
+	// in the Amazon Route 53 Developer Guide.
+	//
+	// Another Amazon Route 53 resource record setSpecify the value of the Name
+	// element for a resource record set in the current hosted zone.
 	//
 	// DNSName is a required field
 	DNSName *string `type:"string" required:"true"`
@@ -4443,7 +5392,7 @@ type AliasTarget struct {
 	//
 	// Note the following:
 	//
-	//    * You cannot set EvaluateTargetHealth to true when the alias target is
+	//    * You can't set EvaluateTargetHealth to true when the alias target is
 	//    a CloudFront distribution.
 	//
 	//    * If the AWS resource that you specify in AliasTarget is a resource record
@@ -4458,25 +5407,22 @@ type AliasTarget struct {
 	//    DNSName, and if the environment contains an ELB load balancer, Elastic
 	//    Load Balancing routes queries only to the healthy Amazon EC2 instances
 	//    that are registered with the load balancer. (An environment automatically
-	//    contains an ELB load balancer if it includes more than one Amazon EC2
-	//    instance.) If you set EvaluateTargetHealth to true and either no Amazon
-	//    EC2 instances are healthy or the load balancer itself is unhealthy, Amazon
-	//    Route 53 routes queries to other available resources that are healthy,
-	//    if any.
+	//    contains an ELB load balancer if it includes more than one EC2 instance.)
+	//    If you set EvaluateTargetHealth to true and either no EC2 instances are
+	//    healthy or the load balancer itself is unhealthy, Amazon Route 53 routes
+	//    queries to other available resources that are healthy, if any.
 	//
-	// If the environment contains a single Amazon EC2 instance, there are no special
-	//    requirements.
+	// If the environment contains a single EC2 instance, there are no special requirements.
 	//
 	//    * If you specify an ELB load balancer in AliasTarget, Elastic Load Balancing
-	//    routes queries only to the healthy Amazon EC2 instances that are registered
-	//    with the load balancer. If no Amazon EC2 instances are healthy or if the
-	//    load balancer itself is unhealthy, and if EvaluateTargetHealth is true
-	//    for the corresponding alias resource record set, Amazon Route 53 routes
-	//    queries to other resources. When you create a load balancer, you configure
-	//    settings for Elastic Load Balancing health checks; they're not Amazon
-	//    Route 53 health checks, but they perform a similar function. Do not create
-	//    Amazon Route 53 health checks for the Amazon EC2 instances that you register
-	//    with an ELB load balancer.
+	//    routes queries only to the healthy EC2 instances that are registered with
+	//    the load balancer. If no EC2 instances are healthy or if the load balancer
+	//    itself is unhealthy, and if EvaluateTargetHealth is true for the corresponding
+	//    alias resource record set, Amazon Route 53 routes queries to other resources.
+	//    When you create a load balancer, you configure settings for Elastic Load
+	//    Balancing health checks; they're not Amazon Route 53 health checks, but
+	//    they perform a similar function. Do not create Amazon Route 53 health
+	//    checks for the EC2 instances that you register with an ELB load balancer.
 	//
 	// For more information, see How Health Checks Work in More Complex Amazon Route
 	//    53 Configurations (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-complex-configs.html)
@@ -4492,45 +5438,52 @@ type AliasTarget struct {
 	// EvaluateTargetHealth is a required field
 	EvaluateTargetHealth *bool `type:"boolean" required:"true"`
 
-	// Alias resource records sets only: The value used depends on where the queries
-	// are routed:
+	// Alias resource records sets only: The value used depends on where you want
+	// to route traffic:
 	//
-	// A CloudFront distributionSpecify Z2FDTNDATAQYW2.
+	// CloudFront distributionSpecify Z2FDTNDATAQYW2.
 	//
-	// Alias resource record sets for CloudFront cannot be created in a private
-	// zone.
+	// Alias resource record sets for CloudFront can't be created in a private zone.
 	//
 	// Elastic Beanstalk environmentSpecify the hosted zone ID for the region in
 	// which you created the environment. The environment must have a regionalized
 	// subdomain. For a list of regions and the corresponding hosted zone IDs, see
 	// AWS Elastic Beanstalk (http://docs.aws.amazon.com/general/latest/gr/rande.html#elasticbeanstalk_region)
-	// in the Regions and Endpoints chapter of the AWS General Reference.
+	// in the "AWS Regions and Endpoints" chapter of the Amazon Web Services General
+	// Reference.
 	//
 	// ELB load balancerSpecify the value of the hosted zone ID for the load balancer.
 	// Use the following methods to get the hosted zone ID:
 	//
-	// AWS Management Console: Go to the Amazon EC2; page, click Load Balancers
-	// in the navigation pane, select the load balancer, and get the value of the
-	// Hosted Zone ID field on the Description tab. Use the same process to get
-	// the DNS Name. See HostedZone$Name.
+	// Elastic Load Balancing (http://docs.aws.amazon.com/general/latest/gr/rande.html#elb_region)
+	// table in the "AWS Regions and Endpoints" chapter of the Amazon Web Services
+	// General Reference: Use the value in the "Amazon Route 53 Hosted Zone ID"
+	// column that corresponds with the region that you created your load balancer
+	// in.
+	//
+	// AWS Management Console: Go to the Amazon EC2 page, click Load Balancers in
+	// the navigation pane, select the load balancer, and get the value of the Hosted
+	// zone field on the Description tab.
 	//
 	// Elastic Load Balancing API: Use DescribeLoadBalancers to get the value of
-	// CanonicalHostedZoneNameID. Use the same process to get the CanonicalHostedZoneName.
-	// See HostedZone$Name.
+	// CanonicalHostedZoneNameId. For more information, see the applicable guide:
+	//
+	// Classic Load Balancer: DescribeLoadBalancers (http://docs.aws.amazon.com/elasticloadbalancing/2012-06-01/APIReference/API_DescribeLoadBalancers.html)
+	//
+	// Application Load Balancer: DescribeLoadBalancers (http://docs.aws.amazon.com/elasticloadbalancing/latest/APIReference/API_DescribeLoadBalancers.html)
 	//
 	// AWS CLI: Use describe-load-balancers (http://docs.aws.amazon.com/cli/latest/reference/elb/describe-load-balancers.html)
-	// to get the value of CanonicalHostedZoneNameID. Use the same process to get
-	// the CanonicalHostedZoneName. See HostedZone$Name.
+	// to get the value of CanonicalHostedZoneNameID.
 	//
 	// An Amazon S3 bucket configured as a static websiteSpecify the hosted zone
-	// ID for the Amazon S3 website endpoint in which you created the bucket. For
-	// more information about valid values, see the table  Amazon S3 (S3) Website
-	// Endpoints (http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region)
-	// in the Amazon Web Services General Reference.
+	// ID for the region that you created the bucket in. For more information about
+	// valid values, see the Amazon Simple Storage Service Website Endpoints (http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region)
+	// table in the "AWS Regions and Endpoints" chapter of the Amazon Web Services
+	// General Reference.
 	//
 	// Another Amazon Route 53 resource record set in your hosted zoneSpecify the
-	// hosted zone ID of your hosted zone. (An alias resource record set cannot
-	// reference a resource record set in a different hosted zone.)
+	// hosted zone ID of your hosted zone. (An alias resource record set can't reference
+	// a resource record set in a different hosted zone.)
 	//
 	// HostedZoneId is a required field
 	HostedZoneId *string `type:"string" required:"true"`
@@ -4565,24 +5518,44 @@ func (s *AliasTarget) Validate() error {
 	return nil
 }
 
-// A complex type that contains information about the VPC and the hosted zone
-// that you want to associate.
+// SetDNSName sets the DNSName field's value.
+func (s *AliasTarget) SetDNSName(v string) *AliasTarget {
+	s.DNSName = &v
+	return s
+}
+
+// SetEvaluateTargetHealth sets the EvaluateTargetHealth field's value.
+func (s *AliasTarget) SetEvaluateTargetHealth(v bool) *AliasTarget {
+	s.EvaluateTargetHealth = &v
+	return s
+}
+
+// SetHostedZoneId sets the HostedZoneId field's value.
+func (s *AliasTarget) SetHostedZoneId(v string) *AliasTarget {
+	s.HostedZoneId = &v
+	return s
+}
+
+// A complex type that contains information about the request to associate a
+// VPC with a private hosted zone.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/AssociateVPCWithHostedZoneRequest
 type AssociateVPCWithHostedZoneInput struct {
 	_ struct{} `locationName:"AssociateVPCWithHostedZoneRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
 	// Optional: A comment about the association request.
 	Comment *string `type:"string"`
 
-	// The ID of the hosted zone you want to associate your VPC with.
+	// The ID of the private hosted zone that you want to associate an Amazon VPC
+	// with.
 	//
-	// Note that you cannot associate a VPC with a hosted zone that doesn't have
+	// Note that you can't associate a VPC with a hosted zone that doesn't have
 	// an existing VPC association.
 	//
 	// HostedZoneId is a required field
 	HostedZoneId *string `location:"uri" locationName:"Id" type:"string" required:"true"`
 
-	// A complex type containing information about the Amazon VPC that you're associating
-	// with the specified hosted zone.
+	// A complex type that contains information about the VPC that you want to associate
+	// with a private hosted zone.
 	//
 	// VPC is a required field
 	VPC *VPC `type:"structure" required:"true"`
@@ -4619,7 +5592,27 @@ func (s *AssociateVPCWithHostedZoneInput) Validate() error {
 	return nil
 }
 
-// A complex type that contains the response information for the hosted zone.
+// SetComment sets the Comment field's value.
+func (s *AssociateVPCWithHostedZoneInput) SetComment(v string) *AssociateVPCWithHostedZoneInput {
+	s.Comment = &v
+	return s
+}
+
+// SetHostedZoneId sets the HostedZoneId field's value.
+func (s *AssociateVPCWithHostedZoneInput) SetHostedZoneId(v string) *AssociateVPCWithHostedZoneInput {
+	s.HostedZoneId = &v
+	return s
+}
+
+// SetVPC sets the VPC field's value.
+func (s *AssociateVPCWithHostedZoneInput) SetVPC(v *VPC) *AssociateVPCWithHostedZoneInput {
+	s.VPC = v
+	return s
+}
+
+// A complex type that contains the response information for the AssociateVPCWithHostedZone
+// request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/AssociateVPCWithHostedZoneResponse
 type AssociateVPCWithHostedZoneOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4639,7 +5632,14 @@ func (s AssociateVPCWithHostedZoneOutput) GoString() string {
 	return s.String()
 }
 
+// SetChangeInfo sets the ChangeInfo field's value.
+func (s *AssociateVPCWithHostedZoneOutput) SetChangeInfo(v *ChangeInfo) *AssociateVPCWithHostedZoneOutput {
+	s.ChangeInfo = v
+	return s
+}
+
 // The information for each resource record set that you want to change.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/Change
 type Change struct {
 	_ struct{} `type:"structure"`
 
@@ -4647,30 +5647,58 @@ type Change struct {
 	//
 	//    * CREATE: Creates a resource record set that has the specified values.
 	//
-	//    * DELETE: Deletes a existing resource record set that has the specified
-	//    values for Name, Type, SetIdentifier (for latency, weighted, geolocation,
-	//    and failover resource record sets), and TTL (except alias resource record
-	//    sets, for which the TTL is determined by the AWS resource that you're
-	//    routing DNS queries to).
+	//    * DELETE: Deletes a existing resource record set.
 	//
 	// To delete the resource record set that is associated with a traffic policy
-	//    instance, use DeleteTrafficPolicyInstance. Amazon Route 53will delete
+	//    instance, use DeleteTrafficPolicyInstance. Amazon Route 53 will delete
 	//    the resource record set automatically. If you delete the resource record
 	//    set by using ChangeResourceRecordSets, Amazon Route 53 doesn't automatically
 	//    delete the traffic policy instance, and you'll continue to be charged
 	//    for it even though it's no longer in use.
 	//
-	//    * UPSERT: If a resource record set does not already exist, Amazon Route
+	//    * UPSERT: If a resource record set doesn't already exist, Amazon Route
 	//    53 creates it. If a resource record set does exist, Amazon Route 53 updates
-	//    it with the values in the request. Amazon Route 53 can update an existing
-	//    resource record set only when all of the following values match: Name,
-	//    Type, and SetIdentifier (for weighted, latency, geolocation, and failover
-	//    resource record sets).
+	//    it with the values in the request.
+	//
+	// The values that you need to include in the request depend on the type of
+	// resource record set that you're creating, deleting, or updating:
+	//
+	// Basic resource record sets (excluding alias, failover, geolocation, latency,
+	// and weighted resource record sets)
+	//
+	//    * Name
+	//
+	//    * Type
+	//
+	//    * TTL
+	//
+	// Failover, geolocation, latency, or weighted resource record sets (excluding
+	// alias resource record sets)
+	//
+	//    * Name
+	//
+	//    * Type
+	//
+	//    * TTL
+	//
+	//    * SetIdentifier
+	//
+	// Alias resource record sets (including failover alias, geolocation alias,
+	// latency alias, and weighted alias resource record sets)
+	//
+	//    * Name
+	//
+	//    * Type
+	//
+	//    * AliasTarget (includes DNSName, EvaluateTargetHealth, and HostedZoneId)
+	//
+	//    * SetIdentifier (for failover, geolocation, latency, and weighted resource
+	//    record sets)
 	//
 	// Action is a required field
 	Action *string `type:"string" required:"true" enum:"ChangeAction"`
 
-	// Information about the resource record set to create or delete.
+	// Information about the resource record set to create, delete, or update.
 	//
 	// ResourceRecordSet is a required field
 	ResourceRecordSet *ResourceRecordSet `type:"structure" required:"true"`
@@ -4707,7 +5735,20 @@ func (s *Change) Validate() error {
 	return nil
 }
 
+// SetAction sets the Action field's value.
+func (s *Change) SetAction(v string) *Change {
+	s.Action = &v
+	return s
+}
+
+// SetResourceRecordSet sets the ResourceRecordSet field's value.
+func (s *Change) SetResourceRecordSet(v *ResourceRecordSet) *Change {
+	s.ResourceRecordSet = v
+	return s
+}
+
 // The information for a change request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ChangeBatch
 type ChangeBatch struct {
 	_ struct{} `type:"structure"`
 
@@ -4756,56 +5797,21 @@ func (s *ChangeBatch) Validate() error {
 	return nil
 }
 
-// A complex type that lists the changes and information for a ChangeBatch.
-type ChangeBatchRecord struct {
-	_ struct{} `deprecated:"true" type:"structure"`
-
-	// A list of changes made in the ChangeBatch.
-	Changes []*Change `locationNameList:"Change" min:"1" type:"list"`
-
-	// A complex type that describes change information about changes made to your
-	// hosted zone.
-	//
-	// This element contains an ID that you use when performing a GetChange action
-	// to get detailed information about the change.
-	Comment *string `type:"string"`
-
-	// The ID of the request. Use this ID to track when the change has completed
-	// across all Amazon Route 53 DNS servers.
-	//
-	// Id is a required field
-	Id *string `type:"string" required:"true"`
-
-	// The current state of the request. PENDING indicates that this request has
-	// not yet been applied to all Amazon Route 53 DNS servers.
-	//
-	// Valid Values: PENDING | INSYNC
-	//
-	// Status is a required field
-	Status *string `type:"string" required:"true" enum:"ChangeStatus"`
-
-	// The date and time the change was submitted, in the format YYYY-MM-DDThh:mm:ssZ,
-	// as specified in the ISO 8601 standard (for example, 2009-11-19T19:37:58Z).
-	// The Z after the time indicates that the time is listed in Coordinated Universal
-	// Time (UTC).
-	SubmittedAt *time.Time `type:"timestamp" timestampFormat:"iso8601"`
-
-	// The AWS account ID attached to the changes.
-	Submitter *string `type:"string"`
+// SetChanges sets the Changes field's value.
+func (s *ChangeBatch) SetChanges(v []*Change) *ChangeBatch {
+	s.Changes = v
+	return s
 }
 
-// String returns the string representation
-func (s ChangeBatchRecord) String() string {
-	return awsutil.Prettify(s)
-}
-
-// GoString returns the string representation
-func (s ChangeBatchRecord) GoString() string {
-	return s.String()
+// SetComment sets the Comment field's value.
+func (s *ChangeBatch) SetComment(v string) *ChangeBatch {
+	s.Comment = &v
+	return s
 }
 
 // A complex type that describes change information about changes made to your
 // hosted zone.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ChangeInfo
 type ChangeInfo struct {
 	_ struct{} `type:"structure"`
 
@@ -4845,7 +5851,32 @@ func (s ChangeInfo) GoString() string {
 	return s.String()
 }
 
+// SetComment sets the Comment field's value.
+func (s *ChangeInfo) SetComment(v string) *ChangeInfo {
+	s.Comment = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *ChangeInfo) SetId(v string) *ChangeInfo {
+	s.Id = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *ChangeInfo) SetStatus(v string) *ChangeInfo {
+	s.Status = &v
+	return s
+}
+
+// SetSubmittedAt sets the SubmittedAt field's value.
+func (s *ChangeInfo) SetSubmittedAt(v time.Time) *ChangeInfo {
+	s.SubmittedAt = &v
+	return s
+}
+
 // A complex type that contains change information for the resource record set.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ChangeResourceRecordSetsRequest
 type ChangeResourceRecordSetsInput struct {
 	_ struct{} `locationName:"ChangeResourceRecordSetsRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -4892,7 +5923,20 @@ func (s *ChangeResourceRecordSetsInput) Validate() error {
 	return nil
 }
 
+// SetChangeBatch sets the ChangeBatch field's value.
+func (s *ChangeResourceRecordSetsInput) SetChangeBatch(v *ChangeBatch) *ChangeResourceRecordSetsInput {
+	s.ChangeBatch = v
+	return s
+}
+
+// SetHostedZoneId sets the HostedZoneId field's value.
+func (s *ChangeResourceRecordSetsInput) SetHostedZoneId(v string) *ChangeResourceRecordSetsInput {
+	s.HostedZoneId = &v
+	return s
+}
+
 // A complex type containing the response for the request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ChangeResourceRecordSetsResponse
 type ChangeResourceRecordSetsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4916,8 +5960,15 @@ func (s ChangeResourceRecordSetsOutput) GoString() string {
 	return s.String()
 }
 
+// SetChangeInfo sets the ChangeInfo field's value.
+func (s *ChangeResourceRecordSetsOutput) SetChangeInfo(v *ChangeInfo) *ChangeResourceRecordSetsOutput {
+	s.ChangeInfo = v
+	return s
+}
+
 // A complex type that contains information about the tags that you want to
 // add, edit, or delete.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ChangeTagsForResourceRequest
 type ChangeTagsForResourceInput struct {
 	_ struct{} `locationName:"ChangeTagsForResourceRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -4979,7 +6030,32 @@ func (s *ChangeTagsForResourceInput) Validate() error {
 	return nil
 }
 
+// SetAddTags sets the AddTags field's value.
+func (s *ChangeTagsForResourceInput) SetAddTags(v []*Tag) *ChangeTagsForResourceInput {
+	s.AddTags = v
+	return s
+}
+
+// SetRemoveTagKeys sets the RemoveTagKeys field's value.
+func (s *ChangeTagsForResourceInput) SetRemoveTagKeys(v []*string) *ChangeTagsForResourceInput {
+	s.RemoveTagKeys = v
+	return s
+}
+
+// SetResourceId sets the ResourceId field's value.
+func (s *ChangeTagsForResourceInput) SetResourceId(v string) *ChangeTagsForResourceInput {
+	s.ResourceId = &v
+	return s
+}
+
+// SetResourceType sets the ResourceType field's value.
+func (s *ChangeTagsForResourceInput) SetResourceType(v string) *ChangeTagsForResourceInput {
+	s.ResourceType = &v
+	return s
+}
+
 // Empty response for the request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ChangeTagsForResourceResponse
 type ChangeTagsForResourceOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4996,6 +6072,7 @@ func (s ChangeTagsForResourceOutput) GoString() string {
 
 // A complex type that contains information about the CloudWatch alarm that
 // Amazon Route 53 is monitoring for this health check.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CloudWatchAlarmConfiguration
 type CloudWatchAlarmConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -5007,8 +6084,8 @@ type CloudWatchAlarmConfiguration struct {
 
 	// For the metric that the CloudWatch alarm is associated with, a complex type
 	// that contains information about the dimensions for the metric.For information,
-	// see Amazon CloudWatch Namespaces, Dimensions, and Metrics Reference ( http://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html)
-	// in the Amazon CloudWatch Developer Guide.
+	// see Amazon CloudWatch Namespaces, Dimensions, and Metrics Reference (http://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html)
+	// in the Amazon CloudWatch User Guide.
 	Dimensions []*Dimension `locationNameList:"Dimension" type:"list"`
 
 	// For the metric that the CloudWatch alarm is associated with, the number of
@@ -5024,7 +6101,7 @@ type CloudWatchAlarmConfiguration struct {
 
 	// The namespace of the metric that the alarm is associated with. For more information,
 	// see Amazon CloudWatch Namespaces, Dimensions, and Metrics Reference (http://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html)
-	// in the Amazon CloudWatch Developer Guide.
+	// in the Amazon CloudWatch User Guide.
 	//
 	// Namespace is a required field
 	Namespace *string `min:"1" type:"string" required:"true"`
@@ -5058,7 +6135,56 @@ func (s CloudWatchAlarmConfiguration) GoString() string {
 	return s.String()
 }
 
+// SetComparisonOperator sets the ComparisonOperator field's value.
+func (s *CloudWatchAlarmConfiguration) SetComparisonOperator(v string) *CloudWatchAlarmConfiguration {
+	s.ComparisonOperator = &v
+	return s
+}
+
+// SetDimensions sets the Dimensions field's value.
+func (s *CloudWatchAlarmConfiguration) SetDimensions(v []*Dimension) *CloudWatchAlarmConfiguration {
+	s.Dimensions = v
+	return s
+}
+
+// SetEvaluationPeriods sets the EvaluationPeriods field's value.
+func (s *CloudWatchAlarmConfiguration) SetEvaluationPeriods(v int64) *CloudWatchAlarmConfiguration {
+	s.EvaluationPeriods = &v
+	return s
+}
+
+// SetMetricName sets the MetricName field's value.
+func (s *CloudWatchAlarmConfiguration) SetMetricName(v string) *CloudWatchAlarmConfiguration {
+	s.MetricName = &v
+	return s
+}
+
+// SetNamespace sets the Namespace field's value.
+func (s *CloudWatchAlarmConfiguration) SetNamespace(v string) *CloudWatchAlarmConfiguration {
+	s.Namespace = &v
+	return s
+}
+
+// SetPeriod sets the Period field's value.
+func (s *CloudWatchAlarmConfiguration) SetPeriod(v int64) *CloudWatchAlarmConfiguration {
+	s.Period = &v
+	return s
+}
+
+// SetStatistic sets the Statistic field's value.
+func (s *CloudWatchAlarmConfiguration) SetStatistic(v string) *CloudWatchAlarmConfiguration {
+	s.Statistic = &v
+	return s
+}
+
+// SetThreshold sets the Threshold field's value.
+func (s *CloudWatchAlarmConfiguration) SetThreshold(v float64) *CloudWatchAlarmConfiguration {
+	s.Threshold = &v
+	return s
+}
+
 // A complex type that contains the health check request information.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateHealthCheckRequest
 type CreateHealthCheckInput struct {
 	_ struct{} `locationName:"CreateHealthCheckRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -5110,7 +6236,20 @@ func (s *CreateHealthCheckInput) Validate() error {
 	return nil
 }
 
+// SetCallerReference sets the CallerReference field's value.
+func (s *CreateHealthCheckInput) SetCallerReference(v string) *CreateHealthCheckInput {
+	s.CallerReference = &v
+	return s
+}
+
+// SetHealthCheckConfig sets the HealthCheckConfig field's value.
+func (s *CreateHealthCheckInput) SetHealthCheckConfig(v *HealthCheckConfig) *CreateHealthCheckInput {
+	s.HealthCheckConfig = v
+	return s
+}
+
 // A complex type containing the response information for the new health check.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateHealthCheckResponse
 type CreateHealthCheckOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5135,7 +6274,20 @@ func (s CreateHealthCheckOutput) GoString() string {
 	return s.String()
 }
 
+// SetHealthCheck sets the HealthCheck field's value.
+func (s *CreateHealthCheckOutput) SetHealthCheck(v *HealthCheck) *CreateHealthCheckOutput {
+	s.HealthCheck = v
+	return s
+}
+
+// SetLocation sets the Location field's value.
+func (s *CreateHealthCheckOutput) SetLocation(v string) *CreateHealthCheckOutput {
+	s.Location = &v
+	return s
+}
+
 // A complex type containing the hosted zone request information.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateHostedZoneRequest
 type CreateHostedZoneInput struct {
 	_ struct{} `locationName:"CreateHostedZoneRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -5180,7 +6332,7 @@ type CreateHostedZoneInput struct {
 	Name *string `type:"string" required:"true"`
 
 	// The VPC that you want your hosted zone to be associated with. By providing
-	// this parameter, your newly created hosted cannot be resolved anywhere other
+	// this parameter, your newly created hosted can't be resolved anywhere other
 	// than the given VPC.
 	VPC *VPC `type:"structure"`
 }
@@ -5219,7 +6371,38 @@ func (s *CreateHostedZoneInput) Validate() error {
 	return nil
 }
 
+// SetCallerReference sets the CallerReference field's value.
+func (s *CreateHostedZoneInput) SetCallerReference(v string) *CreateHostedZoneInput {
+	s.CallerReference = &v
+	return s
+}
+
+// SetDelegationSetId sets the DelegationSetId field's value.
+func (s *CreateHostedZoneInput) SetDelegationSetId(v string) *CreateHostedZoneInput {
+	s.DelegationSetId = &v
+	return s
+}
+
+// SetHostedZoneConfig sets the HostedZoneConfig field's value.
+func (s *CreateHostedZoneInput) SetHostedZoneConfig(v *HostedZoneConfig) *CreateHostedZoneInput {
+	s.HostedZoneConfig = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *CreateHostedZoneInput) SetName(v string) *CreateHostedZoneInput {
+	s.Name = &v
+	return s
+}
+
+// SetVPC sets the VPC field's value.
+func (s *CreateHostedZoneInput) SetVPC(v *VPC) *CreateHostedZoneInput {
+	s.VPC = v
+	return s
+}
+
 // A complex type containing the response information for the hosted zone.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateHostedZoneResponse
 type CreateHostedZoneOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5258,6 +6441,37 @@ func (s CreateHostedZoneOutput) GoString() string {
 	return s.String()
 }
 
+// SetChangeInfo sets the ChangeInfo field's value.
+func (s *CreateHostedZoneOutput) SetChangeInfo(v *ChangeInfo) *CreateHostedZoneOutput {
+	s.ChangeInfo = v
+	return s
+}
+
+// SetDelegationSet sets the DelegationSet field's value.
+func (s *CreateHostedZoneOutput) SetDelegationSet(v *DelegationSet) *CreateHostedZoneOutput {
+	s.DelegationSet = v
+	return s
+}
+
+// SetHostedZone sets the HostedZone field's value.
+func (s *CreateHostedZoneOutput) SetHostedZone(v *HostedZone) *CreateHostedZoneOutput {
+	s.HostedZone = v
+	return s
+}
+
+// SetLocation sets the Location field's value.
+func (s *CreateHostedZoneOutput) SetLocation(v string) *CreateHostedZoneOutput {
+	s.Location = &v
+	return s
+}
+
+// SetVPC sets the VPC field's value.
+func (s *CreateHostedZoneOutput) SetVPC(v *VPC) *CreateHostedZoneOutput {
+	s.VPC = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateReusableDelegationSetRequest
 type CreateReusableDelegationSetInput struct {
 	_ struct{} `locationName:"CreateReusableDelegationSetRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -5301,6 +6515,19 @@ func (s *CreateReusableDelegationSetInput) Validate() error {
 	return nil
 }
 
+// SetCallerReference sets the CallerReference field's value.
+func (s *CreateReusableDelegationSetInput) SetCallerReference(v string) *CreateReusableDelegationSetInput {
+	s.CallerReference = &v
+	return s
+}
+
+// SetHostedZoneId sets the HostedZoneId field's value.
+func (s *CreateReusableDelegationSetInput) SetHostedZoneId(v string) *CreateReusableDelegationSetInput {
+	s.HostedZoneId = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateReusableDelegationSetResponse
 type CreateReusableDelegationSetOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5325,8 +6552,21 @@ func (s CreateReusableDelegationSetOutput) GoString() string {
 	return s.String()
 }
 
+// SetDelegationSet sets the DelegationSet field's value.
+func (s *CreateReusableDelegationSetOutput) SetDelegationSet(v *DelegationSet) *CreateReusableDelegationSetOutput {
+	s.DelegationSet = v
+	return s
+}
+
+// SetLocation sets the Location field's value.
+func (s *CreateReusableDelegationSetOutput) SetLocation(v string) *CreateReusableDelegationSetOutput {
+	s.Location = &v
+	return s
+}
+
 // A complex type that contains information about the traffic policy that you
 // want to create.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateTrafficPolicyRequest
 type CreateTrafficPolicyInput struct {
 	_ struct{} `locationName:"CreateTrafficPolicyRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -5334,8 +6574,7 @@ type CreateTrafficPolicyInput struct {
 	Comment *string `type:"string"`
 
 	// The definition of this traffic policy in JSON format. For more information,
-	// see Traffic Policy Document Format (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/api-policies-traffic-policy-document-format.html)
-	// in the Amazon Route 53 API Reference.
+	// see Traffic Policy Document Format (http://docs.aws.amazon.com/Route53/latest/APIReference/api-policies-traffic-policy-document-format.html).
 	//
 	// Document is a required field
 	Document *string `type:"string" required:"true"`
@@ -5372,8 +6611,27 @@ func (s *CreateTrafficPolicyInput) Validate() error {
 	return nil
 }
 
+// SetComment sets the Comment field's value.
+func (s *CreateTrafficPolicyInput) SetComment(v string) *CreateTrafficPolicyInput {
+	s.Comment = &v
+	return s
+}
+
+// SetDocument sets the Document field's value.
+func (s *CreateTrafficPolicyInput) SetDocument(v string) *CreateTrafficPolicyInput {
+	s.Document = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *CreateTrafficPolicyInput) SetName(v string) *CreateTrafficPolicyInput {
+	s.Name = &v
+	return s
+}
+
 // A complex type that contains information about the resource record sets that
 // you want to create based on a specified traffic policy.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateTrafficPolicyInstanceRequest
 type CreateTrafficPolicyInstanceInput struct {
 	_ struct{} `locationName:"CreateTrafficPolicyInstanceRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -5400,7 +6658,7 @@ type CreateTrafficPolicyInstanceInput struct {
 	// sets in the specified hosted zone.
 	//
 	// TrafficPolicyId is a required field
-	TrafficPolicyId *string `type:"string" required:"true"`
+	TrafficPolicyId *string `min:"1" type:"string" required:"true"`
 
 	// The version of the traffic policy that you want to use to create resource
 	// record sets in the specified hosted zone.
@@ -5434,6 +6692,9 @@ func (s *CreateTrafficPolicyInstanceInput) Validate() error {
 	if s.TrafficPolicyId == nil {
 		invalidParams.Add(request.NewErrParamRequired("TrafficPolicyId"))
 	}
+	if s.TrafficPolicyId != nil && len(*s.TrafficPolicyId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("TrafficPolicyId", 1))
+	}
 	if s.TrafficPolicyVersion == nil {
 		invalidParams.Add(request.NewErrParamRequired("TrafficPolicyVersion"))
 	}
@@ -5447,8 +6708,39 @@ func (s *CreateTrafficPolicyInstanceInput) Validate() error {
 	return nil
 }
 
+// SetHostedZoneId sets the HostedZoneId field's value.
+func (s *CreateTrafficPolicyInstanceInput) SetHostedZoneId(v string) *CreateTrafficPolicyInstanceInput {
+	s.HostedZoneId = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *CreateTrafficPolicyInstanceInput) SetName(v string) *CreateTrafficPolicyInstanceInput {
+	s.Name = &v
+	return s
+}
+
+// SetTTL sets the TTL field's value.
+func (s *CreateTrafficPolicyInstanceInput) SetTTL(v int64) *CreateTrafficPolicyInstanceInput {
+	s.TTL = &v
+	return s
+}
+
+// SetTrafficPolicyId sets the TrafficPolicyId field's value.
+func (s *CreateTrafficPolicyInstanceInput) SetTrafficPolicyId(v string) *CreateTrafficPolicyInstanceInput {
+	s.TrafficPolicyId = &v
+	return s
+}
+
+// SetTrafficPolicyVersion sets the TrafficPolicyVersion field's value.
+func (s *CreateTrafficPolicyInstanceInput) SetTrafficPolicyVersion(v int64) *CreateTrafficPolicyInstanceInput {
+	s.TrafficPolicyVersion = &v
+	return s
+}
+
 // A complex type that contains the response information for the CreateTrafficPolicyInstance
 // request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateTrafficPolicyInstanceResponse
 type CreateTrafficPolicyInstanceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5473,8 +6765,21 @@ func (s CreateTrafficPolicyInstanceOutput) GoString() string {
 	return s.String()
 }
 
+// SetLocation sets the Location field's value.
+func (s *CreateTrafficPolicyInstanceOutput) SetLocation(v string) *CreateTrafficPolicyInstanceOutput {
+	s.Location = &v
+	return s
+}
+
+// SetTrafficPolicyInstance sets the TrafficPolicyInstance field's value.
+func (s *CreateTrafficPolicyInstanceOutput) SetTrafficPolicyInstance(v *TrafficPolicyInstance) *CreateTrafficPolicyInstanceOutput {
+	s.TrafficPolicyInstance = v
+	return s
+}
+
 // A complex type that contains the response information for the CreateTrafficPolicy
 // request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateTrafficPolicyResponse
 type CreateTrafficPolicyOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5499,8 +6804,21 @@ func (s CreateTrafficPolicyOutput) GoString() string {
 	return s.String()
 }
 
+// SetLocation sets the Location field's value.
+func (s *CreateTrafficPolicyOutput) SetLocation(v string) *CreateTrafficPolicyOutput {
+	s.Location = &v
+	return s
+}
+
+// SetTrafficPolicy sets the TrafficPolicy field's value.
+func (s *CreateTrafficPolicyOutput) SetTrafficPolicy(v *TrafficPolicy) *CreateTrafficPolicyOutput {
+	s.TrafficPolicy = v
+	return s
+}
+
 // A complex type that contains information about the traffic policy for which
 // you want to create a new version.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateTrafficPolicyVersionRequest
 type CreateTrafficPolicyVersionInput struct {
 	_ struct{} `locationName:"CreateTrafficPolicyVersionRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -5518,7 +6836,7 @@ type CreateTrafficPolicyVersionInput struct {
 	// The ID of the traffic policy for which you want to create a new version.
 	//
 	// Id is a required field
-	Id *string `location:"uri" locationName:"Id" type:"string" required:"true"`
+	Id *string `location:"uri" locationName:"Id" min:"1" type:"string" required:"true"`
 }
 
 // String returns the string representation
@@ -5540,6 +6858,9 @@ func (s *CreateTrafficPolicyVersionInput) Validate() error {
 	if s.Id == nil {
 		invalidParams.Add(request.NewErrParamRequired("Id"))
 	}
+	if s.Id != nil && len(*s.Id) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Id", 1))
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -5547,8 +6868,27 @@ func (s *CreateTrafficPolicyVersionInput) Validate() error {
 	return nil
 }
 
+// SetComment sets the Comment field's value.
+func (s *CreateTrafficPolicyVersionInput) SetComment(v string) *CreateTrafficPolicyVersionInput {
+	s.Comment = &v
+	return s
+}
+
+// SetDocument sets the Document field's value.
+func (s *CreateTrafficPolicyVersionInput) SetDocument(v string) *CreateTrafficPolicyVersionInput {
+	s.Document = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *CreateTrafficPolicyVersionInput) SetId(v string) *CreateTrafficPolicyVersionInput {
+	s.Id = &v
+	return s
+}
+
 // A complex type that contains the response information for the CreateTrafficPolicyVersion
 // request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateTrafficPolicyVersionResponse
 type CreateTrafficPolicyVersionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5574,7 +6914,122 @@ func (s CreateTrafficPolicyVersionOutput) GoString() string {
 	return s.String()
 }
 
+// SetLocation sets the Location field's value.
+func (s *CreateTrafficPolicyVersionOutput) SetLocation(v string) *CreateTrafficPolicyVersionOutput {
+	s.Location = &v
+	return s
+}
+
+// SetTrafficPolicy sets the TrafficPolicy field's value.
+func (s *CreateTrafficPolicyVersionOutput) SetTrafficPolicy(v *TrafficPolicy) *CreateTrafficPolicyVersionOutput {
+	s.TrafficPolicy = v
+	return s
+}
+
+// A complex type that contains information about the request to authorize associating
+// a VPC with your private hosted zone. Authorization is only required when
+// a private hosted zone and a VPC were created by using different accounts.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateVPCAssociationAuthorizationRequest
+type CreateVPCAssociationAuthorizationInput struct {
+	_ struct{} `locationName:"CreateVPCAssociationAuthorizationRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
+
+	// The ID of the private hosted zone that you want to authorize associating
+	// a VPC with.
+	//
+	// HostedZoneId is a required field
+	HostedZoneId *string `location:"uri" locationName:"Id" type:"string" required:"true"`
+
+	// A complex type that contains the VPC ID and region for the VPC that you want
+	// to authorize associating with your hosted zone.
+	//
+	// VPC is a required field
+	VPC *VPC `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s CreateVPCAssociationAuthorizationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateVPCAssociationAuthorizationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateVPCAssociationAuthorizationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateVPCAssociationAuthorizationInput"}
+	if s.HostedZoneId == nil {
+		invalidParams.Add(request.NewErrParamRequired("HostedZoneId"))
+	}
+	if s.VPC == nil {
+		invalidParams.Add(request.NewErrParamRequired("VPC"))
+	}
+	if s.VPC != nil {
+		if err := s.VPC.Validate(); err != nil {
+			invalidParams.AddNested("VPC", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetHostedZoneId sets the HostedZoneId field's value.
+func (s *CreateVPCAssociationAuthorizationInput) SetHostedZoneId(v string) *CreateVPCAssociationAuthorizationInput {
+	s.HostedZoneId = &v
+	return s
+}
+
+// SetVPC sets the VPC field's value.
+func (s *CreateVPCAssociationAuthorizationInput) SetVPC(v *VPC) *CreateVPCAssociationAuthorizationInput {
+	s.VPC = v
+	return s
+}
+
+// A complex type that contains the response information from a CreateVPCAssociationAuthorization
+// request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateVPCAssociationAuthorizationResponse
+type CreateVPCAssociationAuthorizationOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the hosted zone that you authorized associating a VPC with.
+	//
+	// HostedZoneId is a required field
+	HostedZoneId *string `type:"string" required:"true"`
+
+	// The VPC that you authorized associating with a hosted zone.
+	//
+	// VPC is a required field
+	VPC *VPC `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s CreateVPCAssociationAuthorizationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateVPCAssociationAuthorizationOutput) GoString() string {
+	return s.String()
+}
+
+// SetHostedZoneId sets the HostedZoneId field's value.
+func (s *CreateVPCAssociationAuthorizationOutput) SetHostedZoneId(v string) *CreateVPCAssociationAuthorizationOutput {
+	s.HostedZoneId = &v
+	return s
+}
+
+// SetVPC sets the VPC field's value.
+func (s *CreateVPCAssociationAuthorizationOutput) SetVPC(v *VPC) *CreateVPCAssociationAuthorizationOutput {
+	s.VPC = v
+	return s
+}
+
 // A complex type that describes the name servers for this hosted zone.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DelegationSet
 type DelegationSet struct {
 	_ struct{} `type:"structure"`
 
@@ -5605,8 +7060,27 @@ func (s DelegationSet) GoString() string {
 	return s.String()
 }
 
+// SetCallerReference sets the CallerReference field's value.
+func (s *DelegationSet) SetCallerReference(v string) *DelegationSet {
+	s.CallerReference = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *DelegationSet) SetId(v string) *DelegationSet {
+	s.Id = &v
+	return s
+}
+
+// SetNameServers sets the NameServers field's value.
+func (s *DelegationSet) SetNameServers(v []*string) *DelegationSet {
+	s.NameServers = v
+	return s
+}
+
 // This action deletes a health check. Send a DELETE request to the /2013-04-01/DeleteHealthCheckRequest
 // resource.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteHealthCheckRequest
 type DeleteHealthCheckInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5639,7 +7113,14 @@ func (s *DeleteHealthCheckInput) Validate() error {
 	return nil
 }
 
+// SetHealthCheckId sets the HealthCheckId field's value.
+func (s *DeleteHealthCheckInput) SetHealthCheckId(v string) *DeleteHealthCheckInput {
+	s.HealthCheckId = &v
+	return s
+}
+
 // An empty element.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteHealthCheckResponse
 type DeleteHealthCheckOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5656,6 +7137,7 @@ func (s DeleteHealthCheckOutput) GoString() string {
 
 // A complex type that contains information about the hosted zone that you want
 // to delete.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteHostedZoneRequest
 type DeleteHostedZoneInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5688,7 +7170,14 @@ func (s *DeleteHostedZoneInput) Validate() error {
 	return nil
 }
 
+// SetId sets the Id field's value.
+func (s *DeleteHostedZoneInput) SetId(v string) *DeleteHostedZoneInput {
+	s.Id = &v
+	return s
+}
+
 // A complex type containing the response information for the request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteHostedZoneResponse
 type DeleteHostedZoneOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5709,7 +7198,14 @@ func (s DeleteHostedZoneOutput) GoString() string {
 	return s.String()
 }
 
+// SetChangeInfo sets the ChangeInfo field's value.
+func (s *DeleteHostedZoneOutput) SetChangeInfo(v *ChangeInfo) *DeleteHostedZoneOutput {
+	s.ChangeInfo = v
+	return s
+}
+
 // A complex type containing the information for the delete request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteReusableDelegationSetRequest
 type DeleteReusableDelegationSetInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5742,7 +7238,14 @@ func (s *DeleteReusableDelegationSetInput) Validate() error {
 	return nil
 }
 
+// SetId sets the Id field's value.
+func (s *DeleteReusableDelegationSetInput) SetId(v string) *DeleteReusableDelegationSetInput {
+	s.Id = &v
+	return s
+}
+
 // An empty element.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteReusableDelegationSetResponse
 type DeleteReusableDelegationSetOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5758,13 +7261,14 @@ func (s DeleteReusableDelegationSetOutput) GoString() string {
 }
 
 // A request to delete a specified traffic policy version.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteTrafficPolicyRequest
 type DeleteTrafficPolicyInput struct {
 	_ struct{} `type:"structure"`
 
 	// The ID of the traffic policy that you want to delete.
 	//
 	// Id is a required field
-	Id *string `location:"uri" locationName:"Id" type:"string" required:"true"`
+	Id *string `location:"uri" locationName:"Id" min:"1" type:"string" required:"true"`
 
 	// The version number of the traffic policy that you want to delete.
 	//
@@ -5788,6 +7292,9 @@ func (s *DeleteTrafficPolicyInput) Validate() error {
 	if s.Id == nil {
 		invalidParams.Add(request.NewErrParamRequired("Id"))
 	}
+	if s.Id != nil && len(*s.Id) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Id", 1))
+	}
 	if s.Version == nil {
 		invalidParams.Add(request.NewErrParamRequired("Version"))
 	}
@@ -5801,8 +7308,21 @@ func (s *DeleteTrafficPolicyInput) Validate() error {
 	return nil
 }
 
+// SetId sets the Id field's value.
+func (s *DeleteTrafficPolicyInput) SetId(v string) *DeleteTrafficPolicyInput {
+	s.Id = &v
+	return s
+}
+
+// SetVersion sets the Version field's value.
+func (s *DeleteTrafficPolicyInput) SetVersion(v int64) *DeleteTrafficPolicyInput {
+	s.Version = &v
+	return s
+}
+
 // A complex type that contains information about the traffic policy instance
 // that you want to delete.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteTrafficPolicyInstanceRequest
 type DeleteTrafficPolicyInstanceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5813,7 +7333,7 @@ type DeleteTrafficPolicyInstanceInput struct {
 	// policy instance.
 	//
 	// Id is a required field
-	Id *string `location:"uri" locationName:"Id" type:"string" required:"true"`
+	Id *string `location:"uri" locationName:"Id" min:"1" type:"string" required:"true"`
 }
 
 // String returns the string representation
@@ -5832,6 +7352,9 @@ func (s *DeleteTrafficPolicyInstanceInput) Validate() error {
 	if s.Id == nil {
 		invalidParams.Add(request.NewErrParamRequired("Id"))
 	}
+	if s.Id != nil && len(*s.Id) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Id", 1))
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -5839,7 +7362,14 @@ func (s *DeleteTrafficPolicyInstanceInput) Validate() error {
 	return nil
 }
 
+// SetId sets the Id field's value.
+func (s *DeleteTrafficPolicyInstanceInput) SetId(v string) *DeleteTrafficPolicyInstanceInput {
+	s.Id = &v
+	return s
+}
+
 // An empty element.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteTrafficPolicyInstanceResponse
 type DeleteTrafficPolicyInstanceOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5855,6 +7385,7 @@ func (s DeleteTrafficPolicyInstanceOutput) GoString() string {
 }
 
 // An empty element.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteTrafficPolicyResponse
 type DeleteTrafficPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5869,8 +7400,90 @@ func (s DeleteTrafficPolicyOutput) GoString() string {
 	return s.String()
 }
 
+// A complex type that contains information about the request to remove authorization
+// to associate a VPC that was created by one AWS account with a hosted zone
+// that was created with a different AWS account.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteVPCAssociationAuthorizationRequest
+type DeleteVPCAssociationAuthorizationInput struct {
+	_ struct{} `locationName:"DeleteVPCAssociationAuthorizationRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
+
+	// When removing authorization to associate a VPC that was created by one AWS
+	// account with a hosted zone that was created with a different AWS account,
+	// the ID of the hosted zone.
+	//
+	// HostedZoneId is a required field
+	HostedZoneId *string `location:"uri" locationName:"Id" type:"string" required:"true"`
+
+	// When removing authorization to associate a VPC that was created by one AWS
+	// account with a hosted zone that was created with a different AWS account,
+	// a complex type that includes the ID and region of the VPC.
+	//
+	// VPC is a required field
+	VPC *VPC `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteVPCAssociationAuthorizationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteVPCAssociationAuthorizationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteVPCAssociationAuthorizationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteVPCAssociationAuthorizationInput"}
+	if s.HostedZoneId == nil {
+		invalidParams.Add(request.NewErrParamRequired("HostedZoneId"))
+	}
+	if s.VPC == nil {
+		invalidParams.Add(request.NewErrParamRequired("VPC"))
+	}
+	if s.VPC != nil {
+		if err := s.VPC.Validate(); err != nil {
+			invalidParams.AddNested("VPC", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetHostedZoneId sets the HostedZoneId field's value.
+func (s *DeleteVPCAssociationAuthorizationInput) SetHostedZoneId(v string) *DeleteVPCAssociationAuthorizationInput {
+	s.HostedZoneId = &v
+	return s
+}
+
+// SetVPC sets the VPC field's value.
+func (s *DeleteVPCAssociationAuthorizationInput) SetVPC(v *VPC) *DeleteVPCAssociationAuthorizationInput {
+	s.VPC = v
+	return s
+}
+
+// Empty response for the request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteVPCAssociationAuthorizationResponse
+type DeleteVPCAssociationAuthorizationOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteVPCAssociationAuthorizationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteVPCAssociationAuthorizationOutput) GoString() string {
+	return s.String()
+}
+
 // For the metric that the CloudWatch alarm is associated with, a complex type
 // that contains information about one dimension.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/Dimension
 type Dimension struct {
 	_ struct{} `type:"structure"`
 
@@ -5897,21 +7510,33 @@ func (s Dimension) GoString() string {
 	return s.String()
 }
 
-// A complex type that contains information about the VPC and the hosted zone
-// that you want to disassociate.
+// SetName sets the Name field's value.
+func (s *Dimension) SetName(v string) *Dimension {
+	s.Name = &v
+	return s
+}
+
+// SetValue sets the Value field's value.
+func (s *Dimension) SetValue(v string) *Dimension {
+	s.Value = &v
+	return s
+}
+
+// A complex type that contains information about the VPC that you want to disassociate
+// from a specified private hosted zone.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DisassociateVPCFromHostedZoneRequest
 type DisassociateVPCFromHostedZoneInput struct {
 	_ struct{} `locationName:"DisassociateVPCFromHostedZoneRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
 	// Optional: A comment about the disassociation request.
 	Comment *string `type:"string"`
 
-	// The ID of the VPC that you want to disassociate from an Amazon Route 53 hosted
-	// zone.
+	// The ID of the private hosted zone that you want to disassociate a VPC from.
 	//
 	// HostedZoneId is a required field
 	HostedZoneId *string `location:"uri" locationName:"Id" type:"string" required:"true"`
 
-	// A complex type containing information about the Amazon VPC that you're disassociating
+	// A complex type that contains information about the VPC that you're disassociating
 	// from the specified hosted zone.
 	//
 	// VPC is a required field
@@ -5949,12 +7574,32 @@ func (s *DisassociateVPCFromHostedZoneInput) Validate() error {
 	return nil
 }
 
+// SetComment sets the Comment field's value.
+func (s *DisassociateVPCFromHostedZoneInput) SetComment(v string) *DisassociateVPCFromHostedZoneInput {
+	s.Comment = &v
+	return s
+}
+
+// SetHostedZoneId sets the HostedZoneId field's value.
+func (s *DisassociateVPCFromHostedZoneInput) SetHostedZoneId(v string) *DisassociateVPCFromHostedZoneInput {
+	s.HostedZoneId = &v
+	return s
+}
+
+// SetVPC sets the VPC field's value.
+func (s *DisassociateVPCFromHostedZoneInput) SetVPC(v *VPC) *DisassociateVPCFromHostedZoneInput {
+	s.VPC = v
+	return s
+}
+
 // A complex type that contains the response information for the disassociate
 // request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DisassociateVPCFromHostedZoneResponse
 type DisassociateVPCFromHostedZoneOutput struct {
 	_ struct{} `type:"structure"`
 
-	// A complex type that describes the changes made to your hosted zone.
+	// A complex type that describes the changes made to the specified private hosted
+	// zone.
 	//
 	// ChangeInfo is a required field
 	ChangeInfo *ChangeInfo `type:"structure" required:"true"`
@@ -5970,7 +7615,14 @@ func (s DisassociateVPCFromHostedZoneOutput) GoString() string {
 	return s.String()
 }
 
+// SetChangeInfo sets the ChangeInfo field's value.
+func (s *DisassociateVPCFromHostedZoneOutput) SetChangeInfo(v *ChangeInfo) *DisassociateVPCFromHostedZoneOutput {
+	s.ChangeInfo = v
+	return s
+}
+
 // A complex type that contains information about a geo location.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GeoLocation
 type GeoLocation struct {
 	_ struct{} `type:"structure"`
 
@@ -6019,8 +7671,27 @@ func (s *GeoLocation) Validate() error {
 	return nil
 }
 
+// SetContinentCode sets the ContinentCode field's value.
+func (s *GeoLocation) SetContinentCode(v string) *GeoLocation {
+	s.ContinentCode = &v
+	return s
+}
+
+// SetCountryCode sets the CountryCode field's value.
+func (s *GeoLocation) SetCountryCode(v string) *GeoLocation {
+	s.CountryCode = &v
+	return s
+}
+
+// SetSubdivisionCode sets the SubdivisionCode field's value.
+func (s *GeoLocation) SetSubdivisionCode(v string) *GeoLocation {
+	s.SubdivisionCode = &v
+	return s
+}
+
 // A complex type that contains the codes and full continent, country, and subdivision
 // names for the specified geolocation code.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GeoLocationDetails
 type GeoLocationDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -6055,63 +7726,44 @@ func (s GeoLocationDetails) GoString() string {
 	return s.String()
 }
 
-// The input for a GetChangeDetails request.
-type GetChangeDetailsInput struct {
-	_ struct{} `deprecated:"true" type:"structure"`
-
-	// The ID of the change batch. This is the value that you specified in the change
-	// ID parameter when you submitted the request.
-	//
-	// Id is a required field
-	Id *string `location:"uri" locationName:"Id" type:"string" required:"true"`
+// SetContinentCode sets the ContinentCode field's value.
+func (s *GeoLocationDetails) SetContinentCode(v string) *GeoLocationDetails {
+	s.ContinentCode = &v
+	return s
 }
 
-// String returns the string representation
-func (s GetChangeDetailsInput) String() string {
-	return awsutil.Prettify(s)
+// SetContinentName sets the ContinentName field's value.
+func (s *GeoLocationDetails) SetContinentName(v string) *GeoLocationDetails {
+	s.ContinentName = &v
+	return s
 }
 
-// GoString returns the string representation
-func (s GetChangeDetailsInput) GoString() string {
-	return s.String()
+// SetCountryCode sets the CountryCode field's value.
+func (s *GeoLocationDetails) SetCountryCode(v string) *GeoLocationDetails {
+	s.CountryCode = &v
+	return s
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *GetChangeDetailsInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "GetChangeDetailsInput"}
-	if s.Id == nil {
-		invalidParams.Add(request.NewErrParamRequired("Id"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
+// SetCountryName sets the CountryName field's value.
+func (s *GeoLocationDetails) SetCountryName(v string) *GeoLocationDetails {
+	s.CountryName = &v
+	return s
 }
 
-// A complex type that contains the ChangeBatchRecord element.
-type GetChangeDetailsOutput struct {
-	_ struct{} `deprecated:"true" type:"structure"`
-
-	// A complex type that contains information about the specified change batch,
-	// including the change batch ID, the status of the change, and the contained
-	// changes.
-	//
-	// ChangeBatchRecord is a required field
-	ChangeBatchRecord *ChangeBatchRecord `deprecated:"true" type:"structure" required:"true"`
+// SetSubdivisionCode sets the SubdivisionCode field's value.
+func (s *GeoLocationDetails) SetSubdivisionCode(v string) *GeoLocationDetails {
+	s.SubdivisionCode = &v
+	return s
 }
 
-// String returns the string representation
-func (s GetChangeDetailsOutput) String() string {
-	return awsutil.Prettify(s)
-}
-
-// GoString returns the string representation
-func (s GetChangeDetailsOutput) GoString() string {
-	return s.String()
+// SetSubdivisionName sets the SubdivisionName field's value.
+func (s *GeoLocationDetails) SetSubdivisionName(v string) *GeoLocationDetails {
+	s.SubdivisionName = &v
+	return s
 }
 
 // The input for a GetChange request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetChangeRequest
 type GetChangeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6146,7 +7798,14 @@ func (s *GetChangeInput) Validate() error {
 	return nil
 }
 
+// SetId sets the Id field's value.
+func (s *GetChangeInput) SetId(v string) *GetChangeInput {
+	s.Id = &v
+	return s
+}
+
 // A complex type that contains the ChangeInfo element.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetChangeResponse
 type GetChangeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6166,7 +7825,13 @@ func (s GetChangeOutput) GoString() string {
 	return s.String()
 }
 
-// Empty request.
+// SetChangeInfo sets the ChangeInfo field's value.
+func (s *GetChangeOutput) SetChangeInfo(v *ChangeInfo) *GetChangeOutput {
+	s.ChangeInfo = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetCheckerIpRangesRequest
 type GetCheckerIpRangesInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6181,13 +7846,10 @@ func (s GetCheckerIpRangesInput) GoString() string {
 	return s.String()
 }
 
-// A complex type that contains the CheckerIpRanges element.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetCheckerIpRangesResponse
 type GetCheckerIpRangesOutput struct {
 	_ struct{} `type:"structure"`
 
-	// A complex type that contains sorted list of IP ranges in CIDR format for
-	// Amazon Route 53 health checkers.
-	//
 	// CheckerIpRanges is a required field
 	CheckerIpRanges []*string `type:"list" required:"true"`
 }
@@ -6202,7 +7864,14 @@ func (s GetCheckerIpRangesOutput) GoString() string {
 	return s.String()
 }
 
+// SetCheckerIpRanges sets the CheckerIpRanges field's value.
+func (s *GetCheckerIpRangesOutput) SetCheckerIpRanges(v []*string) *GetCheckerIpRangesOutput {
+	s.CheckerIpRanges = v
+	return s
+}
+
 // A complex type that contains information about the request to get a geo location.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetGeoLocationRequest
 type GetGeoLocationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6263,8 +7932,27 @@ func (s *GetGeoLocationInput) Validate() error {
 	return nil
 }
 
+// SetContinentCode sets the ContinentCode field's value.
+func (s *GetGeoLocationInput) SetContinentCode(v string) *GetGeoLocationInput {
+	s.ContinentCode = &v
+	return s
+}
+
+// SetCountryCode sets the CountryCode field's value.
+func (s *GetGeoLocationInput) SetCountryCode(v string) *GetGeoLocationInput {
+	s.CountryCode = &v
+	return s
+}
+
+// SetSubdivisionCode sets the SubdivisionCode field's value.
+func (s *GetGeoLocationInput) SetSubdivisionCode(v string) *GetGeoLocationInput {
+	s.SubdivisionCode = &v
+	return s
+}
+
 // A complex type that contains the response information for the specified geolocation
 // code.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetGeoLocationResponse
 type GetGeoLocationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6285,8 +7973,15 @@ func (s GetGeoLocationOutput) GoString() string {
 	return s.String()
 }
 
+// SetGeoLocationDetails sets the GeoLocationDetails field's value.
+func (s *GetGeoLocationOutput) SetGeoLocationDetails(v *GeoLocationDetails) *GetGeoLocationOutput {
+	s.GeoLocationDetails = v
+	return s
+}
+
 // To retrieve a count of all your health checks, send a GET request to the
 // /2013-04-01/healthcheckcount resource.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckCountRequest
 type GetHealthCheckCountInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6302,6 +7997,7 @@ func (s GetHealthCheckCountInput) GoString() string {
 }
 
 // A complex type that contains the response to a healthcheckcount request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckCountResponse
 type GetHealthCheckCountOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6321,6 +8017,12 @@ func (s GetHealthCheckCountOutput) GoString() string {
 	return s.String()
 }
 
+// SetHealthCheckCount sets the HealthCheckCount field's value.
+func (s *GetHealthCheckCountOutput) SetHealthCheckCount(v int64) *GetHealthCheckCountOutput {
+	s.HealthCheckCount = &v
+	return s
+}
+
 // This action gets information about a specified health check.
 //
 // Send a GET request to the /Amazon Route 53 API version/gethealthcheckrequest
@@ -6330,6 +8032,7 @@ func (s GetHealthCheckCountOutput) GoString() string {
 // Amazon Route 53 console, see Amazon Route 53 Health Checks and DNS Failover
 // (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover.html)
 // in the Amazon Route 53 Developer Guide.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckRequest
 type GetHealthCheckInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6365,6 +8068,12 @@ func (s *GetHealthCheckInput) Validate() error {
 	return nil
 }
 
+// SetHealthCheckId sets the HealthCheckId field's value.
+func (s *GetHealthCheckInput) SetHealthCheckId(v string) *GetHealthCheckInput {
+	s.HealthCheckId = &v
+	return s
+}
+
 // This action gets the reason that a specified health check failed most recently.
 //
 // To get the reason for the last failure of a health check, send a GET request
@@ -6374,6 +8083,7 @@ func (s *GetHealthCheckInput) Validate() error {
 // using the Amazon Route 53 console, see Viewing Health Check Status and the
 // Reason for Health Check Failures (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/health-checks-monitor-view-status.html)
 // in the Amazon Route 53 Developer Guide.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckLastFailureReasonRequest
 type GetHealthCheckLastFailureReasonInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6408,8 +8118,15 @@ func (s *GetHealthCheckLastFailureReasonInput) Validate() error {
 	return nil
 }
 
+// SetHealthCheckId sets the HealthCheckId field's value.
+func (s *GetHealthCheckLastFailureReasonInput) SetHealthCheckId(v string) *GetHealthCheckLastFailureReasonInput {
+	s.HealthCheckId = &v
+	return s
+}
+
 // A complex type that contains the response to a GetHealthCheckLastFailureReason
 // request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckLastFailureReasonResponse
 type GetHealthCheckLastFailureReasonOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6430,7 +8147,14 @@ func (s GetHealthCheckLastFailureReasonOutput) GoString() string {
 	return s.String()
 }
 
+// SetHealthCheckObservations sets the HealthCheckObservations field's value.
+func (s *GetHealthCheckLastFailureReasonOutput) SetHealthCheckObservations(v []*HealthCheckObservation) *GetHealthCheckLastFailureReasonOutput {
+	s.HealthCheckObservations = v
+	return s
+}
+
 // A complex type that contains the response to a GetHealthCheck request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckResponse
 type GetHealthCheckOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6451,68 +8175,25 @@ func (s GetHealthCheckOutput) GoString() string {
 	return s.String()
 }
 
+// SetHealthCheck sets the HealthCheck field's value.
+func (s *GetHealthCheckOutput) SetHealthCheck(v *HealthCheck) *GetHealthCheckOutput {
+	s.HealthCheck = v
+	return s
+}
+
 // A complex type that contains information about the request to get health
 // check status for a health check.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckStatusRequest
 type GetHealthCheckStatusInput struct {
 	_ struct{} `type:"structure"`
 
-	// If you want Amazon Route 53 to return this resource record set in response
-	// to a DNS query only when a health check is passing, include the HealthCheckId
-	// element and specify the ID of the applicable health check.
+	// The ID for the health check for which you want the current status. When you
+	// created the health check, CreateHealthCheck returned the ID in the response,
+	// in the HealthCheckId element.
 	//
-	// Amazon Route 53 determines whether a resource record set is healthy by periodically
-	// sending a request to the endpoint that is specified in the health check.
-	// If that endpoint returns an HTTP status code of 2xx or 3xx, the endpoint
-	// is healthy. If the endpoint returns an HTTP status code of 400 or greater,
-	// or if the endpoint doesn't respond for a certain amount of time, Amazon Route
-	// 53 considers the endpoint unhealthy and also considers the resource record
-	// set unhealthy.
-	//
-	// The HealthCheckId element is only useful when Amazon Route 53 is choosing
-	// between two or more resource record sets to respond to a DNS query, and you
-	// want Amazon Route 53 to base the choice in part on the status of a health
-	// check. Configuring health checks only makes sense in the following configurations:
-	//
-	//    * You're checking the health of the resource record sets in a weighted,
-	//    latency, geolocation, or failover resource record set, and you specify
-	//    health check IDs for all of the resource record sets. If the health check
-	//    for one resource record set specifies an endpoint that is not healthy,
-	//    Amazon Route 53 stops responding to queries using the value for that resource
-	//    record set.
-	//
-	//    * You set EvaluateTargetHealth to true for the resource record sets in
-	//    an alias, weighted alias, latency alias, geolocation alias, or failover
-	//    alias resource record set, and you specify health check IDs for all of
-	//    the resource record sets that are referenced by the alias resource record
-	//    sets. For more information about this configuration, see EvaluateTargetHealth.
-	//
-	// Amazon Route 53 doesn't check the health of the endpoint specified in the
-	//    resource record set, for example, the endpoint specified by the IP address
-	//    in the Value element. When you add a HealthCheckId element to a resource
-	//    record set, Amazon Route 53 checks the health of the endpoint that you
-	//    specified in the health check.
-	//
-	// For geolocation resource record sets, if an endpoint is unhealthy, Amazon
-	// Route 53 looks for a resource record set for the larger, associated geographic
-	// region. For example, suppose you have resource record sets for a state in
-	// the United States, for the United States, for North America, and for all
-	// locations. If the endpoint for the state resource record set is unhealthy,
-	// Amazon Route 53 checks the resource record sets for the United States, for
-	// North America, and for all locations (a resource record set for which the
-	// value of CountryCode is *), in that order, until it finds a resource record
-	// set for which the endpoint is healthy.
-	//
-	// If your health checks specify the endpoint only by domain name, we recommend
-	// that you create a separate health check for each endpoint. For example, create
-	// a health check for each HTTP server that is serving content for www.example.com.
-	// For the value of FullyQualifiedDomainName, specify the domain name of the
-	// server (such as us-east-1-www.example.com), not the name of the resource
-	// record sets (example.com).
-	//
-	// In this configuration, if you create a health check for which the value of
-	// FullyQualifiedDomainName matches the name of the resource record sets and
-	// then associate the health check with those resource record sets, health check
-	// results will be unpredictable.
+	// If you want to check the status of a calculated health check, you must use
+	// the Amazon Route 53 console or the CloudWatch console. You can't use GetHealthCheckStatus
+	// to get the status of a calculated health check.
 	//
 	// HealthCheckId is a required field
 	HealthCheckId *string `location:"uri" locationName:"HealthCheckId" type:"string" required:"true"`
@@ -6541,7 +8222,14 @@ func (s *GetHealthCheckStatusInput) Validate() error {
 	return nil
 }
 
+// SetHealthCheckId sets the HealthCheckId field's value.
+func (s *GetHealthCheckStatusInput) SetHealthCheckId(v string) *GetHealthCheckStatusInput {
+	s.HealthCheckId = &v
+	return s
+}
+
 // A complex type that contains the response to a GetHealthCheck request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckStatusResponse
 type GetHealthCheckStatusOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6562,8 +8250,15 @@ func (s GetHealthCheckStatusOutput) GoString() string {
 	return s.String()
 }
 
+// SetHealthCheckObservations sets the HealthCheckObservations field's value.
+func (s *GetHealthCheckStatusOutput) SetHealthCheckObservations(v []*HealthCheckObservation) *GetHealthCheckStatusOutput {
+	s.HealthCheckObservations = v
+	return s
+}
+
 // To retrieve a count of all your hosted zones, send a GET request to the /2013-04-01/hostedzonecount
 // resource.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHostedZoneCountRequest
 type GetHostedZoneCountInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6579,6 +8274,7 @@ func (s GetHostedZoneCountInput) GoString() string {
 }
 
 // A complex type that contains the response to a hostedzonecount request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHostedZoneCountResponse
 type GetHostedZoneCountOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6599,7 +8295,14 @@ func (s GetHostedZoneCountOutput) GoString() string {
 	return s.String()
 }
 
+// SetHostedZoneCount sets the HostedZoneCount field's value.
+func (s *GetHostedZoneCountOutput) SetHostedZoneCount(v int64) *GetHostedZoneCountOutput {
+	s.HostedZoneCount = &v
+	return s
+}
+
 // The input for a GetHostedZone request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHostedZoneRequest
 type GetHostedZoneInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6633,7 +8336,14 @@ func (s *GetHostedZoneInput) Validate() error {
 	return nil
 }
 
+// SetId sets the Id field's value.
+func (s *GetHostedZoneInput) SetId(v string) *GetHostedZoneInput {
+	s.Id = &v
+	return s
+}
+
 // A complex type containing the response information for the hosted zone.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHostedZoneResponse
 type GetHostedZoneOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6660,7 +8370,26 @@ func (s GetHostedZoneOutput) GoString() string {
 	return s.String()
 }
 
+// SetDelegationSet sets the DelegationSet field's value.
+func (s *GetHostedZoneOutput) SetDelegationSet(v *DelegationSet) *GetHostedZoneOutput {
+	s.DelegationSet = v
+	return s
+}
+
+// SetHostedZone sets the HostedZone field's value.
+func (s *GetHostedZoneOutput) SetHostedZone(v *HostedZone) *GetHostedZoneOutput {
+	s.HostedZone = v
+	return s
+}
+
+// SetVPCs sets the VPCs field's value.
+func (s *GetHostedZoneOutput) SetVPCs(v []*VPC) *GetHostedZoneOutput {
+	s.VPCs = v
+	return s
+}
+
 // The input for a GetReusableDelegationSet request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetReusableDelegationSetRequest
 type GetReusableDelegationSetInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6694,8 +8423,15 @@ func (s *GetReusableDelegationSetInput) Validate() error {
 	return nil
 }
 
+// SetId sets the Id field's value.
+func (s *GetReusableDelegationSetInput) SetId(v string) *GetReusableDelegationSetInput {
+	s.Id = &v
+	return s
+}
+
 // A complex type that contains the response to the GetReusableDelegationSet
 // request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetReusableDelegationSetResponse
 type GetReusableDelegationSetOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6715,16 +8451,23 @@ func (s GetReusableDelegationSetOutput) GoString() string {
 	return s.String()
 }
 
+// SetDelegationSet sets the DelegationSet field's value.
+func (s *GetReusableDelegationSetOutput) SetDelegationSet(v *DelegationSet) *GetReusableDelegationSetOutput {
+	s.DelegationSet = v
+	return s
+}
+
 // Gets information about a specific traffic policy version. To get the information,
 // send a GET request to the /2013-04-01/trafficpolicy resource, and specify
 // the ID and the version of the traffic policy.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetTrafficPolicyRequest
 type GetTrafficPolicyInput struct {
 	_ struct{} `type:"structure"`
 
 	// The ID of the traffic policy that you want to get information about.
 	//
 	// Id is a required field
-	Id *string `location:"uri" locationName:"Id" type:"string" required:"true"`
+	Id *string `location:"uri" locationName:"Id" min:"1" type:"string" required:"true"`
 
 	// The version number of the traffic policy that you want to get information
 	// about.
@@ -6749,6 +8492,9 @@ func (s *GetTrafficPolicyInput) Validate() error {
 	if s.Id == nil {
 		invalidParams.Add(request.NewErrParamRequired("Id"))
 	}
+	if s.Id != nil && len(*s.Id) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Id", 1))
+	}
 	if s.Version == nil {
 		invalidParams.Add(request.NewErrParamRequired("Version"))
 	}
@@ -6762,8 +8508,21 @@ func (s *GetTrafficPolicyInput) Validate() error {
 	return nil
 }
 
-// To retrieve a count of all your traffic policy instances, send a GET request
-// to the /2013-04-01/trafficpolicyinstancecount resource.
+// SetId sets the Id field's value.
+func (s *GetTrafficPolicyInput) SetId(v string) *GetTrafficPolicyInput {
+	s.Id = &v
+	return s
+}
+
+// SetVersion sets the Version field's value.
+func (s *GetTrafficPolicyInput) SetVersion(v int64) *GetTrafficPolicyInput {
+	s.Version = &v
+	return s
+}
+
+// Request to get the number of traffic policy instances that are associated
+// with the current AWS account.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetTrafficPolicyInstanceCountRequest
 type GetTrafficPolicyInstanceCountInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6780,6 +8539,7 @@ func (s GetTrafficPolicyInstanceCountInput) GoString() string {
 
 // A complex type that contains information about the resource record sets that
 // Amazon Route 53 created based on a specified traffic policy.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetTrafficPolicyInstanceCountResponse
 type GetTrafficPolicyInstanceCountOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6800,17 +8560,24 @@ func (s GetTrafficPolicyInstanceCountOutput) GoString() string {
 	return s.String()
 }
 
+// SetTrafficPolicyInstanceCount sets the TrafficPolicyInstanceCount field's value.
+func (s *GetTrafficPolicyInstanceCountOutput) SetTrafficPolicyInstanceCount(v int64) *GetTrafficPolicyInstanceCountOutput {
+	s.TrafficPolicyInstanceCount = &v
+	return s
+}
+
 // Gets information about a specified traffic policy instance.
 //
 // To get information about a traffic policy instance, send a GET request to
 // the /Amazon Route 53 API version/trafficpolicyinstance/Id resource.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetTrafficPolicyInstanceRequest
 type GetTrafficPolicyInstanceInput struct {
 	_ struct{} `type:"structure"`
 
 	// The ID of the traffic policy instance that you want to get information about.
 	//
 	// Id is a required field
-	Id *string `location:"uri" locationName:"Id" type:"string" required:"true"`
+	Id *string `location:"uri" locationName:"Id" min:"1" type:"string" required:"true"`
 }
 
 // String returns the string representation
@@ -6829,6 +8596,9 @@ func (s *GetTrafficPolicyInstanceInput) Validate() error {
 	if s.Id == nil {
 		invalidParams.Add(request.NewErrParamRequired("Id"))
 	}
+	if s.Id != nil && len(*s.Id) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Id", 1))
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -6836,8 +8606,15 @@ func (s *GetTrafficPolicyInstanceInput) Validate() error {
 	return nil
 }
 
+// SetId sets the Id field's value.
+func (s *GetTrafficPolicyInstanceInput) SetId(v string) *GetTrafficPolicyInstanceInput {
+	s.Id = &v
+	return s
+}
+
 // A complex type that contains information about the resource record sets that
 // Amazon Route 53 created based on a specified traffic policy.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetTrafficPolicyInstanceResponse
 type GetTrafficPolicyInstanceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6857,7 +8634,14 @@ func (s GetTrafficPolicyInstanceOutput) GoString() string {
 	return s.String()
 }
 
+// SetTrafficPolicyInstance sets the TrafficPolicyInstance field's value.
+func (s *GetTrafficPolicyInstanceOutput) SetTrafficPolicyInstance(v *TrafficPolicyInstance) *GetTrafficPolicyInstanceOutput {
+	s.TrafficPolicyInstance = v
+	return s
+}
+
 // A complex type that contains the response information for the request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetTrafficPolicyResponse
 type GetTrafficPolicyOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6877,8 +8661,15 @@ func (s GetTrafficPolicyOutput) GoString() string {
 	return s.String()
 }
 
+// SetTrafficPolicy sets the TrafficPolicy field's value.
+func (s *GetTrafficPolicyOutput) SetTrafficPolicy(v *TrafficPolicy) *GetTrafficPolicyOutput {
+	s.TrafficPolicy = v
+	return s
+}
+
 // A complex type that contains information about one health check that is associated
 // with the current AWS account.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/HealthCheck
 type HealthCheck struct {
 	_ struct{} `type:"structure"`
 
@@ -6922,7 +8713,38 @@ func (s HealthCheck) GoString() string {
 	return s.String()
 }
 
+// SetCallerReference sets the CallerReference field's value.
+func (s *HealthCheck) SetCallerReference(v string) *HealthCheck {
+	s.CallerReference = &v
+	return s
+}
+
+// SetCloudWatchAlarmConfiguration sets the CloudWatchAlarmConfiguration field's value.
+func (s *HealthCheck) SetCloudWatchAlarmConfiguration(v *CloudWatchAlarmConfiguration) *HealthCheck {
+	s.CloudWatchAlarmConfiguration = v
+	return s
+}
+
+// SetHealthCheckConfig sets the HealthCheckConfig field's value.
+func (s *HealthCheck) SetHealthCheckConfig(v *HealthCheckConfig) *HealthCheck {
+	s.HealthCheckConfig = v
+	return s
+}
+
+// SetHealthCheckVersion sets the HealthCheckVersion field's value.
+func (s *HealthCheck) SetHealthCheckVersion(v int64) *HealthCheck {
+	s.HealthCheckVersion = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *HealthCheck) SetId(v string) *HealthCheck {
+	s.Id = &v
+	return s
+}
+
 // A complex type that contains information about the health check.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/HealthCheckConfig
 type HealthCheckConfig struct {
 	_ struct{} `type:"structure"`
 
@@ -6963,17 +8785,23 @@ type HealthCheckConfig struct {
 	// to healthy or vice versa. For more information, see How Amazon Route 53 Determines
 	// Whether an Endpoint Is Healthy (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-determining-health-of-endpoints.html)
 	// in the Amazon Route 53 Developer Guide.
+	//
+	// If you don't specify a value for FailureThreshold, the default value is three
+	// health checks.
 	FailureThreshold *int64 `min:"1" type:"integer"`
 
 	// Amazon Route 53 behavior depends on whether you specify a value for IPAddress.
 	//
-	// If you specifyIPAddress:
+	// If you specify a value forIPAddress:
 	//
-	// The value that you want Amazon Route 53 to pass in the Host header in all
-	// health checks except TCP health checks. This is typically the fully qualified
-	// DNS name of the website that you are attempting to health check. When Amazon
-	// Route 53 checks the health of an endpoint, here is how it constructs the
-	// Host header:
+	// Amazon Route 53 sends health check requests to the specified IPv4 or IPv6
+	// address and passes the value of FullyQualifiedDomainName in the Host header
+	// for all health checks except TCP health checks. This is typically the fully
+	// qualified DNS name of the endpoint on which you want Amazon Route 53 to perform
+	// health checks.
+	//
+	// When Amazon Route 53 checks the health of an endpoint, here is how it constructs
+	// the Host header:
 	//
 	//    * If you specify a value of 80 for Port and HTTP or HTTP_STR_MATCH for
 	//    Type, Amazon Route 53 passes the value of FullyQualifiedDomainName to
@@ -6991,19 +8819,23 @@ type HealthCheckConfig struct {
 	// substitutes the value of IPAddress in the Host header in each of the preceding
 	// cases.
 	//
-	// If you don't specifyIPAddress:
+	// If you don't specify a value for IPAddress:
 	//
-	// If you don't specify a value for IPAddress, Amazon Route 53 sends a DNS request
-	// to the domain that you specify in FullyQualifiedDomainName at the interval
-	// you specify in RequestInterval. Using an IP address that DNS returns, Amazon
-	// Route 53 then checks the health of the endpoint.
+	// Amazon Route 53 sends a DNS request to the domain that you specify for FullyQualifiedDomainName
+	// at the interval that you specify for RequestInterval. Using an IPv4 address
+	// that DNS returns, Amazon Route 53 then checks the health of the endpoint.
+	//
+	// If you don't specify a value for IPAddress, Amazon Route 53 uses only IPv4
+	// to send health checks to the endpoint. If there's no resource record set
+	// with a type of A for the name that you specify for FullyQualifiedDomainName,
+	// the health check fails with a "DNS resolution failed" error.
 	//
 	// If you want to check the health of weighted, latency, or failover resource
 	// record sets and you choose to specify the endpoint only by FullyQualifiedDomainName,
 	// we recommend that you create a separate health check for each endpoint. For
 	// example, create a health check for each HTTP server that is serving content
 	// for www.example.com. For the value of FullyQualifiedDomainName, specify the
-	// domain name of the server (such as us-east-1-www.example.com), not the name
+	// domain name of the server (such as us-east-2-www.example.com), not the name
 	// of the resource record sets (www.example.com).
 	//
 	// In this configuration, if you create a health check for which the value of
@@ -7032,25 +8864,40 @@ type HealthCheckConfig struct {
 	//    to be healthy.
 	HealthThreshold *int64 `type:"integer"`
 
-	// The IPv4 IP address of the endpoint on which you want Amazon Route 53 to
-	// perform health checks. If you don't specify a value for IPAddress, Amazon
-	// Route 53 sends a DNS request to resolve the domain name that you specify
+	// The IPv4 or IPv6 IP address of the endpoint that you want Amazon Route 53
+	// to perform health checks on. If you don't specify a value for IPAddress,
+	// Amazon Route 53 sends a DNS request to resolve the domain name that you specify
 	// in FullyQualifiedDomainName at the interval that you specify in RequestInterval.
-	// Using an IP address that DNS returns, Amazon Route 53 then checks the health
+	// Using an IP address returned by DNS, Amazon Route 53 then checks the health
 	// of the endpoint.
 	//
-	// If the endpoint is an Amazon EC2 instance, we recommend that you create an
-	// Elastic IP address, associate it with your Amazon EC2 instance, and specify
-	// the Elastic IP address for IPAddress. This ensures that the IP address of
-	// your instance will never change.
+	// Use one of the following formats for the value of IPAddress:
+	//
+	//    * IPv4 address: four values between 0 and 255, separated by periods (.),
+	//    for example, 192.0.2.44.
+	//
+	//    * IPv6 address: eight groups of four hexadecimal values, separated by
+	//    colons (:), for example, 2001:0db8:85a3:0000:0000:abcd:0001:2345. You
+	//    can also shorten IPv6 addresses as described in RFC 5952, for example,
+	//    2001:db8:85a3::abcd:1:2345.
+	//
+	// If the endpoint is an EC2 instance, we recommend that you create an Elastic
+	// IP address, associate it with your EC2 instance, and specify the Elastic
+	// IP address for IPAddress. This ensures that the IP address of your instance
+	// will never change.
 	//
 	// For more information, see HealthCheckConfig$FullyQualifiedDomainName.
 	//
-	// Contraints: Amazon Route 53 cannot check the health of endpoints for which
+	// Constraints: Amazon Route 53 can't check the health of endpoints for which
 	// the IP address is in local, private, non-routable, or multicast ranges. For
-	// more information about IP addresses for which you cannot create health checks,
-	// see RFC 5735, Special Use IPv4 Addresses (https://tools.ietf.org/html/rfc5735)
-	// and RFC 6598, IANA-Reserved IPv4 Prefix for Shared Address Space (https://tools.ietf.org/html/rfc6598).
+	// more information about IP addresses for which you can't create health checks,
+	// see the following documents:
+	//
+	//    * RFC 5735, Special Use IPv4 Addresses (https://tools.ietf.org/html/rfc5735)
+	//
+	//    * RFC 6598, IANA-Reserved IPv4 Prefix for Shared Address Space (https://tools.ietf.org/html/rfc6598)
+	//
+	//    * RFC 5156, Special-Use IPv6 Addresses (https://tools.ietf.org/html/rfc5156)
 	//
 	// When the value of Type is CALCULATED or CLOUDWATCH_METRIC, omit IPAddress.
 	IPAddress *string `type:"string"`
@@ -7086,13 +8933,24 @@ type HealthCheckConfig struct {
 
 	// A complex type that contains one Region element for each region from which
 	// you want Amazon Route 53 health checkers to check the specified endpoint.
+	//
+	// If you don't specify any regions, Amazon Route 53 health checkers automatically
+	// performs checks from all of the regions that are listed under Valid Values.
+	//
+	// If you update a health check to remove a region that has been performing
+	// health checks, Amazon Route 53 will briefly continue to perform checks from
+	// that region to ensure that some health checkers are always checking the endpoint
+	// (for example, if you replace three regions with four different regions).
 	Regions []*string `locationNameList:"Region" min:"1" type:"list"`
 
 	// The number of seconds between the time that Amazon Route 53 gets a response
-	// from your endpoint and the time that it sends the next health-check request.
+	// from your endpoint and the time that it sends the next health check request.
 	// Each Amazon Route 53 health checker makes requests at this interval.
 	//
 	// You can't change the value of RequestInterval after you create a health check.
+	//
+	// If you don't specify a value for RequestInterval, the default value is 30
+	// seconds.
 	RequestInterval *int64 `min:"10" type:"integer"`
 
 	// The path, if any, that you want Amazon Route 53 to request when performing
@@ -7199,8 +9057,105 @@ func (s *HealthCheckConfig) Validate() error {
 	return nil
 }
 
+// SetAlarmIdentifier sets the AlarmIdentifier field's value.
+func (s *HealthCheckConfig) SetAlarmIdentifier(v *AlarmIdentifier) *HealthCheckConfig {
+	s.AlarmIdentifier = v
+	return s
+}
+
+// SetChildHealthChecks sets the ChildHealthChecks field's value.
+func (s *HealthCheckConfig) SetChildHealthChecks(v []*string) *HealthCheckConfig {
+	s.ChildHealthChecks = v
+	return s
+}
+
+// SetEnableSNI sets the EnableSNI field's value.
+func (s *HealthCheckConfig) SetEnableSNI(v bool) *HealthCheckConfig {
+	s.EnableSNI = &v
+	return s
+}
+
+// SetFailureThreshold sets the FailureThreshold field's value.
+func (s *HealthCheckConfig) SetFailureThreshold(v int64) *HealthCheckConfig {
+	s.FailureThreshold = &v
+	return s
+}
+
+// SetFullyQualifiedDomainName sets the FullyQualifiedDomainName field's value.
+func (s *HealthCheckConfig) SetFullyQualifiedDomainName(v string) *HealthCheckConfig {
+	s.FullyQualifiedDomainName = &v
+	return s
+}
+
+// SetHealthThreshold sets the HealthThreshold field's value.
+func (s *HealthCheckConfig) SetHealthThreshold(v int64) *HealthCheckConfig {
+	s.HealthThreshold = &v
+	return s
+}
+
+// SetIPAddress sets the IPAddress field's value.
+func (s *HealthCheckConfig) SetIPAddress(v string) *HealthCheckConfig {
+	s.IPAddress = &v
+	return s
+}
+
+// SetInsufficientDataHealthStatus sets the InsufficientDataHealthStatus field's value.
+func (s *HealthCheckConfig) SetInsufficientDataHealthStatus(v string) *HealthCheckConfig {
+	s.InsufficientDataHealthStatus = &v
+	return s
+}
+
+// SetInverted sets the Inverted field's value.
+func (s *HealthCheckConfig) SetInverted(v bool) *HealthCheckConfig {
+	s.Inverted = &v
+	return s
+}
+
+// SetMeasureLatency sets the MeasureLatency field's value.
+func (s *HealthCheckConfig) SetMeasureLatency(v bool) *HealthCheckConfig {
+	s.MeasureLatency = &v
+	return s
+}
+
+// SetPort sets the Port field's value.
+func (s *HealthCheckConfig) SetPort(v int64) *HealthCheckConfig {
+	s.Port = &v
+	return s
+}
+
+// SetRegions sets the Regions field's value.
+func (s *HealthCheckConfig) SetRegions(v []*string) *HealthCheckConfig {
+	s.Regions = v
+	return s
+}
+
+// SetRequestInterval sets the RequestInterval field's value.
+func (s *HealthCheckConfig) SetRequestInterval(v int64) *HealthCheckConfig {
+	s.RequestInterval = &v
+	return s
+}
+
+// SetResourcePath sets the ResourcePath field's value.
+func (s *HealthCheckConfig) SetResourcePath(v string) *HealthCheckConfig {
+	s.ResourcePath = &v
+	return s
+}
+
+// SetSearchString sets the SearchString field's value.
+func (s *HealthCheckConfig) SetSearchString(v string) *HealthCheckConfig {
+	s.SearchString = &v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *HealthCheckConfig) SetType(v string) *HealthCheckConfig {
+	s.Type = &v
+	return s
+}
+
 // A complex type that contains the last failure reason as reported by one Amazon
 // Route 53 health checker.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/HealthCheckObservation
 type HealthCheckObservation struct {
 	_ struct{} `type:"structure"`
 
@@ -7227,7 +9182,26 @@ func (s HealthCheckObservation) GoString() string {
 	return s.String()
 }
 
+// SetIPAddress sets the IPAddress field's value.
+func (s *HealthCheckObservation) SetIPAddress(v string) *HealthCheckObservation {
+	s.IPAddress = &v
+	return s
+}
+
+// SetRegion sets the Region field's value.
+func (s *HealthCheckObservation) SetRegion(v string) *HealthCheckObservation {
+	s.Region = &v
+	return s
+}
+
+// SetStatusReport sets the StatusReport field's value.
+func (s *HealthCheckObservation) SetStatusReport(v *StatusReport) *HealthCheckObservation {
+	s.StatusReport = v
+	return s
+}
+
 // A complex type that contains general information about the hosted zone.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/HostedZone
 type HostedZone struct {
 	_ struct{} `type:"structure"`
 
@@ -7271,9 +9245,40 @@ func (s HostedZone) GoString() string {
 	return s.String()
 }
 
+// SetCallerReference sets the CallerReference field's value.
+func (s *HostedZone) SetCallerReference(v string) *HostedZone {
+	s.CallerReference = &v
+	return s
+}
+
+// SetConfig sets the Config field's value.
+func (s *HostedZone) SetConfig(v *HostedZoneConfig) *HostedZone {
+	s.Config = v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *HostedZone) SetId(v string) *HostedZone {
+	s.Id = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *HostedZone) SetName(v string) *HostedZone {
+	s.Name = &v
+	return s
+}
+
+// SetResourceRecordSetCount sets the ResourceRecordSetCount field's value.
+func (s *HostedZone) SetResourceRecordSetCount(v int64) *HostedZone {
+	s.ResourceRecordSetCount = &v
+	return s
+}
+
 // A complex type that contains an optional comment about your hosted zone.
 // If you don't want to specify a comment, omit both the HostedZoneConfig and
 // Comment elements.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/HostedZoneConfig
 type HostedZoneConfig struct {
 	_ struct{} `type:"structure"`
 
@@ -7294,211 +9299,16 @@ func (s HostedZoneConfig) GoString() string {
 	return s.String()
 }
 
-// The input for a ListChangeBatchesByHostedZone request.
-type ListChangeBatchesByHostedZoneInput struct {
-	_ struct{} `deprecated:"true" type:"structure"`
-
-	// The end of the time period you want to see changes for.
-	//
-	// EndDate is a required field
-	EndDate *string `location:"querystring" locationName:"endDate" deprecated:"true" type:"string" required:"true"`
-
-	// The ID of the hosted zone that you want to see changes for.
-	//
-	// HostedZoneId is a required field
-	HostedZoneId *string `location:"uri" locationName:"Id" type:"string" required:"true"`
-
-	// The page marker.
-	Marker *string `location:"querystring" locationName:"marker" type:"string"`
-
-	// The maximum number of items on a page.
-	MaxItems *string `location:"querystring" locationName:"maxItems" type:"string"`
-
-	// The start of the time period you want to see changes for.
-	//
-	// StartDate is a required field
-	StartDate *string `location:"querystring" locationName:"startDate" deprecated:"true" type:"string" required:"true"`
+// SetComment sets the Comment field's value.
+func (s *HostedZoneConfig) SetComment(v string) *HostedZoneConfig {
+	s.Comment = &v
+	return s
 }
 
-// String returns the string representation
-func (s ListChangeBatchesByHostedZoneInput) String() string {
-	return awsutil.Prettify(s)
-}
-
-// GoString returns the string representation
-func (s ListChangeBatchesByHostedZoneInput) GoString() string {
-	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *ListChangeBatchesByHostedZoneInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "ListChangeBatchesByHostedZoneInput"}
-	if s.EndDate == nil {
-		invalidParams.Add(request.NewErrParamRequired("EndDate"))
-	}
-	if s.HostedZoneId == nil {
-		invalidParams.Add(request.NewErrParamRequired("HostedZoneId"))
-	}
-	if s.StartDate == nil {
-		invalidParams.Add(request.NewErrParamRequired("StartDate"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
-// A complex type containing the response information for the request.
-type ListChangeBatchesByHostedZoneOutput struct {
-	_ struct{} `deprecated:"true" type:"structure"`
-
-	// The change batches within the given hosted zone and time period.
-	//
-	// ChangeBatchRecords is a required field
-	ChangeBatchRecords []*ChangeBatchRecord `locationNameList:"ChangeBatchRecord" min:"1" deprecated:"true" type:"list" required:"true"`
-
-	// A flag that indicates if there are more change batches to list.
-	IsTruncated *bool `type:"boolean"`
-
-	// For the second and subsequent calls to ListHostedZones, Marker is the value
-	// that you specified for the marker parameter in the request that produced
-	// the current response.
-	//
-	// Marker is a required field
-	Marker *string `type:"string" required:"true"`
-
-	// The value that you specified for the maxitems parameter in the call to ListHostedZones
-	// that produced the current response.
-	//
-	// MaxItems is a required field
-	MaxItems *string `type:"string" required:"true"`
-
-	// The next page marker.
-	NextMarker *string `type:"string"`
-}
-
-// String returns the string representation
-func (s ListChangeBatchesByHostedZoneOutput) String() string {
-	return awsutil.Prettify(s)
-}
-
-// GoString returns the string representation
-func (s ListChangeBatchesByHostedZoneOutput) GoString() string {
-	return s.String()
-}
-
-// The input for a ListChangeBatchesByRRSet request.
-type ListChangeBatchesByRRSetInput struct {
-	_ struct{} `deprecated:"true" type:"structure"`
-
-	// The end of the time period you want to see changes for.
-	//
-	// EndDate is a required field
-	EndDate *string `location:"querystring" locationName:"endDate" deprecated:"true" type:"string" required:"true"`
-
-	// The ID of the hosted zone that you want to see changes for.
-	//
-	// HostedZoneId is a required field
-	HostedZoneId *string `location:"uri" locationName:"Id" type:"string" required:"true"`
-
-	// The page marker.
-	Marker *string `location:"querystring" locationName:"marker" type:"string"`
-
-	// The maximum number of items on a page.
-	MaxItems *string `location:"querystring" locationName:"maxItems" type:"string"`
-
-	// The name of the RRSet that you want to see changes for.
-	//
-	// Name is a required field
-	Name *string `location:"querystring" locationName:"rrSet_name" type:"string" required:"true"`
-
-	// The identifier of the RRSet that you want to see changes for.
-	SetIdentifier *string `location:"querystring" locationName:"identifier" min:"1" type:"string"`
-
-	// The start of the time period you want to see changes for.
-	//
-	// StartDate is a required field
-	StartDate *string `location:"querystring" locationName:"startDate" deprecated:"true" type:"string" required:"true"`
-
-	// The type of the RRSet that you want to see changes for.
-	//
-	// Type is a required field
-	Type *string `location:"querystring" locationName:"type" type:"string" required:"true" enum:"RRType"`
-}
-
-// String returns the string representation
-func (s ListChangeBatchesByRRSetInput) String() string {
-	return awsutil.Prettify(s)
-}
-
-// GoString returns the string representation
-func (s ListChangeBatchesByRRSetInput) GoString() string {
-	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *ListChangeBatchesByRRSetInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "ListChangeBatchesByRRSetInput"}
-	if s.EndDate == nil {
-		invalidParams.Add(request.NewErrParamRequired("EndDate"))
-	}
-	if s.HostedZoneId == nil {
-		invalidParams.Add(request.NewErrParamRequired("HostedZoneId"))
-	}
-	if s.Name == nil {
-		invalidParams.Add(request.NewErrParamRequired("Name"))
-	}
-	if s.SetIdentifier != nil && len(*s.SetIdentifier) < 1 {
-		invalidParams.Add(request.NewErrParamMinLen("SetIdentifier", 1))
-	}
-	if s.StartDate == nil {
-		invalidParams.Add(request.NewErrParamRequired("StartDate"))
-	}
-	if s.Type == nil {
-		invalidParams.Add(request.NewErrParamRequired("Type"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
-// The input for a ListChangeBatchesByRRSet request.
-type ListChangeBatchesByRRSetOutput struct {
-	_ struct{} `deprecated:"true" type:"structure"`
-
-	// The change batches within the given hosted zone and time period.
-	//
-	// ChangeBatchRecords is a required field
-	ChangeBatchRecords []*ChangeBatchRecord `locationNameList:"ChangeBatchRecord" min:"1" deprecated:"true" type:"list" required:"true"`
-
-	// A flag that indicates if there are more change batches to list.
-	IsTruncated *bool `type:"boolean"`
-
-	// The page marker.
-	//
-	// Marker is a required field
-	Marker *string `type:"string" required:"true"`
-
-	// The maximum number of items on a page.
-	//
-	// MaxItems is a required field
-	MaxItems *string `type:"string" required:"true"`
-
-	// The next page marker.
-	NextMarker *string `type:"string"`
-}
-
-// String returns the string representation
-func (s ListChangeBatchesByRRSetOutput) String() string {
-	return awsutil.Prettify(s)
-}
-
-// GoString returns the string representation
-func (s ListChangeBatchesByRRSetOutput) GoString() string {
-	return s.String()
+// SetPrivateZone sets the PrivateZone field's value.
+func (s *HostedZoneConfig) SetPrivateZone(v bool) *HostedZoneConfig {
+	s.PrivateZone = &v
+	return s
 }
 
 // To get a list of geographic locations that Amazon Route 53 supports for geolocation,
@@ -7510,6 +9320,7 @@ func (s ListChangeBatchesByRRSetOutput) GoString() string {
 // 53 supports subdivisions for a country (for example, states or provinces),
 // the subdivisions for that country are listed in alphabetical order immediately
 // after the corresponding country.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListGeoLocationsRequest
 type ListGeoLocationsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7579,7 +9390,32 @@ func (s *ListGeoLocationsInput) Validate() error {
 	return nil
 }
 
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListGeoLocationsInput) SetMaxItems(v string) *ListGeoLocationsInput {
+	s.MaxItems = &v
+	return s
+}
+
+// SetStartContinentCode sets the StartContinentCode field's value.
+func (s *ListGeoLocationsInput) SetStartContinentCode(v string) *ListGeoLocationsInput {
+	s.StartContinentCode = &v
+	return s
+}
+
+// SetStartCountryCode sets the StartCountryCode field's value.
+func (s *ListGeoLocationsInput) SetStartCountryCode(v string) *ListGeoLocationsInput {
+	s.StartCountryCode = &v
+	return s
+}
+
+// SetStartSubdivisionCode sets the StartSubdivisionCode field's value.
+func (s *ListGeoLocationsInput) SetStartSubdivisionCode(v string) *ListGeoLocationsInput {
+	s.StartSubdivisionCode = &v
+	return s
+}
+
 // A complex type containing the response information for the request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListGeoLocationsResponse
 type ListGeoLocationsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7629,6 +9465,42 @@ func (s ListGeoLocationsOutput) GoString() string {
 	return s.String()
 }
 
+// SetGeoLocationDetailsList sets the GeoLocationDetailsList field's value.
+func (s *ListGeoLocationsOutput) SetGeoLocationDetailsList(v []*GeoLocationDetails) *ListGeoLocationsOutput {
+	s.GeoLocationDetailsList = v
+	return s
+}
+
+// SetIsTruncated sets the IsTruncated field's value.
+func (s *ListGeoLocationsOutput) SetIsTruncated(v bool) *ListGeoLocationsOutput {
+	s.IsTruncated = &v
+	return s
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListGeoLocationsOutput) SetMaxItems(v string) *ListGeoLocationsOutput {
+	s.MaxItems = &v
+	return s
+}
+
+// SetNextContinentCode sets the NextContinentCode field's value.
+func (s *ListGeoLocationsOutput) SetNextContinentCode(v string) *ListGeoLocationsOutput {
+	s.NextContinentCode = &v
+	return s
+}
+
+// SetNextCountryCode sets the NextCountryCode field's value.
+func (s *ListGeoLocationsOutput) SetNextCountryCode(v string) *ListGeoLocationsOutput {
+	s.NextCountryCode = &v
+	return s
+}
+
+// SetNextSubdivisionCode sets the NextSubdivisionCode field's value.
+func (s *ListGeoLocationsOutput) SetNextSubdivisionCode(v string) *ListGeoLocationsOutput {
+	s.NextSubdivisionCode = &v
+	return s
+}
+
 // To retrieve a list of your health checks, send a GET request to the /2013-04-01/healthcheck
 // resource. The response to this request includes a HealthChecks element with
 // zero or more HealthCheck child elements. By default, the list of health checks
@@ -7638,6 +9510,7 @@ func (s ListGeoLocationsOutput) GoString() string {
 //
 // Amazon Route 53 returns a maximum of 100 items. If you set MaxItems to a
 // value greater than 100, Amazon Route 53 returns only the first 100.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListHealthChecksRequest
 type ListHealthChecksInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7676,7 +9549,20 @@ func (s ListHealthChecksInput) GoString() string {
 	return s.String()
 }
 
+// SetMarker sets the Marker field's value.
+func (s *ListHealthChecksInput) SetMarker(v string) *ListHealthChecksInput {
+	s.Marker = &v
+	return s
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListHealthChecksInput) SetMaxItems(v string) *ListHealthChecksInput {
+	s.MaxItems = &v
+	return s
+}
+
 // A complex type that contains the response to a ListHealthChecks request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListHealthChecksResponse
 type ListHealthChecksOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7722,6 +9608,36 @@ func (s ListHealthChecksOutput) String() string {
 // GoString returns the string representation
 func (s ListHealthChecksOutput) GoString() string {
 	return s.String()
+}
+
+// SetHealthChecks sets the HealthChecks field's value.
+func (s *ListHealthChecksOutput) SetHealthChecks(v []*HealthCheck) *ListHealthChecksOutput {
+	s.HealthChecks = v
+	return s
+}
+
+// SetIsTruncated sets the IsTruncated field's value.
+func (s *ListHealthChecksOutput) SetIsTruncated(v bool) *ListHealthChecksOutput {
+	s.IsTruncated = &v
+	return s
+}
+
+// SetMarker sets the Marker field's value.
+func (s *ListHealthChecksOutput) SetMarker(v string) *ListHealthChecksOutput {
+	s.Marker = &v
+	return s
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListHealthChecksOutput) SetMaxItems(v string) *ListHealthChecksOutput {
+	s.MaxItems = &v
+	return s
+}
+
+// SetNextMarker sets the NextMarker field's value.
+func (s *ListHealthChecksOutput) SetNextMarker(v string) *ListHealthChecksOutput {
+	s.NextMarker = &v
+	return s
 }
 
 // To retrieve a list of your public and private hosted zones in ASCII order
@@ -7770,6 +9686,7 @@ func (s ListHealthChecksOutput) GoString() string {
 //    zones, make another call to ListHostedZonesByName, and specify the value
 //    of NextDNSName and NextHostedZoneId in the dnsname and hostedzoneid parameters,
 //    respectively.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListHostedZonesByNameRequest
 type ListHostedZonesByNameInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7810,7 +9727,26 @@ func (s ListHostedZonesByNameInput) GoString() string {
 	return s.String()
 }
 
+// SetDNSName sets the DNSName field's value.
+func (s *ListHostedZonesByNameInput) SetDNSName(v string) *ListHostedZonesByNameInput {
+	s.DNSName = &v
+	return s
+}
+
+// SetHostedZoneId sets the HostedZoneId field's value.
+func (s *ListHostedZonesByNameInput) SetHostedZoneId(v string) *ListHostedZonesByNameInput {
+	s.HostedZoneId = &v
+	return s
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListHostedZonesByNameInput) SetMaxItems(v string) *ListHostedZonesByNameInput {
+	s.MaxItems = &v
+	return s
+}
+
 // A complex type that contains the response information for the request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListHostedZonesByNameResponse
 type ListHostedZonesByNameOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7870,6 +9806,48 @@ func (s ListHostedZonesByNameOutput) GoString() string {
 	return s.String()
 }
 
+// SetDNSName sets the DNSName field's value.
+func (s *ListHostedZonesByNameOutput) SetDNSName(v string) *ListHostedZonesByNameOutput {
+	s.DNSName = &v
+	return s
+}
+
+// SetHostedZoneId sets the HostedZoneId field's value.
+func (s *ListHostedZonesByNameOutput) SetHostedZoneId(v string) *ListHostedZonesByNameOutput {
+	s.HostedZoneId = &v
+	return s
+}
+
+// SetHostedZones sets the HostedZones field's value.
+func (s *ListHostedZonesByNameOutput) SetHostedZones(v []*HostedZone) *ListHostedZonesByNameOutput {
+	s.HostedZones = v
+	return s
+}
+
+// SetIsTruncated sets the IsTruncated field's value.
+func (s *ListHostedZonesByNameOutput) SetIsTruncated(v bool) *ListHostedZonesByNameOutput {
+	s.IsTruncated = &v
+	return s
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListHostedZonesByNameOutput) SetMaxItems(v string) *ListHostedZonesByNameOutput {
+	s.MaxItems = &v
+	return s
+}
+
+// SetNextDNSName sets the NextDNSName field's value.
+func (s *ListHostedZonesByNameOutput) SetNextDNSName(v string) *ListHostedZonesByNameOutput {
+	s.NextDNSName = &v
+	return s
+}
+
+// SetNextHostedZoneId sets the NextHostedZoneId field's value.
+func (s *ListHostedZonesByNameOutput) SetNextHostedZoneId(v string) *ListHostedZonesByNameOutput {
+	s.NextHostedZoneId = &v
+	return s
+}
+
 // To retrieve a list of your public and private hosted zones, send a GET request
 // to the /2013-04-01/hostedzone resource. The response to this request includes
 // a HostedZone child element for each hosted zone that was created by the current
@@ -7899,6 +9877,7 @@ func (s ListHostedZonesByNameOutput) GoString() string {
 //    * If you're making the second or subsequent call to ListHostedZones, the
 //    Marker element matches the value that you specified in the marker parameter
 //    in the previous request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListHostedZonesRequest
 type ListHostedZonesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7934,6 +9913,25 @@ func (s ListHostedZonesInput) GoString() string {
 	return s.String()
 }
 
+// SetDelegationSetId sets the DelegationSetId field's value.
+func (s *ListHostedZonesInput) SetDelegationSetId(v string) *ListHostedZonesInput {
+	s.DelegationSetId = &v
+	return s
+}
+
+// SetMarker sets the Marker field's value.
+func (s *ListHostedZonesInput) SetMarker(v string) *ListHostedZonesInput {
+	s.Marker = &v
+	return s
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListHostedZonesInput) SetMaxItems(v string) *ListHostedZonesInput {
+	s.MaxItems = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListHostedZonesResponse
 type ListHostedZonesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7981,7 +9979,38 @@ func (s ListHostedZonesOutput) GoString() string {
 	return s.String()
 }
 
+// SetHostedZones sets the HostedZones field's value.
+func (s *ListHostedZonesOutput) SetHostedZones(v []*HostedZone) *ListHostedZonesOutput {
+	s.HostedZones = v
+	return s
+}
+
+// SetIsTruncated sets the IsTruncated field's value.
+func (s *ListHostedZonesOutput) SetIsTruncated(v bool) *ListHostedZonesOutput {
+	s.IsTruncated = &v
+	return s
+}
+
+// SetMarker sets the Marker field's value.
+func (s *ListHostedZonesOutput) SetMarker(v string) *ListHostedZonesOutput {
+	s.Marker = &v
+	return s
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListHostedZonesOutput) SetMaxItems(v string) *ListHostedZonesOutput {
+	s.MaxItems = &v
+	return s
+}
+
+// SetNextMarker sets the NextMarker field's value.
+func (s *ListHostedZonesOutput) SetNextMarker(v string) *ListHostedZonesOutput {
+	s.NextMarker = &v
+	return s
+}
+
 // The input for a ListResourceRecordSets request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListResourceRecordSetsRequest
 type ListResourceRecordSetsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8019,7 +10048,7 @@ type ListResourceRecordSetsInput struct {
 	//
 	// Values for alias resource record sets:
 	//
-	//    * CloudFront distribution: A
+	//    * CloudFront distribution: A or AAAA
 	//
 	//    * Elastic Beanstalk environment that has a regionalized subdomain: A
 	//
@@ -8058,7 +10087,38 @@ func (s *ListResourceRecordSetsInput) Validate() error {
 	return nil
 }
 
+// SetHostedZoneId sets the HostedZoneId field's value.
+func (s *ListResourceRecordSetsInput) SetHostedZoneId(v string) *ListResourceRecordSetsInput {
+	s.HostedZoneId = &v
+	return s
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListResourceRecordSetsInput) SetMaxItems(v string) *ListResourceRecordSetsInput {
+	s.MaxItems = &v
+	return s
+}
+
+// SetStartRecordIdentifier sets the StartRecordIdentifier field's value.
+func (s *ListResourceRecordSetsInput) SetStartRecordIdentifier(v string) *ListResourceRecordSetsInput {
+	s.StartRecordIdentifier = &v
+	return s
+}
+
+// SetStartRecordName sets the StartRecordName field's value.
+func (s *ListResourceRecordSetsInput) SetStartRecordName(v string) *ListResourceRecordSetsInput {
+	s.StartRecordName = &v
+	return s
+}
+
+// SetStartRecordType sets the StartRecordType field's value.
+func (s *ListResourceRecordSetsInput) SetStartRecordType(v string) *ListResourceRecordSetsInput {
+	s.StartRecordType = &v
+	return s
+}
+
 // A complex type that contains list information for the resource record set.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListResourceRecordSetsResponse
 type ListResourceRecordSetsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8105,6 +10165,42 @@ func (s ListResourceRecordSetsOutput) GoString() string {
 	return s.String()
 }
 
+// SetIsTruncated sets the IsTruncated field's value.
+func (s *ListResourceRecordSetsOutput) SetIsTruncated(v bool) *ListResourceRecordSetsOutput {
+	s.IsTruncated = &v
+	return s
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListResourceRecordSetsOutput) SetMaxItems(v string) *ListResourceRecordSetsOutput {
+	s.MaxItems = &v
+	return s
+}
+
+// SetNextRecordIdentifier sets the NextRecordIdentifier field's value.
+func (s *ListResourceRecordSetsOutput) SetNextRecordIdentifier(v string) *ListResourceRecordSetsOutput {
+	s.NextRecordIdentifier = &v
+	return s
+}
+
+// SetNextRecordName sets the NextRecordName field's value.
+func (s *ListResourceRecordSetsOutput) SetNextRecordName(v string) *ListResourceRecordSetsOutput {
+	s.NextRecordName = &v
+	return s
+}
+
+// SetNextRecordType sets the NextRecordType field's value.
+func (s *ListResourceRecordSetsOutput) SetNextRecordType(v string) *ListResourceRecordSetsOutput {
+	s.NextRecordType = &v
+	return s
+}
+
+// SetResourceRecordSets sets the ResourceRecordSets field's value.
+func (s *ListResourceRecordSetsOutput) SetResourceRecordSets(v []*ResourceRecordSet) *ListResourceRecordSetsOutput {
+	s.ResourceRecordSets = v
+	return s
+}
+
 // To retrieve a list of your reusable delegation sets, send a GET request to
 // the /2013-04-01/delegationset resource. The response to this request includes
 // a DelegationSets element with zero or more DelegationSet child elements.
@@ -8115,6 +10211,7 @@ func (s ListResourceRecordSetsOutput) GoString() string {
 //
 // Amazon Route 53 returns a maximum of 100 items. If you set MaxItems to a
 // value greater than 100, Amazon Route 53 returns only the first 100.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListReusableDelegationSetsRequest
 type ListReusableDelegationSetsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8138,8 +10235,21 @@ func (s ListReusableDelegationSetsInput) GoString() string {
 	return s.String()
 }
 
+// SetMarker sets the Marker field's value.
+func (s *ListReusableDelegationSetsInput) SetMarker(v string) *ListReusableDelegationSetsInput {
+	s.Marker = &v
+	return s
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListReusableDelegationSetsInput) SetMaxItems(v string) *ListReusableDelegationSetsInput {
+	s.MaxItems = &v
+	return s
+}
+
 // A complex type that contains information about the reusable delegation sets
 // that are associated with the current AWS account.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListReusableDelegationSetsResponse
 type ListReusableDelegationSetsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8187,8 +10297,39 @@ func (s ListReusableDelegationSetsOutput) GoString() string {
 	return s.String()
 }
 
+// SetDelegationSets sets the DelegationSets field's value.
+func (s *ListReusableDelegationSetsOutput) SetDelegationSets(v []*DelegationSet) *ListReusableDelegationSetsOutput {
+	s.DelegationSets = v
+	return s
+}
+
+// SetIsTruncated sets the IsTruncated field's value.
+func (s *ListReusableDelegationSetsOutput) SetIsTruncated(v bool) *ListReusableDelegationSetsOutput {
+	s.IsTruncated = &v
+	return s
+}
+
+// SetMarker sets the Marker field's value.
+func (s *ListReusableDelegationSetsOutput) SetMarker(v string) *ListReusableDelegationSetsOutput {
+	s.Marker = &v
+	return s
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListReusableDelegationSetsOutput) SetMaxItems(v string) *ListReusableDelegationSetsOutput {
+	s.MaxItems = &v
+	return s
+}
+
+// SetNextMarker sets the NextMarker field's value.
+func (s *ListReusableDelegationSetsOutput) SetNextMarker(v string) *ListReusableDelegationSetsOutput {
+	s.NextMarker = &v
+	return s
+}
+
 // A complex type containing information about a request for a list of the tags
 // that are associated with an individual resource.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTagsForResourceRequest
 type ListTagsForResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8233,8 +10374,21 @@ func (s *ListTagsForResourceInput) Validate() error {
 	return nil
 }
 
+// SetResourceId sets the ResourceId field's value.
+func (s *ListTagsForResourceInput) SetResourceId(v string) *ListTagsForResourceInput {
+	s.ResourceId = &v
+	return s
+}
+
+// SetResourceType sets the ResourceType field's value.
+func (s *ListTagsForResourceInput) SetResourceType(v string) *ListTagsForResourceInput {
+	s.ResourceType = &v
+	return s
+}
+
 // A complex type that contains information about the health checks or hosted
 // zones for which you want to list tags.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTagsForResourceResponse
 type ListTagsForResourceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8254,8 +10408,15 @@ func (s ListTagsForResourceOutput) GoString() string {
 	return s.String()
 }
 
+// SetResourceTagSet sets the ResourceTagSet field's value.
+func (s *ListTagsForResourceOutput) SetResourceTagSet(v *ResourceTagSet) *ListTagsForResourceOutput {
+	s.ResourceTagSet = v
+	return s
+}
+
 // A complex type that contains information about the health checks or hosted
 // zones for which you want to list tags.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTagsForResourcesRequest
 type ListTagsForResourcesInput struct {
 	_ struct{} `locationName:"ListTagsForResourcesRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -8304,7 +10465,20 @@ func (s *ListTagsForResourcesInput) Validate() error {
 	return nil
 }
 
+// SetResourceIds sets the ResourceIds field's value.
+func (s *ListTagsForResourcesInput) SetResourceIds(v []*string) *ListTagsForResourcesInput {
+	s.ResourceIds = v
+	return s
+}
+
+// SetResourceType sets the ResourceType field's value.
+func (s *ListTagsForResourcesInput) SetResourceType(v string) *ListTagsForResourcesInput {
+	s.ResourceType = &v
+	return s
+}
+
 // A complex type containing tags for the specified resources.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTagsForResourcesResponse
 type ListTagsForResourcesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8324,8 +10498,15 @@ func (s ListTagsForResourcesOutput) GoString() string {
 	return s.String()
 }
 
+// SetResourceTagSets sets the ResourceTagSets field's value.
+func (s *ListTagsForResourcesOutput) SetResourceTagSets(v []*ResourceTagSet) *ListTagsForResourcesOutput {
+	s.ResourceTagSets = v
+	return s
+}
+
 // A complex type that contains the information about the request to list the
 // traffic policies that are associated with the current AWS account.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPoliciesRequest
 type ListTrafficPoliciesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8346,7 +10527,7 @@ type ListTrafficPoliciesInput struct {
 	// element that was returned in the previous response.
 	//
 	// Policies are listed in the order in which they were created.
-	TrafficPolicyIdMarker *string `location:"querystring" locationName:"trafficpolicyid" type:"string"`
+	TrafficPolicyIdMarker *string `location:"querystring" locationName:"trafficpolicyid" min:"1" type:"string"`
 }
 
 // String returns the string representation
@@ -8359,7 +10540,33 @@ func (s ListTrafficPoliciesInput) GoString() string {
 	return s.String()
 }
 
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListTrafficPoliciesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListTrafficPoliciesInput"}
+	if s.TrafficPolicyIdMarker != nil && len(*s.TrafficPolicyIdMarker) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("TrafficPolicyIdMarker", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListTrafficPoliciesInput) SetMaxItems(v string) *ListTrafficPoliciesInput {
+	s.MaxItems = &v
+	return s
+}
+
+// SetTrafficPolicyIdMarker sets the TrafficPolicyIdMarker field's value.
+func (s *ListTrafficPoliciesInput) SetTrafficPolicyIdMarker(v string) *ListTrafficPoliciesInput {
+	s.TrafficPolicyIdMarker = &v
+	return s
+}
+
 // A complex type that contains the response information for the request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPoliciesResponse
 type ListTrafficPoliciesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8383,7 +10590,7 @@ type ListTrafficPoliciesOutput struct {
 	// first traffic policy in the next group of MaxItems traffic policies.
 	//
 	// TrafficPolicyIdMarker is a required field
-	TrafficPolicyIdMarker *string `type:"string" required:"true"`
+	TrafficPolicyIdMarker *string `min:"1" type:"string" required:"true"`
 
 	// A list that contains one TrafficPolicySummary element for each traffic policy
 	// that was created by the current AWS account.
@@ -8402,8 +10609,33 @@ func (s ListTrafficPoliciesOutput) GoString() string {
 	return s.String()
 }
 
+// SetIsTruncated sets the IsTruncated field's value.
+func (s *ListTrafficPoliciesOutput) SetIsTruncated(v bool) *ListTrafficPoliciesOutput {
+	s.IsTruncated = &v
+	return s
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListTrafficPoliciesOutput) SetMaxItems(v string) *ListTrafficPoliciesOutput {
+	s.MaxItems = &v
+	return s
+}
+
+// SetTrafficPolicyIdMarker sets the TrafficPolicyIdMarker field's value.
+func (s *ListTrafficPoliciesOutput) SetTrafficPolicyIdMarker(v string) *ListTrafficPoliciesOutput {
+	s.TrafficPolicyIdMarker = &v
+	return s
+}
+
+// SetTrafficPolicySummaries sets the TrafficPolicySummaries field's value.
+func (s *ListTrafficPoliciesOutput) SetTrafficPolicySummaries(v []*TrafficPolicySummary) *ListTrafficPoliciesOutput {
+	s.TrafficPolicySummaries = v
+	return s
+}
+
 // A request for the traffic policy instances that you created in a specified
 // hosted zone.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyInstancesByHostedZoneRequest
 type ListTrafficPolicyInstancesByHostedZoneInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8469,7 +10701,32 @@ func (s *ListTrafficPolicyInstancesByHostedZoneInput) Validate() error {
 	return nil
 }
 
+// SetHostedZoneId sets the HostedZoneId field's value.
+func (s *ListTrafficPolicyInstancesByHostedZoneInput) SetHostedZoneId(v string) *ListTrafficPolicyInstancesByHostedZoneInput {
+	s.HostedZoneId = &v
+	return s
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListTrafficPolicyInstancesByHostedZoneInput) SetMaxItems(v string) *ListTrafficPolicyInstancesByHostedZoneInput {
+	s.MaxItems = &v
+	return s
+}
+
+// SetTrafficPolicyInstanceNameMarker sets the TrafficPolicyInstanceNameMarker field's value.
+func (s *ListTrafficPolicyInstancesByHostedZoneInput) SetTrafficPolicyInstanceNameMarker(v string) *ListTrafficPolicyInstancesByHostedZoneInput {
+	s.TrafficPolicyInstanceNameMarker = &v
+	return s
+}
+
+// SetTrafficPolicyInstanceTypeMarker sets the TrafficPolicyInstanceTypeMarker field's value.
+func (s *ListTrafficPolicyInstancesByHostedZoneInput) SetTrafficPolicyInstanceTypeMarker(v string) *ListTrafficPolicyInstancesByHostedZoneInput {
+	s.TrafficPolicyInstanceTypeMarker = &v
+	return s
+}
+
 // A complex type that contains the response information for the request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyInstancesByHostedZoneResponse
 type ListTrafficPolicyInstancesByHostedZoneOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8516,8 +10773,39 @@ func (s ListTrafficPolicyInstancesByHostedZoneOutput) GoString() string {
 	return s.String()
 }
 
+// SetIsTruncated sets the IsTruncated field's value.
+func (s *ListTrafficPolicyInstancesByHostedZoneOutput) SetIsTruncated(v bool) *ListTrafficPolicyInstancesByHostedZoneOutput {
+	s.IsTruncated = &v
+	return s
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListTrafficPolicyInstancesByHostedZoneOutput) SetMaxItems(v string) *ListTrafficPolicyInstancesByHostedZoneOutput {
+	s.MaxItems = &v
+	return s
+}
+
+// SetTrafficPolicyInstanceNameMarker sets the TrafficPolicyInstanceNameMarker field's value.
+func (s *ListTrafficPolicyInstancesByHostedZoneOutput) SetTrafficPolicyInstanceNameMarker(v string) *ListTrafficPolicyInstancesByHostedZoneOutput {
+	s.TrafficPolicyInstanceNameMarker = &v
+	return s
+}
+
+// SetTrafficPolicyInstanceTypeMarker sets the TrafficPolicyInstanceTypeMarker field's value.
+func (s *ListTrafficPolicyInstancesByHostedZoneOutput) SetTrafficPolicyInstanceTypeMarker(v string) *ListTrafficPolicyInstancesByHostedZoneOutput {
+	s.TrafficPolicyInstanceTypeMarker = &v
+	return s
+}
+
+// SetTrafficPolicyInstances sets the TrafficPolicyInstances field's value.
+func (s *ListTrafficPolicyInstancesByHostedZoneOutput) SetTrafficPolicyInstances(v []*TrafficPolicyInstance) *ListTrafficPolicyInstancesByHostedZoneOutput {
+	s.TrafficPolicyInstances = v
+	return s
+}
+
 // A complex type that contains the information about the request to list your
 // traffic policy instances.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyInstancesByPolicyRequest
 type ListTrafficPolicyInstancesByPolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8545,7 +10833,7 @@ type ListTrafficPolicyInstancesByPolicyInput struct {
 	// The ID of the traffic policy for which you want to list traffic policy instances.
 	//
 	// TrafficPolicyId is a required field
-	TrafficPolicyId *string `location:"querystring" locationName:"id" type:"string" required:"true"`
+	TrafficPolicyId *string `location:"querystring" locationName:"id" min:"1" type:"string" required:"true"`
 
 	// For the first request to ListTrafficPolicyInstancesByPolicy, omit this value.
 	//
@@ -8594,6 +10882,9 @@ func (s *ListTrafficPolicyInstancesByPolicyInput) Validate() error {
 	if s.TrafficPolicyId == nil {
 		invalidParams.Add(request.NewErrParamRequired("TrafficPolicyId"))
 	}
+	if s.TrafficPolicyId != nil && len(*s.TrafficPolicyId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("TrafficPolicyId", 1))
+	}
 	if s.TrafficPolicyVersion == nil {
 		invalidParams.Add(request.NewErrParamRequired("TrafficPolicyVersion"))
 	}
@@ -8607,7 +10898,44 @@ func (s *ListTrafficPolicyInstancesByPolicyInput) Validate() error {
 	return nil
 }
 
+// SetHostedZoneIdMarker sets the HostedZoneIdMarker field's value.
+func (s *ListTrafficPolicyInstancesByPolicyInput) SetHostedZoneIdMarker(v string) *ListTrafficPolicyInstancesByPolicyInput {
+	s.HostedZoneIdMarker = &v
+	return s
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListTrafficPolicyInstancesByPolicyInput) SetMaxItems(v string) *ListTrafficPolicyInstancesByPolicyInput {
+	s.MaxItems = &v
+	return s
+}
+
+// SetTrafficPolicyId sets the TrafficPolicyId field's value.
+func (s *ListTrafficPolicyInstancesByPolicyInput) SetTrafficPolicyId(v string) *ListTrafficPolicyInstancesByPolicyInput {
+	s.TrafficPolicyId = &v
+	return s
+}
+
+// SetTrafficPolicyInstanceNameMarker sets the TrafficPolicyInstanceNameMarker field's value.
+func (s *ListTrafficPolicyInstancesByPolicyInput) SetTrafficPolicyInstanceNameMarker(v string) *ListTrafficPolicyInstancesByPolicyInput {
+	s.TrafficPolicyInstanceNameMarker = &v
+	return s
+}
+
+// SetTrafficPolicyInstanceTypeMarker sets the TrafficPolicyInstanceTypeMarker field's value.
+func (s *ListTrafficPolicyInstancesByPolicyInput) SetTrafficPolicyInstanceTypeMarker(v string) *ListTrafficPolicyInstancesByPolicyInput {
+	s.TrafficPolicyInstanceTypeMarker = &v
+	return s
+}
+
+// SetTrafficPolicyVersion sets the TrafficPolicyVersion field's value.
+func (s *ListTrafficPolicyInstancesByPolicyInput) SetTrafficPolicyVersion(v int64) *ListTrafficPolicyInstancesByPolicyInput {
+	s.TrafficPolicyVersion = &v
+	return s
+}
+
 // A complex type that contains the response information for the request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyInstancesByPolicyResponse
 type ListTrafficPolicyInstancesByPolicyOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8659,8 +10987,45 @@ func (s ListTrafficPolicyInstancesByPolicyOutput) GoString() string {
 	return s.String()
 }
 
-// A complex type that contains the information about the request to list your
-// traffic policy instances.
+// SetHostedZoneIdMarker sets the HostedZoneIdMarker field's value.
+func (s *ListTrafficPolicyInstancesByPolicyOutput) SetHostedZoneIdMarker(v string) *ListTrafficPolicyInstancesByPolicyOutput {
+	s.HostedZoneIdMarker = &v
+	return s
+}
+
+// SetIsTruncated sets the IsTruncated field's value.
+func (s *ListTrafficPolicyInstancesByPolicyOutput) SetIsTruncated(v bool) *ListTrafficPolicyInstancesByPolicyOutput {
+	s.IsTruncated = &v
+	return s
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListTrafficPolicyInstancesByPolicyOutput) SetMaxItems(v string) *ListTrafficPolicyInstancesByPolicyOutput {
+	s.MaxItems = &v
+	return s
+}
+
+// SetTrafficPolicyInstanceNameMarker sets the TrafficPolicyInstanceNameMarker field's value.
+func (s *ListTrafficPolicyInstancesByPolicyOutput) SetTrafficPolicyInstanceNameMarker(v string) *ListTrafficPolicyInstancesByPolicyOutput {
+	s.TrafficPolicyInstanceNameMarker = &v
+	return s
+}
+
+// SetTrafficPolicyInstanceTypeMarker sets the TrafficPolicyInstanceTypeMarker field's value.
+func (s *ListTrafficPolicyInstancesByPolicyOutput) SetTrafficPolicyInstanceTypeMarker(v string) *ListTrafficPolicyInstancesByPolicyOutput {
+	s.TrafficPolicyInstanceTypeMarker = &v
+	return s
+}
+
+// SetTrafficPolicyInstances sets the TrafficPolicyInstances field's value.
+func (s *ListTrafficPolicyInstancesByPolicyOutput) SetTrafficPolicyInstances(v []*TrafficPolicyInstance) *ListTrafficPolicyInstancesByPolicyOutput {
+	s.TrafficPolicyInstances = v
+	return s
+}
+
+// A request to get information about the traffic policy instances that you
+// created by using the current AWS account.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyInstancesRequest
 type ListTrafficPolicyInstancesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8716,7 +11081,32 @@ func (s ListTrafficPolicyInstancesInput) GoString() string {
 	return s.String()
 }
 
+// SetHostedZoneIdMarker sets the HostedZoneIdMarker field's value.
+func (s *ListTrafficPolicyInstancesInput) SetHostedZoneIdMarker(v string) *ListTrafficPolicyInstancesInput {
+	s.HostedZoneIdMarker = &v
+	return s
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListTrafficPolicyInstancesInput) SetMaxItems(v string) *ListTrafficPolicyInstancesInput {
+	s.MaxItems = &v
+	return s
+}
+
+// SetTrafficPolicyInstanceNameMarker sets the TrafficPolicyInstanceNameMarker field's value.
+func (s *ListTrafficPolicyInstancesInput) SetTrafficPolicyInstanceNameMarker(v string) *ListTrafficPolicyInstancesInput {
+	s.TrafficPolicyInstanceNameMarker = &v
+	return s
+}
+
+// SetTrafficPolicyInstanceTypeMarker sets the TrafficPolicyInstanceTypeMarker field's value.
+func (s *ListTrafficPolicyInstancesInput) SetTrafficPolicyInstanceTypeMarker(v string) *ListTrafficPolicyInstancesInput {
+	s.TrafficPolicyInstanceTypeMarker = &v
+	return s
+}
+
 // A complex type that contains the response information for the request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyInstancesResponse
 type ListTrafficPolicyInstancesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8768,8 +11158,45 @@ func (s ListTrafficPolicyInstancesOutput) GoString() string {
 	return s.String()
 }
 
+// SetHostedZoneIdMarker sets the HostedZoneIdMarker field's value.
+func (s *ListTrafficPolicyInstancesOutput) SetHostedZoneIdMarker(v string) *ListTrafficPolicyInstancesOutput {
+	s.HostedZoneIdMarker = &v
+	return s
+}
+
+// SetIsTruncated sets the IsTruncated field's value.
+func (s *ListTrafficPolicyInstancesOutput) SetIsTruncated(v bool) *ListTrafficPolicyInstancesOutput {
+	s.IsTruncated = &v
+	return s
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListTrafficPolicyInstancesOutput) SetMaxItems(v string) *ListTrafficPolicyInstancesOutput {
+	s.MaxItems = &v
+	return s
+}
+
+// SetTrafficPolicyInstanceNameMarker sets the TrafficPolicyInstanceNameMarker field's value.
+func (s *ListTrafficPolicyInstancesOutput) SetTrafficPolicyInstanceNameMarker(v string) *ListTrafficPolicyInstancesOutput {
+	s.TrafficPolicyInstanceNameMarker = &v
+	return s
+}
+
+// SetTrafficPolicyInstanceTypeMarker sets the TrafficPolicyInstanceTypeMarker field's value.
+func (s *ListTrafficPolicyInstancesOutput) SetTrafficPolicyInstanceTypeMarker(v string) *ListTrafficPolicyInstancesOutput {
+	s.TrafficPolicyInstanceTypeMarker = &v
+	return s
+}
+
+// SetTrafficPolicyInstances sets the TrafficPolicyInstances field's value.
+func (s *ListTrafficPolicyInstancesOutput) SetTrafficPolicyInstances(v []*TrafficPolicyInstance) *ListTrafficPolicyInstancesOutput {
+	s.TrafficPolicyInstances = v
+	return s
+}
+
 // A complex type that contains the information about the request to list your
 // traffic policies.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyVersionsRequest
 type ListTrafficPolicyVersionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8777,7 +11204,7 @@ type ListTrafficPolicyVersionsInput struct {
 	// all versions.
 	//
 	// Id is a required field
-	Id *string `location:"uri" locationName:"Id" type:"string" required:"true"`
+	Id *string `location:"uri" locationName:"Id" min:"1" type:"string" required:"true"`
 
 	// The maximum number of traffic policy versions that you want Amazon Route
 	// 53 to include in the response body for this request. If the specified traffic
@@ -8816,6 +11243,9 @@ func (s *ListTrafficPolicyVersionsInput) Validate() error {
 	if s.Id == nil {
 		invalidParams.Add(request.NewErrParamRequired("Id"))
 	}
+	if s.Id != nil && len(*s.Id) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Id", 1))
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -8823,7 +11253,26 @@ func (s *ListTrafficPolicyVersionsInput) Validate() error {
 	return nil
 }
 
+// SetId sets the Id field's value.
+func (s *ListTrafficPolicyVersionsInput) SetId(v string) *ListTrafficPolicyVersionsInput {
+	s.Id = &v
+	return s
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListTrafficPolicyVersionsInput) SetMaxItems(v string) *ListTrafficPolicyVersionsInput {
+	s.MaxItems = &v
+	return s
+}
+
+// SetTrafficPolicyVersionMarker sets the TrafficPolicyVersionMarker field's value.
+func (s *ListTrafficPolicyVersionsInput) SetTrafficPolicyVersionMarker(v string) *ListTrafficPolicyVersionsInput {
+	s.TrafficPolicyVersionMarker = &v
+	return s
+}
+
 // A complex type that contains the response information for the request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyVersionsResponse
 type ListTrafficPolicyVersionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8868,9 +11317,154 @@ func (s ListTrafficPolicyVersionsOutput) GoString() string {
 	return s.String()
 }
 
+// SetIsTruncated sets the IsTruncated field's value.
+func (s *ListTrafficPolicyVersionsOutput) SetIsTruncated(v bool) *ListTrafficPolicyVersionsOutput {
+	s.IsTruncated = &v
+	return s
+}
+
+// SetMaxItems sets the MaxItems field's value.
+func (s *ListTrafficPolicyVersionsOutput) SetMaxItems(v string) *ListTrafficPolicyVersionsOutput {
+	s.MaxItems = &v
+	return s
+}
+
+// SetTrafficPolicies sets the TrafficPolicies field's value.
+func (s *ListTrafficPolicyVersionsOutput) SetTrafficPolicies(v []*TrafficPolicy) *ListTrafficPolicyVersionsOutput {
+	s.TrafficPolicies = v
+	return s
+}
+
+// SetTrafficPolicyVersionMarker sets the TrafficPolicyVersionMarker field's value.
+func (s *ListTrafficPolicyVersionsOutput) SetTrafficPolicyVersionMarker(v string) *ListTrafficPolicyVersionsOutput {
+	s.TrafficPolicyVersionMarker = &v
+	return s
+}
+
+// A complex type that contains information about that can be associated with
+// your hosted zone.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListVPCAssociationAuthorizationsRequest
+type ListVPCAssociationAuthorizationsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the hosted zone for which you want a list of VPCs that can be associated
+	// with the hosted zone.
+	//
+	// HostedZoneId is a required field
+	HostedZoneId *string `location:"uri" locationName:"Id" type:"string" required:"true"`
+
+	// Optional: An integer that specifies the maximum number of VPCs that you want
+	// Amazon Route 53 to return.
+	MaxResults *string `location:"querystring" locationName:"maxresults" type:"string"`
+
+	// Optional: If a response includes a NextToken element, there are more VPCs
+	// that can be associated with the specified hosted zone. To get the next page
+	// of results, submit another request, and include the value of the NextToken
+	// element in from the response in the NextToken parameter in another ListVPCAssociationAuthorizations
+	// request.
+	NextToken *string `location:"querystring" locationName:"nexttoken" type:"string"`
+}
+
+// String returns the string representation
+func (s ListVPCAssociationAuthorizationsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListVPCAssociationAuthorizationsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListVPCAssociationAuthorizationsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListVPCAssociationAuthorizationsInput"}
+	if s.HostedZoneId == nil {
+		invalidParams.Add(request.NewErrParamRequired("HostedZoneId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetHostedZoneId sets the HostedZoneId field's value.
+func (s *ListVPCAssociationAuthorizationsInput) SetHostedZoneId(v string) *ListVPCAssociationAuthorizationsInput {
+	s.HostedZoneId = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListVPCAssociationAuthorizationsInput) SetMaxResults(v string) *ListVPCAssociationAuthorizationsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListVPCAssociationAuthorizationsInput) SetNextToken(v string) *ListVPCAssociationAuthorizationsInput {
+	s.NextToken = &v
+	return s
+}
+
+// A complex type that contains the response information for the request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListVPCAssociationAuthorizationsResponse
+type ListVPCAssociationAuthorizationsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the hosted zone that you can associate the listed VPCs with.
+	//
+	// HostedZoneId is a required field
+	HostedZoneId *string `type:"string" required:"true"`
+
+	// When the response includes a NextToken element, there are more VPCs that
+	// can be associated with the specified hosted zone. To get the next page of
+	// VPCs, submit another ListVPCAssociationAuthorizations request, and include
+	// the value of the NextToken element from the response in the NextToken request
+	// parameter:
+	//
+	// /2013-04-01/hostedzone/hosted zone ID/authorizevpcassociation?MaxItems=VPCs
+	// per page&NextToken=
+	NextToken *string `type:"string"`
+
+	// The list of VPCs that are authorized to be associated with the specified
+	// hosted zone.
+	//
+	// VPCs is a required field
+	VPCs []*VPC `locationNameList:"VPC" min:"1" type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s ListVPCAssociationAuthorizationsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListVPCAssociationAuthorizationsOutput) GoString() string {
+	return s.String()
+}
+
+// SetHostedZoneId sets the HostedZoneId field's value.
+func (s *ListVPCAssociationAuthorizationsOutput) SetHostedZoneId(v string) *ListVPCAssociationAuthorizationsOutput {
+	s.HostedZoneId = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListVPCAssociationAuthorizationsOutput) SetNextToken(v string) *ListVPCAssociationAuthorizationsOutput {
+	s.NextToken = &v
+	return s
+}
+
+// SetVPCs sets the VPCs field's value.
+func (s *ListVPCAssociationAuthorizationsOutput) SetVPCs(v []*VPC) *ListVPCAssociationAuthorizationsOutput {
+	s.VPCs = v
+	return s
+}
+
 // Information specific to the resource record.
 //
-// If you are creating an alias resource record set, omit ResourceRecord.
+// If you're creating an alias resource record set, omit ResourceRecord.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ResourceRecord
 type ResourceRecord struct {
 	_ struct{} `type:"structure"`
 
@@ -8883,7 +11477,7 @@ type ResourceRecord struct {
 	// You can specify more than one value for all record types except CNAME and
 	// SOA.
 	//
-	// If you are creating an alias resource record set, omit Value.
+	// If you're creating an alias resource record set, omit Value.
 	//
 	// Value is a required field
 	Value *string `type:"string" required:"true"`
@@ -8912,14 +11506,21 @@ func (s *ResourceRecord) Validate() error {
 	return nil
 }
 
+// SetValue sets the Value field's value.
+func (s *ResourceRecord) SetValue(v string) *ResourceRecord {
+	s.Value = &v
+	return s
+}
+
 // Information about the resource record set to create or delete.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ResourceRecordSet
 type ResourceRecordSet struct {
 	_ struct{} `type:"structure"`
 
 	// Alias resource record sets only: Information about the CloudFront distribution,
-	// Elastic Beanstalk environment, ELB load balancer, Amazon S3 bucket, or Amazon
-	// Route 53 resource record set to which you are redirecting queries. The Elastic
-	// Beanstalk environment must have a regionalized subdomain.
+	// AWS Elastic Beanstalk environment, ELB load balancer, Amazon S3 bucket, or
+	// Amazon Route 53 resource record set to which you're redirecting queries.
+	// The AWS Elastic Beanstalk environment must have a regionalized subdomain.
 	//
 	// If you're creating resource records sets for a private hosted zone, note
 	// the following:
@@ -8963,7 +11564,7 @@ type ResourceRecordSet struct {
 	//    resource record set. This is true regardless of the health of the associated
 	//    endpoint.
 	//
-	// You cannot create non-failover resource record sets that have the same values
+	// You can't create non-failover resource record sets that have the same values
 	// for the Name and Type elements as failover resource record sets.
 	//
 	// For failover alias resource record sets, you must also include the EvaluateTargetHealth
@@ -8994,7 +11595,7 @@ type ResourceRecordSet struct {
 	// This allows you to route most queries for a continent to one resource and
 	// to route queries for a country on that continent to a different resource.
 	//
-	// You cannot create two geolocation resource record sets that specify the same
+	// You can't create two geolocation resource record sets that specify the same
 	// geographic location.
 	//
 	// The value * in the CountryCode element matches all geographic locations that
@@ -9011,7 +11612,7 @@ type ResourceRecordSet struct {
 	// aren't mapped to a location. If you don't create a * resource record set,
 	// Amazon Route 53 returns a "no answer" response for queries from those locations.
 	//
-	// You cannot create non-geolocation resource record sets that have the same
+	// You can't create non-geolocation resource record sets that have the same
 	// values for the Name and Type elements as geolocation resource record sets.
 	GeoLocation *GeoLocation `type:"structure"`
 
@@ -9031,26 +11632,26 @@ type ResourceRecordSet struct {
 	//    * By determining the current state of a CloudWatch alarm (CloudWatch metric
 	//    health checks)
 	//
-	// For information about how Amazon Route 53 determines whether a health check
-	// is healthy, see CreateHealthCheck.
+	// For more information, see How Amazon Route 53 Determines Whether an Endpoint
+	// Is Healthy (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-determining-health-of-endpoints.html).
 	//
 	// The HealthCheckId element is only useful when Amazon Route 53 is choosing
 	// between two or more resource record sets to respond to a DNS query, and you
 	// want Amazon Route 53 to base the choice in part on the status of a health
 	// check. Configuring health checks only makes sense in the following configurations:
 	//
-	//    * You're checking the health of the resource record sets in a weighted,
-	//    latency, geolocation, or failover resource record set, and you specify
-	//    health check IDs for all of the resource record sets. If the health check
-	//    for one resource record set specifies an endpoint that is not healthy,
-	//    Amazon Route 53 stops responding to queries using the value for that resource
-	//    record set.
+	//    * You're checking the health of the resource record sets in a group of
+	//    weighted, latency, geolocation, or failover resource record sets, and
+	//    you specify health check IDs for all of the resource record sets. If the
+	//    health check for one resource record set specifies an endpoint that is
+	//    not healthy, Amazon Route 53 stops responding to queries using the value
+	//    for that resource record set.
 	//
 	//    * You set EvaluateTargetHealth to true for the resource record sets in
-	//    an alias, weighted alias, latency alias, geolocation alias, or failover
-	//    alias resource record set, and you specify health check IDs for all of
-	//    the resource record sets that are referenced by the alias resource record
-	//    sets.
+	//    a group of alias, weighted alias, latency alias, geolocation alias, or
+	//    failover alias resource record sets, and you specify health check IDs
+	//    for all of the resource record sets that are referenced by the alias resource
+	//    record sets.
 	//
 	// Amazon Route 53 doesn't check the health of the endpoint specified in the
 	// resource record set, for example, the endpoint specified by the IP address
@@ -9072,7 +11673,7 @@ type ResourceRecordSet struct {
 	// that you create a separate health check for each endpoint. For example, create
 	// a health check for each HTTP server that is serving content for www.example.com.
 	// For the value of FullyQualifiedDomainName, specify the domain name of the
-	// server (such as us-east-1-www.example.com), not the name of the resource
+	// server (such as us-east-2-www.example.com), not the name of the resource
 	// record sets (example.com).
 	//
 	// n this configuration, if you create a health check for which the value of
@@ -9116,18 +11717,18 @@ type ResourceRecordSet struct {
 	//    NS.
 	//
 	// You can use the * wildcard as the leftmost label in a domain name, for example,
-	// *.example.com. You cannot use an * for one of the middle labels, for example,
+	// *.example.com. You can't use an * for one of the middle labels, for example,
 	// marketing.*.example.com. In addition, the * must replace the entire label;
 	// for example, you can't specify prod*.example.com.
 	//
 	// Name is a required field
 	Name *string `type:"string" required:"true"`
 
-	// Latency-based resource record sets only: The Amazon EC2 region where the
+	// Latency-based resource record sets only: The Amazon EC2 Region where the
 	// resource that is specified in this resource record set resides. The resource
-	// typically is an AWS resource, such as an Amazon EC2 instance or an ELB load
-	// balancer, and is referred to by an IP address or a DNS domain name, depending
-	// on the record type.
+	// typically is an AWS resource, such as an EC2 instance or an ELB load balancer,
+	// and is referred to by an IP address or a DNS domain name, depending on the
+	// record type.
 	//
 	// Creating latency and latency alias resource record sets in private hosted
 	// zones is not supported.
@@ -9135,7 +11736,7 @@ type ResourceRecordSet struct {
 	// When Amazon Route 53 receives a DNS query for a domain name and type for
 	// which you have created latency resource record sets, Amazon Route 53 selects
 	// the latency resource record set that has the lowest latency between the end
-	// user and the associated Amazon EC2 region. Amazon Route 53 then returns the
+	// user and the associated Amazon EC2 Region. Amazon Route 53 then returns the
 	// value that is associated with the selected resource record set.
 	//
 	// Note the following:
@@ -9144,20 +11745,19 @@ type ResourceRecordSet struct {
 	//    set.
 	//
 	//    * You can only create one latency resource record set for each Amazon
-	//    EC2 region.
+	//    EC2 Region.
 	//
-	//    * You are not required to create latency resource record sets for all
-	//    Amazon EC2 regions. Amazon Route 53 will choose the region with the best
-	//    latency from among the regions for which you create latency resource record
-	//    sets.
+	//    * You aren't required to create latency resource record sets for all Amazon
+	//    EC2 Regions. Amazon Route 53 will choose the region with the best latency
+	//    from among the regions for which you create latency resource record sets.
 	//
-	//    * You cannot create non-latency resource record sets that have the same
+	//    * You can't create non-latency resource record sets that have the same
 	//    values for the Name and Type elements as latency resource record sets.
 	Region *string `min:"1" type:"string" enum:"ResourceRecordSetRegion"`
 
 	// Information about the resource records to act upon.
 	//
-	// If you are creating an alias resource record set, omit ResourceRecords.
+	// If you're creating an alias resource record set, omit ResourceRecords.
 	ResourceRecords []*ResourceRecord `locationNameList:"ResourceRecord" min:"1" type:"list"`
 
 	// Weighted, Latency, Geo, and Failover resource record sets only: An identifier
@@ -9198,7 +11798,7 @@ type ResourceRecordSet struct {
 	// by using ChangeResourceRecordSets, Amazon Route 53 doesn't automatically
 	// delete the traffic policy instance, and you'll continue to be charged for
 	// it even though it's no longer in use.
-	TrafficPolicyInstanceId *string `type:"string"`
+	TrafficPolicyInstanceId *string `min:"1" type:"string"`
 
 	// The DNS record type. For information about different record types and how
 	// data is encoded for them, see Supported DNS Resource Record Types (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/ResourceRecordTypes.html)
@@ -9225,7 +11825,12 @@ type ResourceRecordSet struct {
 	//
 	//    * CloudFront distributions:A
 	//
-	//    * Elastic Beanstalk environment that has a regionalized subdomain: A
+	// If IPv6 is enabled for the distribution, create two resource record sets
+	//    to route traffic to your distribution, one with a value of A and one with
+	//    a value of AAAA.
+	//
+	//    * AWS Elastic Beanstalk environment that has a regionalized subdomain:
+	//    A
 	//
 	//    * ELB load balancers:A | AAAA
 	//
@@ -9252,9 +11857,9 @@ type ResourceRecordSet struct {
 	//    * You can only specify one ResourceRecord per weighted resource record
 	//    set.
 	//
-	//    * You cannot create latency, failover, or geolocation resource record
-	//    sets that have the same values for the Name and Type elements as weighted
-	//    resource record sets.
+	//    * You can't create latency, failover, or geolocation resource record sets
+	//    that have the same values for the Name and Type elements as weighted resource
+	//    record sets.
 	//
 	//    * You can create a maximum of 100 weighted resource record sets that have
 	//    the same values for the Name and Type elements.
@@ -9299,6 +11904,9 @@ func (s *ResourceRecordSet) Validate() error {
 	if s.SetIdentifier != nil && len(*s.SetIdentifier) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("SetIdentifier", 1))
 	}
+	if s.TrafficPolicyInstanceId != nil && len(*s.TrafficPolicyInstanceId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("TrafficPolicyInstanceId", 1))
+	}
 	if s.Type == nil {
 		invalidParams.Add(request.NewErrParamRequired("Type"))
 	}
@@ -9329,7 +11937,80 @@ func (s *ResourceRecordSet) Validate() error {
 	return nil
 }
 
+// SetAliasTarget sets the AliasTarget field's value.
+func (s *ResourceRecordSet) SetAliasTarget(v *AliasTarget) *ResourceRecordSet {
+	s.AliasTarget = v
+	return s
+}
+
+// SetFailover sets the Failover field's value.
+func (s *ResourceRecordSet) SetFailover(v string) *ResourceRecordSet {
+	s.Failover = &v
+	return s
+}
+
+// SetGeoLocation sets the GeoLocation field's value.
+func (s *ResourceRecordSet) SetGeoLocation(v *GeoLocation) *ResourceRecordSet {
+	s.GeoLocation = v
+	return s
+}
+
+// SetHealthCheckId sets the HealthCheckId field's value.
+func (s *ResourceRecordSet) SetHealthCheckId(v string) *ResourceRecordSet {
+	s.HealthCheckId = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *ResourceRecordSet) SetName(v string) *ResourceRecordSet {
+	s.Name = &v
+	return s
+}
+
+// SetRegion sets the Region field's value.
+func (s *ResourceRecordSet) SetRegion(v string) *ResourceRecordSet {
+	s.Region = &v
+	return s
+}
+
+// SetResourceRecords sets the ResourceRecords field's value.
+func (s *ResourceRecordSet) SetResourceRecords(v []*ResourceRecord) *ResourceRecordSet {
+	s.ResourceRecords = v
+	return s
+}
+
+// SetSetIdentifier sets the SetIdentifier field's value.
+func (s *ResourceRecordSet) SetSetIdentifier(v string) *ResourceRecordSet {
+	s.SetIdentifier = &v
+	return s
+}
+
+// SetTTL sets the TTL field's value.
+func (s *ResourceRecordSet) SetTTL(v int64) *ResourceRecordSet {
+	s.TTL = &v
+	return s
+}
+
+// SetTrafficPolicyInstanceId sets the TrafficPolicyInstanceId field's value.
+func (s *ResourceRecordSet) SetTrafficPolicyInstanceId(v string) *ResourceRecordSet {
+	s.TrafficPolicyInstanceId = &v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *ResourceRecordSet) SetType(v string) *ResourceRecordSet {
+	s.Type = &v
+	return s
+}
+
+// SetWeight sets the Weight field's value.
+func (s *ResourceRecordSet) SetWeight(v int64) *ResourceRecordSet {
+	s.Weight = &v
+	return s
+}
+
 // A complex type containing a resource and its associated tags.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ResourceTagSet
 type ResourceTagSet struct {
 	_ struct{} `type:"structure"`
 
@@ -9357,8 +12038,27 @@ func (s ResourceTagSet) GoString() string {
 	return s.String()
 }
 
+// SetResourceId sets the ResourceId field's value.
+func (s *ResourceTagSet) SetResourceId(v string) *ResourceTagSet {
+	s.ResourceId = &v
+	return s
+}
+
+// SetResourceType sets the ResourceType field's value.
+func (s *ResourceTagSet) SetResourceType(v string) *ResourceTagSet {
+	s.ResourceType = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *ResourceTagSet) SetTags(v []*Tag) *ResourceTagSet {
+	s.Tags = v
+	return s
+}
+
 // A complex type that contains the status that one Amazon Route 53 health checker
 // reports and the time of the health check.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/StatusReport
 type StatusReport struct {
 	_ struct{} `type:"structure"`
 
@@ -9383,8 +12083,21 @@ func (s StatusReport) GoString() string {
 	return s.String()
 }
 
+// SetCheckedTime sets the CheckedTime field's value.
+func (s *StatusReport) SetCheckedTime(v time.Time) *StatusReport {
+	s.CheckedTime = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *StatusReport) SetStatus(v string) *StatusReport {
+	s.Status = &v
+	return s
+}
+
 // A complex type that contains information about a tag that you want to add
 // or edit for the specified health check or hosted zone.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/Tag
 type Tag struct {
 	_ struct{} `type:"structure"`
 
@@ -9422,6 +12135,18 @@ func (s Tag) GoString() string {
 	return s.String()
 }
 
+// SetKey sets the Key field's value.
+func (s *Tag) SetKey(v string) *Tag {
+	s.Key = &v
+	return s
+}
+
+// SetValue sets the Value field's value.
+func (s *Tag) SetValue(v string) *Tag {
+	s.Value = &v
+	return s
+}
+
 // Gets the value that Amazon Route 53 returns in response to a DNS request
 // for a specified record name and type. You can optionally specify the IP address
 // of a DNS resolver, an EDNS0 client subnet IP address, and a subnet mask.
@@ -9449,6 +12174,7 @@ func (s Tag) GoString() string {
 // 192.0.2.44 for edns0clientsubnetip and 24 for edns0clientsubnetmask, the
 // checking tool will simulate a request from 192.0.2.0/24. The default value
 // is 24 bits.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/TestDNSAnswerRequest
 type TestDNSAnswerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9515,7 +12241,44 @@ func (s *TestDNSAnswerInput) Validate() error {
 	return nil
 }
 
+// SetEDNS0ClientSubnetIP sets the EDNS0ClientSubnetIP field's value.
+func (s *TestDNSAnswerInput) SetEDNS0ClientSubnetIP(v string) *TestDNSAnswerInput {
+	s.EDNS0ClientSubnetIP = &v
+	return s
+}
+
+// SetEDNS0ClientSubnetMask sets the EDNS0ClientSubnetMask field's value.
+func (s *TestDNSAnswerInput) SetEDNS0ClientSubnetMask(v string) *TestDNSAnswerInput {
+	s.EDNS0ClientSubnetMask = &v
+	return s
+}
+
+// SetHostedZoneId sets the HostedZoneId field's value.
+func (s *TestDNSAnswerInput) SetHostedZoneId(v string) *TestDNSAnswerInput {
+	s.HostedZoneId = &v
+	return s
+}
+
+// SetRecordName sets the RecordName field's value.
+func (s *TestDNSAnswerInput) SetRecordName(v string) *TestDNSAnswerInput {
+	s.RecordName = &v
+	return s
+}
+
+// SetRecordType sets the RecordType field's value.
+func (s *TestDNSAnswerInput) SetRecordType(v string) *TestDNSAnswerInput {
+	s.RecordType = &v
+	return s
+}
+
+// SetResolverIP sets the ResolverIP field's value.
+func (s *TestDNSAnswerInput) SetResolverIP(v string) *TestDNSAnswerInput {
+	s.ResolverIP = &v
+	return s
+}
+
 // A complex type that contains the response to a TestDNSAnswer request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/TestDNSAnswerResponse
 type TestDNSAnswerOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9566,7 +12329,44 @@ func (s TestDNSAnswerOutput) GoString() string {
 	return s.String()
 }
 
+// SetNameserver sets the Nameserver field's value.
+func (s *TestDNSAnswerOutput) SetNameserver(v string) *TestDNSAnswerOutput {
+	s.Nameserver = &v
+	return s
+}
+
+// SetProtocol sets the Protocol field's value.
+func (s *TestDNSAnswerOutput) SetProtocol(v string) *TestDNSAnswerOutput {
+	s.Protocol = &v
+	return s
+}
+
+// SetRecordData sets the RecordData field's value.
+func (s *TestDNSAnswerOutput) SetRecordData(v []*string) *TestDNSAnswerOutput {
+	s.RecordData = v
+	return s
+}
+
+// SetRecordName sets the RecordName field's value.
+func (s *TestDNSAnswerOutput) SetRecordName(v string) *TestDNSAnswerOutput {
+	s.RecordName = &v
+	return s
+}
+
+// SetRecordType sets the RecordType field's value.
+func (s *TestDNSAnswerOutput) SetRecordType(v string) *TestDNSAnswerOutput {
+	s.RecordType = &v
+	return s
+}
+
+// SetResponseCode sets the ResponseCode field's value.
+func (s *TestDNSAnswerOutput) SetResponseCode(v string) *TestDNSAnswerOutput {
+	s.ResponseCode = &v
+	return s
+}
+
 // A complex type that contains settings for a traffic policy.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/TrafficPolicy
 type TrafficPolicy struct {
 	_ struct{} `type:"structure"`
 
@@ -9575,7 +12375,7 @@ type TrafficPolicy struct {
 
 	// The definition of a traffic policy in JSON format. You specify the JSON document
 	// to use for a new traffic policy in the CreateTrafficPolicy request. For more
-	// information about the JSON format, see Traffic Policy Document Format (http://docs.aws.amazon.com/Route53/latest/api-reference/api-policies-traffic-policy-document-format.html).
+	// information about the JSON format, see Traffic Policy Document Format (http://docs.aws.amazon.com/Route53/latest/APIReference/api-policies-traffic-policy-document-format.html).
 	//
 	// Document is a required field
 	Document *string `type:"string" required:"true"`
@@ -9584,7 +12384,7 @@ type TrafficPolicy struct {
 	// it.
 	//
 	// Id is a required field
-	Id *string `type:"string" required:"true"`
+	Id *string `min:"1" type:"string" required:"true"`
 
 	// The name that you specified when you created the traffic policy.
 	//
@@ -9614,7 +12414,44 @@ func (s TrafficPolicy) GoString() string {
 	return s.String()
 }
 
+// SetComment sets the Comment field's value.
+func (s *TrafficPolicy) SetComment(v string) *TrafficPolicy {
+	s.Comment = &v
+	return s
+}
+
+// SetDocument sets the Document field's value.
+func (s *TrafficPolicy) SetDocument(v string) *TrafficPolicy {
+	s.Document = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *TrafficPolicy) SetId(v string) *TrafficPolicy {
+	s.Id = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *TrafficPolicy) SetName(v string) *TrafficPolicy {
+	s.Name = &v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *TrafficPolicy) SetType(v string) *TrafficPolicy {
+	s.Type = &v
+	return s
+}
+
+// SetVersion sets the Version field's value.
+func (s *TrafficPolicy) SetVersion(v int64) *TrafficPolicy {
+	s.Version = &v
+	return s
+}
+
 // A complex type that contains settings for the new traffic policy instance.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/TrafficPolicyInstance
 type TrafficPolicyInstance struct {
 	_ struct{} `type:"structure"`
 
@@ -9627,7 +12464,7 @@ type TrafficPolicyInstance struct {
 	// The ID that Amazon Route 53 assigned to the new traffic policy instance.
 	//
 	// Id is a required field
-	Id *string `type:"string" required:"true"`
+	Id *string `min:"1" type:"string" required:"true"`
 
 	// If State is Failed, an explanation of the reason for the failure. If State
 	// is another value, Message is empty.
@@ -9667,7 +12504,7 @@ type TrafficPolicyInstance struct {
 	// record sets in the specified hosted zone.
 	//
 	// TrafficPolicyId is a required field
-	TrafficPolicyId *string `type:"string" required:"true"`
+	TrafficPolicyId *string `min:"1" type:"string" required:"true"`
 
 	// The DNS type that Amazon Route 53 assigned to all of the resource record
 	// sets that it created for this traffic policy instance.
@@ -9692,8 +12529,63 @@ func (s TrafficPolicyInstance) GoString() string {
 	return s.String()
 }
 
+// SetHostedZoneId sets the HostedZoneId field's value.
+func (s *TrafficPolicyInstance) SetHostedZoneId(v string) *TrafficPolicyInstance {
+	s.HostedZoneId = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *TrafficPolicyInstance) SetId(v string) *TrafficPolicyInstance {
+	s.Id = &v
+	return s
+}
+
+// SetMessage sets the Message field's value.
+func (s *TrafficPolicyInstance) SetMessage(v string) *TrafficPolicyInstance {
+	s.Message = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *TrafficPolicyInstance) SetName(v string) *TrafficPolicyInstance {
+	s.Name = &v
+	return s
+}
+
+// SetState sets the State field's value.
+func (s *TrafficPolicyInstance) SetState(v string) *TrafficPolicyInstance {
+	s.State = &v
+	return s
+}
+
+// SetTTL sets the TTL field's value.
+func (s *TrafficPolicyInstance) SetTTL(v int64) *TrafficPolicyInstance {
+	s.TTL = &v
+	return s
+}
+
+// SetTrafficPolicyId sets the TrafficPolicyId field's value.
+func (s *TrafficPolicyInstance) SetTrafficPolicyId(v string) *TrafficPolicyInstance {
+	s.TrafficPolicyId = &v
+	return s
+}
+
+// SetTrafficPolicyType sets the TrafficPolicyType field's value.
+func (s *TrafficPolicyInstance) SetTrafficPolicyType(v string) *TrafficPolicyInstance {
+	s.TrafficPolicyType = &v
+	return s
+}
+
+// SetTrafficPolicyVersion sets the TrafficPolicyVersion field's value.
+func (s *TrafficPolicyInstance) SetTrafficPolicyVersion(v int64) *TrafficPolicyInstance {
+	s.TrafficPolicyVersion = &v
+	return s
+}
+
 // A complex type that contains information about the latest version of one
 // traffic policy that is associated with the current AWS account.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/TrafficPolicySummary
 type TrafficPolicySummary struct {
 	_ struct{} `type:"structure"`
 
@@ -9701,7 +12593,7 @@ type TrafficPolicySummary struct {
 	// it.
 	//
 	// Id is a required field
-	Id *string `type:"string" required:"true"`
+	Id *string `min:"1" type:"string" required:"true"`
 
 	// The version number of the latest version of the traffic policy.
 	//
@@ -9735,7 +12627,38 @@ func (s TrafficPolicySummary) GoString() string {
 	return s.String()
 }
 
+// SetId sets the Id field's value.
+func (s *TrafficPolicySummary) SetId(v string) *TrafficPolicySummary {
+	s.Id = &v
+	return s
+}
+
+// SetLatestVersion sets the LatestVersion field's value.
+func (s *TrafficPolicySummary) SetLatestVersion(v int64) *TrafficPolicySummary {
+	s.LatestVersion = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *TrafficPolicySummary) SetName(v string) *TrafficPolicySummary {
+	s.Name = &v
+	return s
+}
+
+// SetTrafficPolicyCount sets the TrafficPolicyCount field's value.
+func (s *TrafficPolicySummary) SetTrafficPolicyCount(v int64) *TrafficPolicySummary {
+	s.TrafficPolicyCount = &v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *TrafficPolicySummary) SetType(v string) *TrafficPolicySummary {
+	s.Type = &v
+	return s
+}
+
 // A complex type that contains the health check request information.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateHealthCheckRequest
 type UpdateHealthCheckInput struct {
 	_ struct{} `locationName:"UpdateHealthCheckRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -9775,6 +12698,9 @@ type UpdateHealthCheckInput struct {
 	// to healthy or vice versa. For more information, see How Amazon Route 53 Determines
 	// Whether an Endpoint Is Healthy (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-determining-health-of-endpoints.html)
 	// in the Amazon Route 53 Developer Guide.
+	//
+	// If you don't specify a value for FailureThreshold, the default value is three
+	// health checks.
 	FailureThreshold *int64 `min:"1" type:"integer"`
 
 	// Amazon Route 53 behavior depends on whether you specify a value for IPAddress.
@@ -9783,13 +12709,16 @@ type UpdateHealthCheckInput struct {
 	// However, you can't update an existing health check to add or remove the value
 	// of IPAddress.
 	//
-	// If you specifyIPAddress:
+	// If you specify a value forIPAddress:
 	//
-	// The value that you want Amazon Route 53 to pass in the Host header in all
-	// health checks except TCP health checks. This is typically the fully qualified
-	// DNS name of the endpoint on which you want Amazon Route 53 to perform health
-	// checks. When Amazon Route 53 checks the health of an endpoint, here is how
-	// it constructs the Host header:
+	// Amazon Route 53 sends health check requests to the specified IPv4 or IPv6
+	// address and passes the value of FullyQualifiedDomainName in the Host header
+	// for all health checks except TCP health checks. This is typically the fully
+	// qualified DNS name of the endpoint on which you want Amazon Route 53 to perform
+	// health checks.
+	//
+	// When Amazon Route 53 checks the health of an endpoint, here is how it constructs
+	// the Host header:
 	//
 	//    * If you specify a value of 80 for Port and HTTP or HTTP_STR_MATCH for
 	//    Type, Amazon Route 53 passes the value of FullyQualifiedDomainName to
@@ -9807,19 +12736,24 @@ type UpdateHealthCheckInput struct {
 	// substitutes the value of IPAddress in the Host header in each of the above
 	// cases.
 	//
-	// If you don't specifyIPAddress:
+	// If you don't specify a value forIPAddress:
 	//
 	// If you don't specify a value for IPAddress, Amazon Route 53 sends a DNS request
 	// to the domain that you specify in FullyQualifiedDomainName at the interval
-	// you specify in RequestInterval. Using an IP address that DNS returns, Amazon
-	// Route 53 then checks the health of the endpoint.
+	// you specify in RequestInterval. Using an IPv4 address that is returned by
+	// DNS, Amazon Route 53 then checks the health of the endpoint.
+	//
+	// If you don't specify a value for IPAddress, Amazon Route 53 uses only IPv4
+	// to send health checks to the endpoint. If there's no resource record set
+	// with a type of A for the name that you specify for FullyQualifiedDomainName,
+	// the health check fails with a "DNS resolution failed" error.
 	//
 	// If you want to check the health of weighted, latency, or failover resource
 	// record sets and you choose to specify the endpoint only by FullyQualifiedDomainName,
 	// we recommend that you create a separate health check for each endpoint. For
 	// example, create a health check for each HTTP server that is serving content
 	// for www.example.com. For the value of FullyQualifiedDomainName, specify the
-	// domain name of the server (such as us-east-1-www.example.com), not the name
+	// domain name of the server (such as us-east-2-www.example.com), not the name
 	// of the resource record sets (www.example.com).
 	//
 	// In this configuration, if the value of FullyQualifiedDomainName matches the
@@ -9872,18 +12806,27 @@ type UpdateHealthCheckInput struct {
 	//    to be healthy.
 	HealthThreshold *int64 `type:"integer"`
 
-	// The IPv4 IP address of the endpoint on which you want Amazon Route 53 to
-	// perform health checks. If you don't specify a value for IPAddress, Amazon
-	// Route 53 sends a DNS request to resolve the domain name that you specify
-	// in FullyQualifiedDomainName at the interval you specify in RequestInterval.
-	// Using an IP address that DNS returns, Amazon Route 53 then checks the health
-	// of the endpoint.
+	// The IPv4 or IPv6 IP address for the endpoint that you want Amazon Route 53
+	// to perform health checks on. If you don't specify a value for IPAddress,
+	// Amazon Route 53 sends a DNS request to resolve the domain name that you specify
+	// in FullyQualifiedDomainName at the interval that you specify in RequestInterval.
+	// Using an IP address that is returned by DNS, Amazon Route 53 then checks
+	// the health of the endpoint.
 	//
-	// f the endpoint is an Amazon EC2 instance, we recommend that you create an
-	// Elastic IP address, associate it with your Amazon EC2 instance, and specify
-	// the Elastic IP address for IPAddress. This ensures that the IP address of
-	// your instance never changes. For more information, see Elastic IP Addresses
-	// (EIP) (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html)
+	// Use one of the following formats for the value of IPAddress:
+	//
+	//    * IPv4 address: four values between 0 and 255, separated by periods (.),
+	//    for example, 192.0.2.44.
+	//
+	//    * IPv6 address: eight groups of four hexadecimal values, separated by
+	//    colons (:), for example, 2001:0db8:85a3:0000:0000:abcd:0001:2345. You
+	//    can also shorten IPv6 addresses as described in RFC 5952, for example,
+	//    2001:db8:85a3::abcd:1:2345.
+	//
+	// If the endpoint is an EC2 instance, we recommend that you create an Elastic
+	// IP address, associate it with your EC2 instance, and specify the Elastic
+	// IP address for IPAddress. This ensures that the IP address of your instance
+	// never changes. For more information, see Elastic IP Addresses (EIP) (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html)
 	// in the Amazon EC2 User Guide for Linux Instances.
 	//
 	// If a health check already has a value for IPAddress, you can change the value.
@@ -9891,6 +12834,17 @@ type UpdateHealthCheckInput struct {
 	// of IPAddress.
 	//
 	// For more information, see UpdateHealthCheckRequest$FullyQualifiedDomainName.
+	//
+	// Constraints: Amazon Route 53 can't check the health of endpoints for which
+	// the IP address is in local, private, non-routable, or multicast ranges. For
+	// more information about IP addresses for which you can't create health checks,
+	// see the following documents:
+	//
+	//    * RFC 5735, Special Use IPv4 Addresses (https://tools.ietf.org/html/rfc5735)
+	//
+	//    * RFC 6598, IANA-Reserved IPv4 Prefix for Shared Address Space (https://tools.ietf.org/html/rfc6598)
+	//
+	//    * RFC 5156, Special-Use IPv6 Addresses (https://tools.ietf.org/html/rfc5156)
 	IPAddress *string `type:"string"`
 
 	// When CloudWatch has insufficient data about the metric to determine the alarm
@@ -9975,6 +12929,97 @@ func (s *UpdateHealthCheckInput) Validate() error {
 	return nil
 }
 
+// SetAlarmIdentifier sets the AlarmIdentifier field's value.
+func (s *UpdateHealthCheckInput) SetAlarmIdentifier(v *AlarmIdentifier) *UpdateHealthCheckInput {
+	s.AlarmIdentifier = v
+	return s
+}
+
+// SetChildHealthChecks sets the ChildHealthChecks field's value.
+func (s *UpdateHealthCheckInput) SetChildHealthChecks(v []*string) *UpdateHealthCheckInput {
+	s.ChildHealthChecks = v
+	return s
+}
+
+// SetEnableSNI sets the EnableSNI field's value.
+func (s *UpdateHealthCheckInput) SetEnableSNI(v bool) *UpdateHealthCheckInput {
+	s.EnableSNI = &v
+	return s
+}
+
+// SetFailureThreshold sets the FailureThreshold field's value.
+func (s *UpdateHealthCheckInput) SetFailureThreshold(v int64) *UpdateHealthCheckInput {
+	s.FailureThreshold = &v
+	return s
+}
+
+// SetFullyQualifiedDomainName sets the FullyQualifiedDomainName field's value.
+func (s *UpdateHealthCheckInput) SetFullyQualifiedDomainName(v string) *UpdateHealthCheckInput {
+	s.FullyQualifiedDomainName = &v
+	return s
+}
+
+// SetHealthCheckId sets the HealthCheckId field's value.
+func (s *UpdateHealthCheckInput) SetHealthCheckId(v string) *UpdateHealthCheckInput {
+	s.HealthCheckId = &v
+	return s
+}
+
+// SetHealthCheckVersion sets the HealthCheckVersion field's value.
+func (s *UpdateHealthCheckInput) SetHealthCheckVersion(v int64) *UpdateHealthCheckInput {
+	s.HealthCheckVersion = &v
+	return s
+}
+
+// SetHealthThreshold sets the HealthThreshold field's value.
+func (s *UpdateHealthCheckInput) SetHealthThreshold(v int64) *UpdateHealthCheckInput {
+	s.HealthThreshold = &v
+	return s
+}
+
+// SetIPAddress sets the IPAddress field's value.
+func (s *UpdateHealthCheckInput) SetIPAddress(v string) *UpdateHealthCheckInput {
+	s.IPAddress = &v
+	return s
+}
+
+// SetInsufficientDataHealthStatus sets the InsufficientDataHealthStatus field's value.
+func (s *UpdateHealthCheckInput) SetInsufficientDataHealthStatus(v string) *UpdateHealthCheckInput {
+	s.InsufficientDataHealthStatus = &v
+	return s
+}
+
+// SetInverted sets the Inverted field's value.
+func (s *UpdateHealthCheckInput) SetInverted(v bool) *UpdateHealthCheckInput {
+	s.Inverted = &v
+	return s
+}
+
+// SetPort sets the Port field's value.
+func (s *UpdateHealthCheckInput) SetPort(v int64) *UpdateHealthCheckInput {
+	s.Port = &v
+	return s
+}
+
+// SetRegions sets the Regions field's value.
+func (s *UpdateHealthCheckInput) SetRegions(v []*string) *UpdateHealthCheckInput {
+	s.Regions = v
+	return s
+}
+
+// SetResourcePath sets the ResourcePath field's value.
+func (s *UpdateHealthCheckInput) SetResourcePath(v string) *UpdateHealthCheckInput {
+	s.ResourcePath = &v
+	return s
+}
+
+// SetSearchString sets the SearchString field's value.
+func (s *UpdateHealthCheckInput) SetSearchString(v string) *UpdateHealthCheckInput {
+	s.SearchString = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateHealthCheckResponse
 type UpdateHealthCheckOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9995,7 +13040,14 @@ func (s UpdateHealthCheckOutput) GoString() string {
 	return s.String()
 }
 
+// SetHealthCheck sets the HealthCheck field's value.
+func (s *UpdateHealthCheckOutput) SetHealthCheck(v *HealthCheck) *UpdateHealthCheckOutput {
+	s.HealthCheck = v
+	return s
+}
+
 // A complex type that contains the hosted zone request information.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateHostedZoneCommentRequest
 type UpdateHostedZoneCommentInput struct {
 	_ struct{} `locationName:"UpdateHostedZoneCommentRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -10032,7 +13084,20 @@ func (s *UpdateHostedZoneCommentInput) Validate() error {
 	return nil
 }
 
+// SetComment sets the Comment field's value.
+func (s *UpdateHostedZoneCommentInput) SetComment(v string) *UpdateHostedZoneCommentInput {
+	s.Comment = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *UpdateHostedZoneCommentInput) SetId(v string) *UpdateHostedZoneCommentInput {
+	s.Id = &v
+	return s
+}
+
 // A complex type that contains the response to the UpdateHostedZoneCommentRequest.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateHostedZoneCommentResponse
 type UpdateHostedZoneCommentOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10052,8 +13117,15 @@ func (s UpdateHostedZoneCommentOutput) GoString() string {
 	return s.String()
 }
 
+// SetHostedZone sets the HostedZone field's value.
+func (s *UpdateHostedZoneCommentOutput) SetHostedZone(v *HostedZone) *UpdateHostedZoneCommentOutput {
+	s.HostedZone = v
+	return s
+}
+
 // A complex type that contains information about the traffic policy for which
 // you want to update the comment.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateTrafficPolicyCommentRequest
 type UpdateTrafficPolicyCommentInput struct {
 	_ struct{} `locationName:"UpdateTrafficPolicyCommentRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -10065,7 +13137,7 @@ type UpdateTrafficPolicyCommentInput struct {
 	// The value of Id for the traffic policy for which you want to update the comment.
 	//
 	// Id is a required field
-	Id *string `location:"uri" locationName:"Id" type:"string" required:"true"`
+	Id *string `location:"uri" locationName:"Id" min:"1" type:"string" required:"true"`
 
 	// The value of Version for the traffic policy for which you want to update
 	// the comment.
@@ -10093,6 +13165,9 @@ func (s *UpdateTrafficPolicyCommentInput) Validate() error {
 	if s.Id == nil {
 		invalidParams.Add(request.NewErrParamRequired("Id"))
 	}
+	if s.Id != nil && len(*s.Id) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Id", 1))
+	}
 	if s.Version == nil {
 		invalidParams.Add(request.NewErrParamRequired("Version"))
 	}
@@ -10106,7 +13181,26 @@ func (s *UpdateTrafficPolicyCommentInput) Validate() error {
 	return nil
 }
 
+// SetComment sets the Comment field's value.
+func (s *UpdateTrafficPolicyCommentInput) SetComment(v string) *UpdateTrafficPolicyCommentInput {
+	s.Comment = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *UpdateTrafficPolicyCommentInput) SetId(v string) *UpdateTrafficPolicyCommentInput {
+	s.Id = &v
+	return s
+}
+
+// SetVersion sets the Version field's value.
+func (s *UpdateTrafficPolicyCommentInput) SetVersion(v int64) *UpdateTrafficPolicyCommentInput {
+	s.Version = &v
+	return s
+}
+
 // A complex type that contains the response information for the traffic policy.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateTrafficPolicyCommentResponse
 type UpdateTrafficPolicyCommentOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10126,15 +13220,22 @@ func (s UpdateTrafficPolicyCommentOutput) GoString() string {
 	return s.String()
 }
 
+// SetTrafficPolicy sets the TrafficPolicy field's value.
+func (s *UpdateTrafficPolicyCommentOutput) SetTrafficPolicy(v *TrafficPolicy) *UpdateTrafficPolicyCommentOutput {
+	s.TrafficPolicy = v
+	return s
+}
+
 // A complex type that contains information about the resource record sets that
 // you want to update based on a specified traffic policy instance.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateTrafficPolicyInstanceRequest
 type UpdateTrafficPolicyInstanceInput struct {
 	_ struct{} `locationName:"UpdateTrafficPolicyInstanceRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
 	// The ID of the traffic policy instance that you want to update.
 	//
 	// Id is a required field
-	Id *string `location:"uri" locationName:"Id" type:"string" required:"true"`
+	Id *string `location:"uri" locationName:"Id" min:"1" type:"string" required:"true"`
 
 	// The TTL that you want Amazon Route 53 to assign to all of the updated resource
 	// record sets.
@@ -10146,7 +13247,7 @@ type UpdateTrafficPolicyInstanceInput struct {
 	// resource record sets for the specified traffic policy instance.
 	//
 	// TrafficPolicyId is a required field
-	TrafficPolicyId *string `type:"string" required:"true"`
+	TrafficPolicyId *string `min:"1" type:"string" required:"true"`
 
 	// The version of the traffic policy that you want Amazon Route 53 to use to
 	// update resource record sets for the specified traffic policy instance.
@@ -10171,11 +13272,17 @@ func (s *UpdateTrafficPolicyInstanceInput) Validate() error {
 	if s.Id == nil {
 		invalidParams.Add(request.NewErrParamRequired("Id"))
 	}
+	if s.Id != nil && len(*s.Id) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Id", 1))
+	}
 	if s.TTL == nil {
 		invalidParams.Add(request.NewErrParamRequired("TTL"))
 	}
 	if s.TrafficPolicyId == nil {
 		invalidParams.Add(request.NewErrParamRequired("TrafficPolicyId"))
+	}
+	if s.TrafficPolicyId != nil && len(*s.TrafficPolicyId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("TrafficPolicyId", 1))
 	}
 	if s.TrafficPolicyVersion == nil {
 		invalidParams.Add(request.NewErrParamRequired("TrafficPolicyVersion"))
@@ -10190,8 +13297,33 @@ func (s *UpdateTrafficPolicyInstanceInput) Validate() error {
 	return nil
 }
 
+// SetId sets the Id field's value.
+func (s *UpdateTrafficPolicyInstanceInput) SetId(v string) *UpdateTrafficPolicyInstanceInput {
+	s.Id = &v
+	return s
+}
+
+// SetTTL sets the TTL field's value.
+func (s *UpdateTrafficPolicyInstanceInput) SetTTL(v int64) *UpdateTrafficPolicyInstanceInput {
+	s.TTL = &v
+	return s
+}
+
+// SetTrafficPolicyId sets the TrafficPolicyId field's value.
+func (s *UpdateTrafficPolicyInstanceInput) SetTrafficPolicyId(v string) *UpdateTrafficPolicyInstanceInput {
+	s.TrafficPolicyId = &v
+	return s
+}
+
+// SetTrafficPolicyVersion sets the TrafficPolicyVersion field's value.
+func (s *UpdateTrafficPolicyInstanceInput) SetTrafficPolicyVersion(v int64) *UpdateTrafficPolicyInstanceInput {
+	s.TrafficPolicyVersion = &v
+	return s
+}
+
 // A complex type that contains information about the resource record sets that
 // Amazon Route 53 created based on a specified traffic policy.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateTrafficPolicyInstanceResponse
 type UpdateTrafficPolicyInstanceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10211,12 +13343,19 @@ func (s UpdateTrafficPolicyInstanceOutput) GoString() string {
 	return s.String()
 }
 
-// A complex type that contains information about the Amazon VPC that you're
-// associating with the specified hosted zone.
+// SetTrafficPolicyInstance sets the TrafficPolicyInstance field's value.
+func (s *UpdateTrafficPolicyInstanceOutput) SetTrafficPolicyInstance(v *TrafficPolicyInstance) *UpdateTrafficPolicyInstanceOutput {
+	s.TrafficPolicyInstance = v
+	return s
+}
+
+// A complex type that contains information about an Amazon VPC that is associated
+// with a private hosted zone.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/VPC
 type VPC struct {
 	_ struct{} `type:"structure"`
 
-	// A VPC ID
+	// The ID of an Amazon VPC.
 	VPCId *string `type:"string"`
 
 	// The region in which you created the VPC that you want to associate with the
@@ -10247,6 +13386,18 @@ func (s *VPC) Validate() error {
 	return nil
 }
 
+// SetVPCId sets the VPCId field's value.
+func (s *VPC) SetVPCId(v string) *VPC {
+	s.VPCId = &v
+	return s
+}
+
+// SetVPCRegion sets the VPCRegion field's value.
+func (s *VPC) SetVPCRegion(v string) *VPC {
+	s.VPCRegion = &v
+	return s
+}
+
 const (
 	// ChangeActionCreate is a ChangeAction enum value
 	ChangeActionCreate = "CREATE"
@@ -10270,17 +13421,26 @@ const (
 	// CloudWatchRegionUsEast1 is a CloudWatchRegion enum value
 	CloudWatchRegionUsEast1 = "us-east-1"
 
+	// CloudWatchRegionUsEast2 is a CloudWatchRegion enum value
+	CloudWatchRegionUsEast2 = "us-east-2"
+
 	// CloudWatchRegionUsWest1 is a CloudWatchRegion enum value
 	CloudWatchRegionUsWest1 = "us-west-1"
 
 	// CloudWatchRegionUsWest2 is a CloudWatchRegion enum value
 	CloudWatchRegionUsWest2 = "us-west-2"
 
+	// CloudWatchRegionCaCentral1 is a CloudWatchRegion enum value
+	CloudWatchRegionCaCentral1 = "ca-central-1"
+
 	// CloudWatchRegionEuCentral1 is a CloudWatchRegion enum value
 	CloudWatchRegionEuCentral1 = "eu-central-1"
 
 	// CloudWatchRegionEuWest1 is a CloudWatchRegion enum value
 	CloudWatchRegionEuWest1 = "eu-west-1"
+
+	// CloudWatchRegionEuWest2 is a CloudWatchRegion enum value
+	CloudWatchRegionEuWest2 = "eu-west-2"
 
 	// CloudWatchRegionApSouth1 is a CloudWatchRegion enum value
 	CloudWatchRegionApSouth1 = "ap-south-1"
@@ -10315,8 +13475,6 @@ const (
 	ComparisonOperatorLessThanOrEqualToThreshold = "LessThanOrEqualToThreshold"
 )
 
-// An Amazon EC2 region that you want Amazon Route 53 to use to perform health
-// checks.
 const (
 	// HealthCheckRegionUsEast1 is a HealthCheckRegion enum value
 	HealthCheckRegionUsEast1 = "us-east-1"
@@ -10433,8 +13591,14 @@ const (
 	// ResourceRecordSetRegionUsWest2 is a ResourceRecordSetRegion enum value
 	ResourceRecordSetRegionUsWest2 = "us-west-2"
 
+	// ResourceRecordSetRegionCaCentral1 is a ResourceRecordSetRegion enum value
+	ResourceRecordSetRegionCaCentral1 = "ca-central-1"
+
 	// ResourceRecordSetRegionEuWest1 is a ResourceRecordSetRegion enum value
 	ResourceRecordSetRegionEuWest1 = "eu-west-1"
+
+	// ResourceRecordSetRegionEuWest2 is a ResourceRecordSetRegion enum value
+	ResourceRecordSetRegionEuWest2 = "eu-west-2"
 
 	// ResourceRecordSetRegionEuCentral1 is a ResourceRecordSetRegion enum value
 	ResourceRecordSetRegionEuCentral1 = "eu-central-1"
@@ -10502,6 +13666,9 @@ const (
 	// VPCRegionEuWest1 is a VPCRegion enum value
 	VPCRegionEuWest1 = "eu-west-1"
 
+	// VPCRegionEuWest2 is a VPCRegion enum value
+	VPCRegionEuWest2 = "eu-west-2"
+
 	// VPCRegionEuCentral1 is a VPCRegion enum value
 	VPCRegionEuCentral1 = "eu-central-1"
 
@@ -10522,6 +13689,9 @@ const (
 
 	// VPCRegionSaEast1 is a VPCRegion enum value
 	VPCRegionSaEast1 = "sa-east-1"
+
+	// VPCRegionCaCentral1 is a VPCRegion enum value
+	VPCRegionCaCentral1 = "ca-central-1"
 
 	// VPCRegionCnNorth1 is a VPCRegion enum value
 	VPCRegionCnNorth1 = "cn-north-1"
