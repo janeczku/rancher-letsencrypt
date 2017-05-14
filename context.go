@@ -12,18 +12,21 @@ import (
 )
 
 const (
-	CERT_DESCRIPTION  = "Created by Let's Encrypt Certificate Manager"
-	ISSUER_PRODUCTION = "Let's Encrypt"
-	ISSUER_STAGING    = "fake CA"
+	CERT_DESCRIPTION    = "Created by Let's Encrypt Certificate Manager"
+	ISSUER_PRODUCTION   = "Let's Encrypt"
+	ISSUER_STAGING      = "fake CA"
+	RENEWAL_PERIOD_DAYS = 20
 )
 
 type Context struct {
 	Acme    *letsencrypt.Client
 	Rancher *rancher.Client
 
-	CertificateName string
-	Domains         []string
-	RenewalTime     int
+	CertificateName   string
+	Domains           []string
+	RenewalDayTime    int
+	RenewalPeriodDays int
+	RunOnce           bool
 
 	ExpiryDate    time.Time
 	RancherCertId string
@@ -46,9 +49,23 @@ func (c *Context) InitContext() {
 	domainParam := getEnvOption("DOMAINS", true)
 	keyTypeParam := getEnvOption("PUBLIC_KEY_TYPE", true)
 	certNameParam := getEnvOption("CERT_NAME", true)
-	timeParam := getEnvOption("RENEWAL_TIME", true)
+	dayTimeParam := getEnvOption("RENEWAL_TIME", true)
 	providerParam := getEnvOption("PROVIDER", true)
 	resolversParam := getEnvOption("DNS_RESOLVERS", false)
+	renewalDays := getEnvOption("RENEWAL_PERIOD_DAYS", false)
+	runOnce := getEnvOption("RUN_ONCE", false)
+
+	if b, err := strconv.ParseBool(runOnce); err == nil {
+		c.RunOnce = b
+	} else {
+		c.RunOnce = false
+	}
+
+	if i, err := strconv.Atoi(renewalDays); err == nil {
+		c.RenewalPeriodDays = i
+	} else {
+		c.RenewalPeriodDays = RENEWAL_PERIOD_DAYS
+	}
 
 	if eulaParam != "Yes" {
 		logrus.Fatalf("Terms of service were not accepted")
@@ -70,9 +87,9 @@ func (c *Context) InitContext() {
 	}
 
 	c.CertificateName = certNameParam
-	c.RenewalTime, err = strconv.Atoi(timeParam)
-	if err != nil || c.RenewalTime < 0 || c.RenewalTime > 23 {
-		logrus.Fatalf("Invalid value for RENEWAL_TIME: %s", timeParam)
+	c.RenewalDayTime, err = strconv.Atoi(dayTimeParam)
+	if err != nil || c.RenewalDayTime < 0 || c.RenewalDayTime > 23 {
+		logrus.Fatalf("Invalid value for RENEWAL_TIME: %s", dayTimeParam)
 	}
 
 	apiVersion := letsencrypt.ApiVersion(apiVerParam)

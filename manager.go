@@ -8,12 +8,19 @@ import (
 	"github.com/Sirupsen/logrus"
 )
 
-const (
-	RENEW_BEFORE_DAYS = 20
-)
-
 func (c *Context) Run() {
 	c.startup()
+	if c.RunOnce {
+		// Renew certificate if it's about to expire
+		if time.Now().UTC().After(c.getRenewalDate()) {
+			c.renew()
+		} else {
+			logrus.Infof("Certificate %s expires on %s", c.CertificateName,
+				c.ExpiryDate.UTC().Format(time.UnixDate))
+		}
+		return
+	}
+
 	for {
 		<-c.timer()
 		c.renew()
@@ -142,7 +149,10 @@ func (c *Context) timer() <-chan time.Time {
 }
 
 func (c *Context) getRenewalDate() time.Time {
-	date := c.ExpiryDate.AddDate(0, 0, -RENEW_BEFORE_DAYS)
+	if c.ExpiryDate.IsZero() {
+		logrus.Fatalf("Could not determine expiry date for certificate: %s", c.CertificateName)
+	}
+	date := c.ExpiryDate.AddDate(0, 0, -c.RenewalPeriodDays)
 	dYear, dMonth, dDay := date.Date()
-	return time.Date(dYear, dMonth, dDay, c.RenewalTime, 0, 0, 0, time.UTC)
+	return time.Date(dYear, dMonth, dDay, c.RenewalDayTime, 0, 0, 0, time.UTC)
 }
