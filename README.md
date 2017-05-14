@@ -14,7 +14,7 @@
 A [Rancher](http://rancher.com/rancher/) service that obtains free SSL/TLS certificates from the [Let's Encrypt CA](https://letsencrypt.org/), adds them to Rancher's certificate store and manages renewal and propagation of updated certificates to load balancers.
 
 #### Requirements
-* Rancher Server >= v1.2.0
+* Rancher Server >= v1.5.0
 * If using a DNS-based challenge, existing account with one of the supported DNS providers:
   * `Aurora DNS`
   * `AWS Route 53`
@@ -28,7 +28,7 @@ A [Rancher](http://rancher.com/rancher/) service that obtains free SSL/TLS certi
   * `Ovh`
   * `Vultr`
 
-* If using the HTTP challenge, a proxy that routes `example.com/.well-known/acme-challenge` to `rancher-letsencrypt`.
+* If using the HTTP challenge, a reverse proxy that routes `example.com/.well-known/acme-challenge` to `rancher-letsencrypt`. 
 
 ### How to use
 
@@ -39,22 +39,18 @@ Then locate the `Let's Encrypt` template in the Catalog section of the UI and fo
 
 ### Storing certificate in shared storage volume
 
-By default the created SSL certificate is stored in Rancher for usage in load balancers.  
+By default the created SSL certificate is stored in Rancher's certificate store for usage in Rancher load balancers.
 
-If you specify an existing volume storage driver (e.g. rancher-nfs) then the account data, certificate and private key will be stored in a stack scoped volume named `lets-encrypt`, allowing you to access them from other services in the same stack. See the [Storage Service documentation](https://docs.rancher.com/rancher/v1.3/en/rancher-services/storage-service/).
+You can specify a volume name to store account data, certificate and private key in a (host scoped) named Docker volume.
+To share the certificates with other services you may specify a persistent storage driver (e.g. rancher-nfs).
 
-#### Example
-
-When mounting the `lets-encrypt` storage volume to `/etc/letsencrypt` in another container, then production certificates and keys are located at:
- 
-- `/etc/letsencrypt/production/certs/<certificate name>/fullchain.pem`
-- `/etc/letsencrypt/production/certs/<certificate name>/privkey.pem`
-
-where `<certificate name>` is the name of the certificate sanitized to consist of only the following characters: `[a-zA-Z0-9-_.]`.
+See the README in the Rancher catalog for more information.
 
 ### Provider specific usage
 
 #### AWS Route 53
+
+Note: If you have both a private and public zone in Route53 for the domain, you need to run the service configured with public DNS resolvers (this is now the default).
 
 The following IAM policy describes the minimum permissions required when using AWS Route 53 for domain authorization.    
 Replace `<HOSTED_ZONE_ID>` with the ID of the hosted zone that encloses the domain(s) for which you are going to obtain certificates. You may use a wildcard (*) in place of the ID to make this policy work with all of the hosted zones associated with an AWS account.
@@ -106,7 +102,7 @@ Then deploy this service using the generated key, application secret and consume
 
 If you prefer not to use a DNS-based challenge or your provider is not supported, you can use the HTTP challenge.
 Simply choose `HTTP` from the list of providers.
-Then make sure that HTTP requests to `domain.com/.well-known/acme-challenge` are forwarded to the `rancher-letsencrypt` service, e.g. by configuring a Rancher load balancer accordingly.
+Then make sure that HTTP requests to `domain.com/.well-known/acme-challenge` are forwarded to port 80 of the `rancher-letsencrypt` service, e.g. by configuring a Rancher load balancer accordingly. If you are using another reverse proxy (e.g. Nginx) you need to make sure it passed the original `host` header through to the backend.
 
 ![Rancher Load Balancer Let's Encrypt Targets](https://cloud.githubusercontent.com/assets/198988/22224463/0d1eb4aa-e1bf-11e6-955c-5f0d085ce8cd.png)
 
