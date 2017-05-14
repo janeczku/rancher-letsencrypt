@@ -134,11 +134,11 @@ func (c *Context) InitContext() {
 	}
 
 	logrus.Infof("Using Let's Encrypt %s API", apiVersion)
+	c.Acme.EnableLogs()
 
 	// Enable debug mode
 	if c.Debug {
 		logrus.SetLevel(logrus.DebugLevel)
-		c.Acme.EnableDebug()
 	}
 }
 

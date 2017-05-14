@@ -149,9 +149,11 @@ func NewClient(email string, kt KeyType, apiVer ApiVersion, dnsResolvers []strin
 	}, nil
 }
 
-// EnableDebugLogging enables logging in the upstream lego library
-func (c *Client) EnableDebug() {
-	lego.Logger = log.New(os.Stdout, "", 0)
+// EnableLogs prints logs from the upstream lego library
+func (c *Client) EnableLogs() {
+	logger := logrus.New()
+	logger.Out = os.Stdout
+	lego.Logger = log.New(logger.Writer(), "", 0)
 }
 
 // Issue obtains a new SAN certificate from the Lets Encrypt CA
