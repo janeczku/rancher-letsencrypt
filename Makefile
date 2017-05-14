@@ -29,7 +29,6 @@ build: build-dir
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-X main.Version=$(VERSION) -X main.Git=$(SHA)" -o build/$(PROJECT)-linux-amd64
 
 deps:
-	go get github.com/tools/godep
 	go get github.com/c4milo/github-release
 
 vet:
