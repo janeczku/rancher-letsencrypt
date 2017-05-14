@@ -15,9 +15,10 @@ func (c *Context) Run() {
 		if time.Now().UTC().After(c.getRenewalDate()) {
 			c.renew()
 		} else {
-			logrus.Infof("Certificate %s expires on %s", c.CertificateName,
+			logrus.Infof("Not renewing certificate %s which expires on %s", c.CertificateName,
 				c.ExpiryDate.UTC().Format(time.UnixDate))
 		}
+		logrus.Info("Run once: Finished")
 		return
 	}
 
@@ -66,7 +67,7 @@ func (c *Context) startup() {
 	if c.Acme.ProviderName() == "HTTP" {
 		logrus.Info("Using HTTP challenge: Sleeping for 120 seconds before requesting certificate")
 		logrus.Info("Make sure that HTTP requests for '/.well-known/acme-challenge' for all certificate " +
-			"domains are forwarded to the container running this application")
+			"domains are forwarded to port 80 of the container running this application")
 		time.Sleep(120 * time.Second)
 	}
 
