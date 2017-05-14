@@ -48,6 +48,7 @@ func (c *Context) InitContext() {
 	certNameParam := getEnvOption("CERT_NAME", true)
 	timeParam := getEnvOption("RENEWAL_TIME", true)
 	providerParam := getEnvOption("PROVIDER", true)
+	resolversParam := getEnvOption("DNS_RESOLVERS", false)
 
 	if eulaParam != "Yes" {
 		logrus.Fatalf("Terms of service were not accepted")
@@ -56,6 +57,16 @@ func (c *Context) InitContext() {
 	c.Domains = listToSlice(domainParam)
 	if len(c.Domains) == 0 {
 		logrus.Fatalf("Invalid value for DOMAINS: %s", domainParam)
+	}
+
+	dnsResolvers := []string{}
+	if len(resolversParam) > 0 {
+		for _, resolver := range listToSlice(resolversParam) {
+			if !strings.Contains(resolver, ":") {
+				resolver += ":53"
+			}
+			dnsResolvers = append(dnsResolvers, resolver)
+		}
 	}
 
 	c.CertificateName = certNameParam
@@ -100,7 +111,7 @@ func (c *Context) InitContext() {
 		NS1ApiKey:            getEnvOption("NS1_API_KEY", false),
 	}
 
-	c.Acme, err = letsencrypt.NewClient(emailParam, keyType, apiVersion, providerOpts)
+	c.Acme, err = letsencrypt.NewClient(emailParam, keyType, apiVersion, dnsResolvers, providerOpts)
 	if err != nil {
 		logrus.Fatalf("LetsEncrypt client: %v", err)
 	}

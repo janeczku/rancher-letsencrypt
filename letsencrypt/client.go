@@ -60,7 +60,7 @@ type Client struct {
 }
 
 // NewClient returns a new Lets Encrypt client
-func NewClient(email string, kt KeyType, apiVer ApiVersion, provider ProviderOpts) (*Client, error) {
+func NewClient(email string, kt KeyType, apiVer ApiVersion, dnsResolvers []string, provider ProviderOpts) (*Client, error) {
 	var keyType lego.KeyType
 	switch kt {
 	case RSA2048:
@@ -136,6 +136,10 @@ func NewClient(email string, kt KeyType, apiVer ApiVersion, provider ProviderOpt
 		client.ExcludeChallenges([]lego.Challenge{lego.HTTP01, lego.TLSSNI01})
 	} else if challenge == lego.HTTP01 {
 		client.ExcludeChallenges([]lego.Challenge{lego.TLSSNI01, lego.DNS01})
+	}
+
+	if len(dnsResolvers) > 0 {
+		lego.RecursiveNameservers = dnsResolvers
 	}
 
 	return &Client{
