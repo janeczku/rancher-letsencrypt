@@ -46,6 +46,61 @@ To share the certificates with other services you may specify a persistent stora
 
 See the README in the Rancher catalog for more information.
 
+#### Configuration reference
+
+You can either set environment variables or use Rancher Secrets for provider configuration. 
+
+Possible options are:
+
+*Azure*
+
+- AZURE_CLIENT_ID - /run/secrets/azure_client_id
+- AZURE_CLIENT_SECRET - /run/secrets/azure_client_secret
+- AZURE_SUBSCRIPTION_ID - /run/secrets/azure_subscription_id
+- AZURE_TENANT_ID - /run/secrets/azure_tenant_id
+- AZURE_RESOURCE_GROUP - /run/secrets/azure_resource_group
+
+*Aurora*
+
+- AURORA_USER_ID - /run/secrets/aurora_user_id
+- AURORA_KEY - /run/secrets/aurora_key
+- AURORA_ENDPOINT - /run/secrets/aurora_endpoint
+
+*CloudFlare*
+- CLOUDFLARE_EMAIL - /run/secrets/cloudflare_email
+- CLOUDFLARE_KEY - /run/secrets/cloudflare_key
+
+*DigitalOcean*
+- DO_ACCESS_TOKEN - /run/secrets/do_access_token
+
+*AWS*
+- AWS_ACCESS_KEY - /run/secrets/aws_access_key
+- AWS_SECRET_KEY - /run/secrets/aws_secret_key
+
+*DNSSimple*
+- DNSIMPLE_EMAIL - /run/secrets/dnsimple_email
+- DNSIMPLE_KEY - /run/secrets/dnsimple_key
+
+*DYN*
+- DYN_CUSTOMER_NAME - /run/secrets/dyn_customer_name
+- DYN_USER_NAME - /run/secrets/dyn_user_name
+- DYN_PASSWORD - /run/secrets/dyn_password
+
+*VULTR*
+- VULTR_API_KEY - /run/secrets/vultr_api_key
+
+*OVH*
+- OVH_APPLICATION_KEY - /run/secrets/ovh_application_key
+- OVH_APPLICATION_SECRET - /run/secrets/ovh_application_secret
+- OVH_CONSUMER_KEY - /run/secrets/ovh_consumer_key
+
+*GANDI*
+- GANDI_API_KEY - /run/secrets/gandi_api_key
+
+*NS1*
+- NS1_API_KEY - /run/secrets/ns1_api_key
+
+
 ### Provider specific usage
 
 #### AWS Route 53
