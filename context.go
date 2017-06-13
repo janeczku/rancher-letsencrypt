@@ -146,7 +146,7 @@ func (c *Context) InitContext() {
 
 func getEnvOption(name string, required bool) string {
 	val := os.Getenv(name)
-	
+
 	if len(val) == 0 {
 		buf, _ := ioutil.ReadFile(RANCHER_SECRETS_DIR + strings.ToLower(name))
 		val = string(buf)
