@@ -12,6 +12,7 @@ import (
 	"github.com/xenolf/lego/providers/dns/dnsimple"
 	"github.com/xenolf/lego/providers/dns/dyn"
 	"github.com/xenolf/lego/providers/dns/gandi"
+	"github.com/xenolf/lego/providers/dns/linode"
 	"github.com/xenolf/lego/providers/dns/ns1"
 	"github.com/xenolf/lego/providers/dns/ovh"
 	"github.com/xenolf/lego/providers/dns/route53"
@@ -58,6 +59,9 @@ type ProviderOpts struct {
 	// Gandi credentials
 	GandiApiKey string
 
+	// Linode credentials
+	LinodeApiKey string
+
 	// NS1 credentials
 	NS1ApiKey string
 
@@ -80,6 +84,7 @@ const (
 	DNSIMPLE     = Provider("DNSimple")
 	DYN          = Provider("Dyn")
 	GANDI        = Provider("Gandi")
+	LINODE       = Provider("Linode")
 	NS1          = Provider("NS1")
 	OVH          = Provider("Ovh")
 	ROUTE53      = Provider("Route53")
@@ -100,6 +105,7 @@ var providerFactory = map[Provider]ProviderFactory{
 	DNSIMPLE:     ProviderFactory{makeDNSimpleProvider, lego.DNS01},
 	DYN:          ProviderFactory{makeDynProvider, lego.DNS01},
 	GANDI:        ProviderFactory{makeGandiProvider, lego.DNS01},
+	LINODE:       ProviderFactory{makeLinodeProvider, lego.DNS01},
 	NS1:          ProviderFactory{makeNS1Provider, lego.DNS01},
 	OVH:          ProviderFactory{makeOvhProvider, lego.DNS01},
 	ROUTE53:      ProviderFactory{makeRoute53Provider, lego.DNS01},
@@ -269,6 +275,19 @@ func makeGandiProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 	}
 
 	provider, err := gandi.NewDNSProviderCredentials(opts.GandiApiKey)
+	if err != nil {
+		return nil, err
+	}
+	return provider, nil
+}
+
+// returns a preconfigured Linode lego.ChallengeProvider
+func makeLinodeProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
+	if len(opts.LinodeApiKey) == 0 {
+		return nil, fmt.Errorf("Linode API key is not set")
+	}
+
+	provider, err := linode.NewDNSProviderCredentials(opts.LinodeApiKey)
 	if err != nil {
 		return nil, err
 	}
