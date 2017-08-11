@@ -124,6 +124,8 @@ func (c *Context) InitContext() {
 		OvhApplicationKey:    getEnvOption("OVH_APPLICATION_KEY", false),
 		OvhApplicationSecret: getEnvOption("OVH_APPLICATION_SECRET", false),
 		OvhConsumerKey:       getEnvOption("OVH_CONSUMER_KEY", false),
+		PowerDNSUrl:          getEnvOption("PDNS_URL", false),
+		PowerDNSKey:          getEnvOption("PDNS_KEY", false),
 		GandiApiKey:          getEnvOption("GANDI_API_KEY", false),
 		NS1ApiKey:            getEnvOption("NS1_API_KEY", false),
 	}
