@@ -1,5 +1,41 @@
 # CHANGELOG
 
+## `v10.2.1-beta`
+- Fixes polymorphic structs in `mysql` and `postgresql` packages.
+
+## `v10.2.0-beta`
+### ARM
+
+| api                                 | version            | note                                |
+|:------------------------------------|:-------------------|:------------------------------------|
+| arm/cosmos-db                       | 2015-04-08         | new                                 |
+| arm/mysql                           | 2017-04-30-preview | new                                 |
+| arm/postgresql                      | 2017-04-30-preview | new                                 |
+
+### Storage
+- Bug fixes.
+
+### Generated code notes
+- [Azure REST API specs](https://github.com/Azure/azure-rest-api-specs) commit: 485ded7560c6309efb2f795ec6e46b7436dc6fdb
+- [AutoRest](https://github.com/Azure/autorest) commit: c180952b850e677a8624655abeaded307d95cae3
+
+## `v10.1.0-beta`
+### ARM
+
+| api                                 | version            | note                                |
+|:------------------------------------|:-------------------|:------------------------------------|
+| arm/recoveryservicessiterecovery    | 2016-08-10         | new                                 |
+| arm/managedapplications             | 2016-09-01-preview | new                                 |
+| arm/storsimple8000series            | 2017-06-01         | new                                 |
+| arm/streamanalytics                 | multiple           | new                                 |
+
+### Storage
+- Bug fixes.
+
+### Generated code notes
+- [Azure REST API specs](https://github.com/Azure/azure-rest-api-specs) commit: a2cdf005407b81edb161c1f7b5c49b5ce8e7f041
+- [AutoRest](https://github.com/Azure/autorest) commit: 8e9c2d3704a04913a175ab76972b7d9597c77687
+
 -----
 ## `v10.0.0-beta`
 ### ARM
