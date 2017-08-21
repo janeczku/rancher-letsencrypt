@@ -3,6 +3,7 @@ package letsencrypt
 import (
 	"fmt"
 	"os"
+	"net/url"
 
 	lego "github.com/xenolf/lego/acme"
 	"github.com/xenolf/lego/providers/dns/auroradns"
@@ -14,6 +15,7 @@ import (
 	"github.com/xenolf/lego/providers/dns/gandi"
 	"github.com/xenolf/lego/providers/dns/ns1"
 	"github.com/xenolf/lego/providers/dns/ovh"
+	"github.com/xenolf/lego/providers/dns/pdns"
 	"github.com/xenolf/lego/providers/dns/route53"
 	"github.com/xenolf/lego/providers/dns/vultr"
 )
@@ -66,6 +68,10 @@ type ProviderOpts struct {
 	OvhApplicationSecret string
 	OvhConsumerKey       string
 
+	// PowerDNS credentials
+	PowerDNSUrl string
+	PowerDNSKey string
+
 	// Vultr credentials
 	VultrApiKey string
 }
@@ -82,6 +88,7 @@ const (
 	GANDI        = Provider("Gandi")
 	NS1          = Provider("NS1")
 	OVH          = Provider("Ovh")
+	PDNS         = Provider("PowerDNS")
 	ROUTE53      = Provider("Route53")
 	VULTR        = Provider("Vultr")
 	HTTP         = Provider("HTTP")
@@ -102,6 +109,7 @@ var providerFactory = map[Provider]ProviderFactory{
 	GANDI:        ProviderFactory{makeGandiProvider, lego.DNS01},
 	NS1:          ProviderFactory{makeNS1Provider, lego.DNS01},
 	OVH:          ProviderFactory{makeOvhProvider, lego.DNS01},
+	PDNS:         ProviderFactory{makePdnsProvider, lego.DNS01},
 	ROUTE53:      ProviderFactory{makeRoute53Provider, lego.DNS01},
 	VULTR:        ProviderFactory{makeVultrProvider, lego.DNS01},
 	HTTP:         ProviderFactory{makeHTTPProvider, lego.HTTP01},
@@ -256,6 +264,27 @@ func makeOvhProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 
 	provider, err := ovh.NewDNSProviderCredentials("ovh-eu", opts.OvhApplicationKey, opts.OvhApplicationSecret,
 		opts.OvhConsumerKey)
+	if err != nil {
+		return nil, err
+	}
+	return provider, nil
+}
+
+// returns a preconfigured PowerDNS lego.ChallengeProvider
+func makePdnsProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
+	if len(opts.PowerDNSUrl) == 0 {
+		return nil, fmt.Errorf("PowerDNS Url is not set")
+	}
+	if len(opts.PowerDNSKey) == 0 {
+		return nil, fmt.Errorf("PowerDNS API key is not set")
+	}
+
+	parsedUrl, err := url.Parse(opts.PowerDNSUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	provider, err := pdns.NewDNSProviderCredentials(parsedUrl, opts.PowerDNSKey)
 	if err != nil {
 		return nil, err
 	}
