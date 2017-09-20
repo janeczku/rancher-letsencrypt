@@ -47,8 +47,7 @@ type ProviderOpts struct {
 	DoAccessToken string
 
 	// DNSimple credentials
-	DNSimpleEmail string
-	DNSimpleKey   string
+	DNSimpleAccountAccess string
 
 	// Dyn credentials
 	DynCustomerName string
@@ -195,14 +194,11 @@ func makeRoute53Provider(opts ProviderOpts) (lego.ChallengeProvider, error) {
 
 // returns a preconfigured DNSimple lego.ChallengeProvider
 func makeDNSimpleProvider(opts ProviderOpts) (lego.ChallengeProvider, error) {
-	if len(opts.DNSimpleEmail) == 0 {
-		return nil, fmt.Errorf("DNSimple Email is not set")
-	}
-	if len(opts.DNSimpleKey) == 0 {
-		return nil, fmt.Errorf("DNSimple API key is not set")
+	if len(opts.DNSimpleAccountAccess) == 0 {
+		return nil, fmt.Errorf("DNSimple Domain API token is not set")
 	}
 
-	provider, err := dnsimple.NewDNSProviderCredentials(opts.DNSimpleEmail, opts.DNSimpleKey)
+	provider, err := dnsimple.NewDNSProviderCredentials(opts.DNSimpleAccountAccess, "https://api.dnsimple.com")
 	if err != nil {
 		return nil, err
 	}
