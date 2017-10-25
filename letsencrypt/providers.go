@@ -175,16 +175,14 @@ func makeDigitalOceanProvider(opts ProviderOpts) (lego.ChallengeProvider, error)
 
 // returns a preconfigured Route53 lego.ChallengeProvider
 func makeRoute53Provider(opts ProviderOpts) (lego.ChallengeProvider, error) {
-	if len(opts.AwsAccessKey) == 0 {
-		return nil, fmt.Errorf("AWS access key is not set")
+	if len(opts.AwsAccessKey) != 0 {
+		os.Setenv("AWS_ACCESS_KEY_ID", opts.AwsAccessKey)
 	}
-	if len(opts.AwsSecretKey) == 0 {
-		return nil, fmt.Errorf("AWS secret key is not set")
+	if len(opts.AwsSecretKey) != 0 {
+		os.Setenv("AWS_SECRET_ACCESS_KEY", opts.AwsSecretKey)
 	}
 
 	os.Setenv("AWS_REGION", "us-east-1")
-	os.Setenv("AWS_ACCESS_KEY_ID", opts.AwsAccessKey)
-	os.Setenv("AWS_SECRET_ACCESS_KEY", opts.AwsSecretKey)
 
 	provider, err := route53.NewDNSProvider()
 	if err != nil {
