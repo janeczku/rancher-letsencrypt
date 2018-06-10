@@ -73,11 +73,9 @@ func (c *Context) startup() {
 
 	logrus.Infof("Trying to obtain SSL certificate (%s) from Let's Encrypt %s CA", strings.Join(c.Domains, ","), c.Acme.ApiVersion())
 
-	acmeCert, failures := c.Acme.Issue(c.CertificateName, c.Domains)
-	if len(failures) > 0 {
-		for k, v := range failures {
-			logrus.Errorf("[%s] Error obtaining certificate: %s", k, v.Error())
-		}
+	acmeCert, err = c.Acme.Issue(c.CertificateName, c.Domains)
+	if err != nil {
+		logrus.Errorf("[%s] Error obtaining certificate: %s", err, err.Error())
 		os.Exit(1)
 	}
 

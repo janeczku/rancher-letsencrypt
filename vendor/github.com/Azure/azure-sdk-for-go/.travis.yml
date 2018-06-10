@@ -1,32 +1,34 @@
 sudo: false
 
 language: go
-
 go:
-  - 1.7
-  - 1.8
+  - 1.8.x
+  - 1.9.x
+  - 1.10.x
+  - master
+
+env:
+  global:
+    - DEP_VERSION="0.4.1"
+    - DEP_SHA=31144e465e52ffbc0035248a10ddea61a09bf28b00784fd3fdd9882c8cbb2315
+    - IGNORE_BREAKING_CHANGES=true
+
+matrix:
+  allow_failures:
+    - go: master
+
+before_install:
+  - curl -fL -o $GOPATH/bin/dep https://github.com/golang/dep/releases/download/v$DEP_VERSION/dep-linux-amd64  && echo "$DEP_SHA $GOPATH/bin/dep" | sha256sum -c - && chmod +x $GOPATH/bin/dep
 
 install:
   - go get -u github.com/golang/lint/golint
-  - go get -u github.com/Masterminds/glide
-  - go get -u golang.org/x/net/context
-  - go get -u gopkg.in/godo.v2/cmd/godo
-  - export GO15VENDOREXPERIMENT=1
-  - glide install
+  - dep ensure
 
 script:
   - bash rungas.sh
-  - test -z "$(gofmt -s -l $(find ./arm/* -type d -print) | tee /dev/stderr)"
-  - test -z "$(gofmt -s -l -w management | tee /dev/stderr)"
-  - test -z "$(gofmt -s -l -w storage | tee /dev/stderr)"
-  - test -z "$(gofmt -s -l -w Gododir | tee /dev/stderr)"
-  - test -z "$(go build $(find ./* -type d -print | grep -v '^./vendor$' | grep -v '^./storage$') | tee /dev/stderr)"
-  - test -z "$(go vet $(find ./arm/* -type d -print) | tee /dev/stderr)"
-  - test -z "$(golint ./arm/... | tee /dev/stderr)"
-  - go test -v ./management/...
-  - go test -v ./storage/...
-  - test -z "$(golint ./management/... |  grep -v 'should have comment' | grep -v 'stutters' | tee /dev/stderr)"
-  - go vet ./management/...
-  - go vet ./storage/...
-  - test -z "$(golint ./Gododir/... | tee /dev/stderr)"
-  - go vet ./Gododir/...
+  - grep -L -r --include *.go --exclude-dir vendor -P "Copyright (\d{4}|\(c\)) Microsoft" ./ | tee /dev/stderr | test -z "$(< /dev/stdin)"
+  - go build $(go list ./... | grep -v vendor)
+  - test -z "$(go fmt $(go list ./... | grep -v vendor) | tee /dev/stderr)"
+  - go vet $(go list ./... | grep -v vendor)
+  - go test $(sh ./findTestedPackages.sh)
+  - go run ./tools/apidiff/main.go packages ./services FETCH_HEAD~1 FETCH_HEAD --copyrepo --breakingchanges || $IGNORE_BREAKING_CHANGES

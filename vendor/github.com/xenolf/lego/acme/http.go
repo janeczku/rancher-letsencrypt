@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"runtime"
 	"strings"
@@ -15,7 +16,18 @@ import (
 var UserAgent string
 
 // HTTPClient is an HTTP client with a reasonable timeout value.
-var HTTPClient = http.Client{Timeout: 10 * time.Second}
+var HTTPClient = http.Client{
+	Transport: &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		Dial: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).Dial,
+		TLSHandshakeTimeout:   15 * time.Second,
+		ResponseHeaderTimeout: 15 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	},
+}
 
 const (
 	// defaultGoUserAgent is the Go HTTP package user agent string. Too
@@ -90,7 +102,7 @@ func getJSON(uri string, respBody interface{}) (http.Header, error) {
 func postJSON(j *jws, uri string, reqBody, respBody interface{}) (http.Header, error) {
 	jsonBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, errors.New("Failed to marshal network message...")
+		return nil, errors.New("Failed to marshal network message")
 	}
 
 	resp, err := j.post(uri, jsonBytes)
@@ -143,6 +155,6 @@ func postJSON(j *jws, uri string, reqBody, respBody interface{}) (http.Header, e
 
 // userAgent builds and returns the User-Agent string to use in requests.
 func userAgent() string {
-	ua := fmt.Sprintf("%s (%s; %s) %s %s", defaultGoUserAgent, runtime.GOOS, runtime.GOARCH, ourUserAgent, UserAgent)
+	ua := fmt.Sprintf("%s %s (%s; %s) %s", UserAgent, ourUserAgent, runtime.GOOS, runtime.GOARCH, defaultGoUserAgent)
 	return strings.TrimSpace(ua)
 }

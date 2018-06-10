@@ -1,5 +1,104 @@
 # Changelog
 
+## [v1.0.0] - 2018-05-30
+
+### Changed:
+- **[lib]** ACME v2 Support.
+- **[dnsprovider]** Renamed `/providers/dns/googlecloud` to `/providers/dns/gcloud`.
+- **[dnsprovider]** Modified Google Cloud provider `gcloud.NewDNSProviderServiceAccount` function to extract the project id directly from the service account file.
+- **[dnsprovider]** Made errors more verbose for the Cloudflare provider.
+
+## [v0.5.0] - 2018-05-29
+
+### Added:
+- **[dnsprovider]** Add DNS challenge provider `exec`
+- **[dnsprovider]** Add DNS Provider for Akamai FastDNS
+- **[dnsprovider]** Add DNS Provider for Bluecat DNS
+- **[dnsprovider]** Add DNS Provider for CloudXNS
+- **[dnsprovider]** Add DNS Provider for Duck DNS
+- **[dnsprovider]** Add DNS Provider for Gandi Beta Platform (LiveDNS)
+- **[dnsprovider]** Add DNS Provider for GleSYS API
+- **[dnsprovider]** Add DNS Provider for GoDaddy
+- **[dnsprovider]** Add DNS Provider for Lightsail
+- **[dnsprovider]** Add DNS Provider for Name.com
+
+### Fixed:
+- **[dnsprovider]** Azure: Added missing environment variable in the comments
+- **[dnsprovider]** PowerDNS: Fix zone URL, add leading slash.
+- **[dnsprovider]** DNSimple: Fix api
+- **[cli]** Correct help text for `--dns-resolvers` default.
+- **[cli]** renew/revoke - don't panic on wrong account.
+- **[lib]** Fix zone detection for cross-zone cnames.
+- **[lib]** Use proxies from environment when making outbound http connections.
+
+### Changed:
+- **[lib]** Users of an effective top-level domain can use the DNS challenge.
+- **[dnsprovider]** Azure: Refactor to work with new Azure SDK version.
+- **[dnsprovider]** Cloudflare and Azure: Adding output of which envvars are missing.
+- **[dnsprovider]** Dyn DNS: Slightly improve provider error reporting.
+- **[dnsprovider]** Exoscale: update to latest egoscale version.
+- **[dnsprovider]** Route53: Use NewSessionWithOptions instead of deprecated New.
+
+## [0.4.1] - 2017-09-26
+
+### Added:
+- lib: A new DNS provider for OTC.
+- lib: The `AWS_HOSTED_ZONE_ID` environment variable for the Route53 DNS provider to directly specify the zone.
+- lib: The `RFC2136_TIMEOUT` enviroment variable to make the timeout for the RFC2136 provider configurable.
+- lib: The `GCE_SERVICE_ACCOUNT_FILE` environment variable to specify a service account file for the Google Cloud DNS provider.
+
+### Fixed:
+- lib: Fixed an authentication issue with the latest Azure SDK.
+
+## [0.4.0] - 2017-07-13
+
+### Added:
+- CLI: The `--http-timeout` switch. This allows for an override of the default client HTTP timeout.
+- lib: The `HTTPClient` field. This allows for an override of the default HTTP timeout for library HTTP requests.
+- CLI: The `--dns-timeout` switch. This allows for an override of the default DNS timeout for library DNS requests.
+- lib: The `DNSTimeout` switch. This allows for an override of the default client DNS timeout.
+- lib: The `QueryRegistration` function on `acme.Client`. This performs a POST on the client registration's URI and gets the updated registration info.
+- lib: The `DeleteRegistration` function on `acme.Client`. This deletes the registration as currently configured in the client.
+- lib: The `ObtainCertificateForCSR` function on `acme.Client`. The function allows to request a certificate for an already existing CSR.
+- CLI: The `--csr` switch. Allows to use already existing CSRs for certificate requests on the command line.
+- CLI: The `--pem` flag. This will change the certificate output so it outputs a .pem file concatanating the .key and .crt files together.
+- CLI: The `--dns-resolvers` flag. Allows for users to override the default DNS servers used for recursive lookup.
+- lib: Added a memcached provider for the HTTP challenge.
+- CLI: The `--memcached-host` flag. This allows to use memcached for challenge storage.
+- CLI: The `--must-staple` flag. This enables OCSP must staple in the generated CSR.
+- lib: The library will now honor entries in your resolv.conf.
+- lib: Added a field `IssuerCertificate` to the `CertificateResource` struct.
+- lib: A new DNS provider for OVH.
+- lib: A new DNS provider for DNSMadeEasy.
+- lib: A new DNS provider for Linode.
+- lib: A new DNS provider for AuroraDNS.
+- lib: A new DNS provider for NS1.
+- lib: A new DNS provider for Azure DNS.
+- lib: A new DNS provider for Rackspace DNS.
+- lib: A new DNS provider for Exoscale DNS.
+- lib: A new DNS provider for DNSPod.
+
+### Changed:
+- lib: Exported the `PreCheckDNS` field so library users can manage the DNS check in tests.
+- lib: The library will now skip challenge solving if a valid Authz already exists.
+
+### Removed:
+- lib: The library will no longer check for auto renewed certificates. This has been removed from the spec and is not supported in Boulder.
+
+### Fixed:
+- lib: Fix a problem with the Route53 provider where it was possible the verification was published to a private zone.
+- lib: Loading an account from file should fail if a integral part is nil
+- lib: Fix a potential issue where the Dyn provider could resolve to an incorrect zone.
+- lib: If a registration encounteres a conflict, the old registration is now recovered.
+- CLI: The account.json file no longer has the executable flag set.
+- lib: Made the client registration more robust in case of a 403 HTTP response.
+- lib: Fixed an issue with zone lookups when they have a CNAME in another zone.
+- lib: Fixed the lookup for the authoritative zone for Google Cloud.
+- lib: Fixed a race condition in the nonce store.
+- lib: The Google Cloud provider now removes old entries before trying to add new ones.
+- lib: Fixed a condition where we could stall due to an early error condition.
+- lib: Fixed an issue where Authz object could end up in an active state after an error condition.
+
 ## [0.3.1] - 2016-04-19
 
 ### Added:

@@ -5,6 +5,7 @@ package route53
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"strings"
 	"time"
 
@@ -23,7 +24,8 @@ const (
 
 // DNSProvider implements the acme.ChallengeProvider interface
 type DNSProvider struct {
-	client *route53.Route53
+	client       *route53.Route53
+	hostedZoneID string
 }
 
 // customRetryer implements the client.Retryer interface by composing the
@@ -58,14 +60,26 @@ func (d customRetryer) RetryRules(r *request.Request) time.Duration {
 // 2. Shared credentials file (defaults to ~/.aws/credentials)
 // 3. Amazon EC2 IAM role
 //
+// If AWS_HOSTED_ZONE_ID is not set, Lego tries to determine the correct
+// public hosted zone via the FQDN.
+//
 // See also: https://github.com/aws/aws-sdk-go/wiki/configuring-sdk
 func NewDNSProvider() (*DNSProvider, error) {
+	hostedZoneID := os.Getenv("AWS_HOSTED_ZONE_ID")
+
 	r := customRetryer{}
 	r.NumMaxRetries = maxRetries
 	config := request.WithRetryer(aws.NewConfig(), r)
-	client := route53.New(session.New(config))
+	session, err := session.NewSessionWithOptions(session.Options{Config: *config})
+	if err != nil {
+		return nil, err
+	}
+	client := route53.New(session)
 
-	return &DNSProvider{client: client}, nil
+	return &DNSProvider{
+		client:       client,
+		hostedZoneID: hostedZoneID,
+	}, nil
 }
 
 // Present creates a TXT record using the specified parameters
@@ -83,9 +97,9 @@ func (r *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 }
 
 func (r *DNSProvider) changeRecord(action, fqdn, value string, ttl int) error {
-	hostedZoneID, err := getHostedZoneID(fqdn, r.client)
+	hostedZoneID, err := r.getHostedZoneID(fqdn)
 	if err != nil {
-		return fmt.Errorf("Failed to determine Route 53 hosted zone ID: %v", err)
+		return fmt.Errorf("failed to determine Route 53 hosted zone ID: %v", err)
 	}
 
 	recordSet := newTXTRecordSet(fqdn, value, ttl)
@@ -104,7 +118,7 @@ func (r *DNSProvider) changeRecord(action, fqdn, value string, ttl int) error {
 
 	resp, err := r.client.ChangeResourceRecordSets(reqParams)
 	if err != nil {
-		return fmt.Errorf("Failed to change Route 53 record set: %v", err)
+		return fmt.Errorf("failed to change Route 53 record set: %v", err)
 	}
 
 	statusID := resp.ChangeInfo.Id
@@ -115,16 +129,20 @@ func (r *DNSProvider) changeRecord(action, fqdn, value string, ttl int) error {
 		}
 		resp, err := r.client.GetChange(reqParams)
 		if err != nil {
-			return false, fmt.Errorf("Failed to query Route 53 change status: %v", err)
+			return false, fmt.Errorf("failed to query Route 53 change status: %v", err)
 		}
-		if *resp.ChangeInfo.Status == route53.ChangeStatusInsync {
+		if aws.StringValue(resp.ChangeInfo.Status) == route53.ChangeStatusInsync {
 			return true, nil
 		}
 		return false, nil
 	})
 }
 
-func getHostedZoneID(fqdn string, client *route53.Route53) (string, error) {
+func (r *DNSProvider) getHostedZoneID(fqdn string) (string, error) {
+	if r.hostedZoneID != "" {
+		return r.hostedZoneID, nil
+	}
+
 	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
 	if err != nil {
 		return "", err
@@ -134,7 +152,7 @@ func getHostedZoneID(fqdn string, client *route53.Route53) (string, error) {
 	reqParams := &route53.ListHostedZonesByNameInput{
 		DNSName: aws.String(acme.UnFqdn(authZone)),
 	}
-	resp, err := client.ListHostedZonesByName(reqParams)
+	resp, err := r.client.ListHostedZonesByName(reqParams)
 	if err != nil {
 		return "", err
 	}
@@ -142,14 +160,14 @@ func getHostedZoneID(fqdn string, client *route53.Route53) (string, error) {
 	var hostedZoneID string
 	for _, hostedZone := range resp.HostedZones {
 		// .Name has a trailing dot
-		if !*hostedZone.Config.PrivateZone && *hostedZone.Name == authZone {
-			hostedZoneID = *hostedZone.Id
+		if !aws.BoolValue(hostedZone.Config.PrivateZone) && aws.StringValue(hostedZone.Name) == authZone {
+			hostedZoneID = aws.StringValue(hostedZone.Id)
 			break
 		}
 	}
 
 	if len(hostedZoneID) == 0 {
-		return "", fmt.Errorf("Zone %s not found in Route 53 for domain %s", authZone, fqdn)
+		return "", fmt.Errorf("zone %s not found in Route 53 for domain %s", authZone, fqdn)
 	}
 
 	if strings.HasPrefix(hostedZoneID, "/hostedzone/") {

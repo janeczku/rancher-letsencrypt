@@ -5,13 +5,15 @@ LINTIGNORESTUTTER='service/[^/]+/(api|service)\.go:.+(and that stutters)'
 LINTIGNOREINFLECT='service/[^/]+/(api|errors|service)\.go:.+(method|const) .+ should be '
 LINTIGNOREINFLECTS3UPLOAD='service/s3/s3manager/upload\.go:.+struct field SSEKMSKeyId should be '
 LINTIGNOREDEPS='vendor/.+\.go'
-UNIT_TEST_TAGS="example codegen"
+LINTIGNOREPKGCOMMENT='service/[^/]+/doc_custom.go:.+package comment should be of the form'
+UNIT_TEST_TAGS="example codegen awsinclude"
 
 SDK_WITH_VENDOR_PKGS=$(shell go list -tags ${UNIT_TEST_TAGS} ./... | grep -v "/vendor/src")
 SDK_ONLY_PKGS=$(shell go list ./... | grep -v "/vendor/")
 SDK_UNIT_TEST_ONLY_PKGS=$(shell go list -tags ${UNIT_TEST_TAGS} ./... | grep -v "/vendor/")
 SDK_GO_1_4=$(shell go version | grep "go1.4")
 SDK_GO_1_5=$(shell go version | grep "go1.5")
+SDK_GO_1_6=$(shell go version | grep "go1.6")
 SDK_GO_VERSION=$(shell go version | awk '''{print $$3}''' | tr -d '''\n''')
 
 all: get-deps generate unit
@@ -59,10 +61,25 @@ unit-with-race-cover: get-deps-tests build verify
 	@echo "go test SDK and vendor packages"
 	@go test -tags ${UNIT_TEST_TAGS} -race -cpu=1,2,4 $(SDK_UNIT_TEST_ONLY_PKGS)
 
+ci-test: ci-test-generate unit-with-race-cover ci-test-generate-validate
+
+ci-test-generate: get-deps
+	@echo "CI test generated code"
+	@if [ \( -z "${SDK_GO_1_6}" \) -a \( -z "${SDK_GO_1_5}" \) ]; then  make generate; else echo "skipping generate"; fi
+
+ci-test-generate-validate:
+	@echo "CI test validate no generated code changes"
+	@gitstatus=`if [ \( -z "${SDK_GO_1_6}" \) -a \( -z "${SDK_GO_1_5}" \) ]; then  git status --porcelain; else echo "skipping validation"; fi`; \
+	echo "$$gitstatus"; \
+	if [ "$$gitstatus" != "" ] && [ "$$gitstatus" != "skipping validation" ]; then git diff; exit 1; fi
+
 integration: get-deps-tests integ-custom smoke-tests performance
 
 integ-custom:
 	go test -tags "integration" ./awstesting/integration/customizations/...
+
+cleanup-integ:
+	go run -tags "integration" ./awstesting/cmd/bucket_cleanup/main.go "aws-sdk-go-integration"
 
 smoke-tests: get-deps-tests
 	gucumber -go-tags "integration" ./awstesting/integration/smoke
@@ -70,7 +87,7 @@ smoke-tests: get-deps-tests
 performance: get-deps-tests
 	AWS_TESTING_LOG_RESULTS=${log-detailed} AWS_TESTING_REGION=$(region) AWS_TESTING_DB_TABLE=$(table) gucumber -go-tags "integration" ./awstesting/performance
 
-sandbox-tests: sandbox-test-go15 sandbox-test-go15-novendorexp sandbox-test-go16 sandbox-test-go17 sandbox-test-go18 sandbox-test-gotip
+sandbox-tests: sandbox-test-go15 sandbox-test-go15-novendorexp sandbox-test-go16 sandbox-test-go17 sandbox-test-go18 sandbox-test-go19 sandbox-test-gotip
 
 sandbox-build-go15:
 	docker build -f ./awstesting/sandbox/Dockerfile.test.go1.5 -t "aws-sdk-go-1.5" .
@@ -107,6 +124,13 @@ sandbox-go18: sandbox-build-go18
 sandbox-test-go18: sandbox-build-go18
 	docker run -t aws-sdk-go-1.8
 
+sandbox-build-go19:
+	docker build -f ./awstesting/sandbox/Dockerfile.test.go1.8 -t "aws-sdk-go-1.9" .
+sandbox-go19: sandbox-build-go19
+	docker run -i -t aws-sdk-go-1.9 bash
+sandbox-test-go19: sandbox-build-go19
+	docker run -t aws-sdk-go-1.9
+
 sandbox-build-gotip:
 	@echo "Run make update-aws-golang-tip, if this test fails because missing aws-golang:tip container"
 	docker build -f ./awstesting/sandbox/Dockerfile.test.gotip -t "aws-sdk-go-tip" .
@@ -123,7 +147,7 @@ verify: get-deps-verify lint vet
 lint:
 	@echo "go lint SDK and vendor packages"
 	@lint=`if [ \( -z "${SDK_GO_1_4}" \) -a \( -z "${SDK_GO_1_5}" \) ]; then  golint ./...; else echo "skipping golint"; fi`; \
-	lint=`echo "$$lint" | grep -E -v -e ${LINTIGNOREDOT} -e ${LINTIGNOREDOC} -e ${LINTIGNORECONST} -e ${LINTIGNORESTUTTER} -e ${LINTIGNOREINFLECT} -e ${LINTIGNOREDEPS} -e ${LINTIGNOREINFLECTS3UPLOAD}`; \
+	lint=`echo "$$lint" | grep -E -v -e ${LINTIGNOREDOT} -e ${LINTIGNOREDOC} -e ${LINTIGNORECONST} -e ${LINTIGNORESTUTTER} -e ${LINTIGNOREINFLECT} -e ${LINTIGNOREDEPS} -e ${LINTIGNOREINFLECTS3UPLOAD} -e ${LINTIGNOREPKGCOMMENT}`; \
 	echo "$$lint"; \
 	if [ "$$lint" != "" ] && [ "$$lint" != "skipping golint" ]; then exit 1; fi
 
@@ -149,6 +173,7 @@ get-deps-tests:
 	go get github.com/stretchr/testify
 	go get github.com/smartystreets/goconvey
 	go get golang.org/x/net/html
+	go get golang.org/x/net/http2
 
 get-deps-verify:
 	@echo "go get SDK verification utilities"
