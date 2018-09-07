@@ -19,7 +19,7 @@ import (
 const (
 	StorageDir       = "/etc/letsencrypt"
 	ProductionApiUri = "https://acme-v02.api.letsencrypt.org/directory"
-	StagingApiUri    = "https://acme-staging.api.letsencrypt.org/directory"
+	StagingApiUri    = "https://acme-staging-v02.api.letsencrypt.org/directory"
 )
 
 type KeyType string
