@@ -13,12 +13,13 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	lego "github.com/xenolf/lego/acme"
+	loge "github.com/xenolf/lego/log"
 )
 
 const (
 	StorageDir       = "/etc/letsencrypt"
-	ProductionApiUri = "https://acme-v01.api.letsencrypt.org/directory"
-	StagingApiUri    = "https://acme-staging.api.letsencrypt.org/directory"
+	ProductionApiUri = "https://acme-v02.api.letsencrypt.org/directory"
+	StagingApiUri    = "https://acme-staging-v02.api.letsencrypt.org/directory"
 )
 
 type KeyType string
@@ -97,23 +98,16 @@ func NewClient(email string, kt KeyType, apiVer ApiVersion, dnsResolvers []strin
 		return nil, fmt.Errorf("Could not create client: %v", err)
 	}
 
-	lego.Logger = log.New(ioutil.Discard, "", 0)
+	loge.Logger = log.New(ioutil.Discard, "", 0)
 
 	if acc.Registration == nil {
 		logrus.Infof("Creating Let's Encrypt account for %s", email)
-		reg, err := client.Register()
+		reg, err := client.Register(true)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to register account: %v", err)
 		}
 
 		acc.Registration = reg
-		if acc.Registration.Body.Agreement == "" {
-			err = client.AgreeToTOS()
-			if err != nil {
-				return nil, fmt.Errorf("Could not agree to TOS: %v", err)
-			}
-		}
-
 		err = acc.Save()
 		if err != nil {
 			logrus.Errorf("Could not save account data: %v", err)
@@ -133,9 +127,9 @@ func NewClient(email string, kt KeyType, apiVer ApiVersion, dnsResolvers []strin
 	}
 
 	if challenge == lego.DNS01 {
-		client.ExcludeChallenges([]lego.Challenge{lego.HTTP01, lego.TLSSNI01})
+		client.ExcludeChallenges([]lego.Challenge{lego.HTTP01})
 	} else if challenge == lego.HTTP01 {
-		client.ExcludeChallenges([]lego.Challenge{lego.TLSSNI01, lego.DNS01})
+		client.ExcludeChallenges([]lego.Challenge{lego.DNS01})
 	}
 
 	if len(dnsResolvers) > 0 {
@@ -153,20 +147,21 @@ func NewClient(email string, kt KeyType, apiVer ApiVersion, dnsResolvers []strin
 func (c *Client) EnableLogs() {
 	logger := logrus.New()
 	logger.Out = os.Stdout
-	lego.Logger = log.New(logger.Writer(), "", 0)
+	loge.Logger = log.New(logger.Writer(), "", 0)
 }
 
 // Issue obtains a new SAN certificate from the Lets Encrypt CA
-func (c *Client) Issue(certName string, domains []string) (*AcmeCertificate, map[string]error) {
-	certRes, failures := c.client.ObtainCertificate(domains, true, nil, false)
-	if len(failures) > 0 {
-		return nil, failures
+func (c *Client) Issue(certName string, domains []string) (*AcmeCertificate, error) {
+	certRes, err := c.client.ObtainCertificate(domains, true, nil, false)
+	if err != nil {
+		return nil, err
 	}
 
 	dnsNames := dnsNamesIdentifier(domains)
 	acmeCert, err := c.saveCertificate(certName, dnsNames, certRes)
 	if err != nil {
 		logrus.Fatalf("Error saving certificate '%s': %v", certName, err)
+		return nil, err
 	}
 
 	return acmeCert, nil
@@ -261,7 +256,7 @@ func (c *Client) loadCertificateByName(certName string) (AcmeCertificate, error)
 	return acmeCert, nil
 }
 
-func (c *Client) saveCertificate(certName, dnsNames string, certRes lego.CertificateResource) (*AcmeCertificate, error) {
+func (c *Client) saveCertificate(certName, dnsNames string, certRes *lego.CertificateResource) (*AcmeCertificate, error) {
 	expiryDate, err := lego.GetPEMCertExpiration(certRes.Certificate)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read certificate expiry date: %v", err)
@@ -272,7 +267,7 @@ func (c *Client) saveCertificate(certName, dnsNames string, certRes lego.Certifi
 	}
 
 	acmeCert := AcmeCertificate{
-		CertificateResource: certRes,
+		CertificateResource: *certRes,
 		ExpiryDate:          expiryDate,
 		SerialNumber:        serialNumber,
 		DnsNames:            dnsNames,

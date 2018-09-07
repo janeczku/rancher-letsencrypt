@@ -1,484 +1,520 @@
 # CHANGELOG
 
------
-## `v10.0.0-beta`
-### ARM
-In addition to the tabulated changes below, each package had the following updates:
-- Long running operations now run inside a goroutine and return channels for the response and the errors.
-- Some functions changed from returning `autorest.Response` to return the already unmarshaled struct.
-- Uses go-autorest v8.0.0.
+## `v17.3.0`
 
-| api                                 | version            | note                                |
-|:------------------------------------|:-------------------|:------------------------------------|
-| arm/advisor                         | 2017-04-19         | new                                 |
-| arm/analysisservices                | 2016-05-16         | refactor                            |
-| arm/apimanagement                   | 2016-10-10         | update to latest swagger & refactor |
-| arm/appinsights                     | 2015-05-01         | new                                 |
-| arm/automation                      | 2015-10-31         | new                                 |
-| arm/billing                         | 2017-04-24-preview | update to latest swagger & refactor |
-| arm/cdn                             | 2016-10-02         | refactor                            |
-| arm/commerce                        | 2015-06-01-preview | refactor                            |
-| arm/compute                         | 2016-04-30-preview | refactor                            |
-| arm/consumption                     | 2017-04-24-preview | new                                 |
-| arm/containerregistry               | 2017-03-01         | update to latest swagger & refactor |
-| arm/containerservice                | 2017-01-31         | update to latest swagger & refactor |
-| arm/customer-insights               | 2017-01-01         | refactor                            |
-| arm/datalake-analytics/account      | 2016-11-01         | refactor                            |
-| arm/datalake-store/account          | 2016-11-01         | refactor                            |
-| arm/devtestlabs                     | 2016-05-15         | refactor                            |
-| arm/disk                            | 2016-04-30-preview | refactor                            |
-| arm/dns                             | 2016-04-01         | refactor                            |
-| arm/documentdb                      | 2015-04-08         | refactor                            |
-| arm/eventhub                        | 2015-08-01         | refactor                            |
-| arm/graphrbac                       | 1.6                | refactor                            |
-| arm/hdinsight                       | 2015-03-01-preview | new                                 |
-| arm/insights                        | multiple           | new                                 |
-| arm/intune                          | 2015-01-14-preview | refactor                            |
-| arm/iothub                          | 2016-02-03         | refactor                            |
-| arm/machinelearning/commitmentplans | 2016-05-01-preview | refactor                            |
-| arm/machinelearning/webservices     | 2017-01-01         | update to latest swagger & refactor |
-| arm/monitor                         | multiple           | new                                 |
-| arm/network                         | 2017-03-01         | update to latest swagger & refactor |
-| arm/notificationhubs                | 2017-04-01         | update to latest swagger & refactor |
-| arm/operationalinsights             | 2015-11-01-preview | update to latest swagger & refactor |
-| arm/powerbiembedded                 | 2016-01-29         | refactor                            |
-| arm/recoveryservices                | 2016-12-01         | refactor                            |
-| arm/recoveryservicesbackup          | 2016-12-01         | new                                 |
-| arm/redis                           | 2016-04-01         | refactor                            |
-| arm/relay                           | 2016-07-01         | new                                 |
-| arm/resourcehealth                  | 2015-01-01         | new                                 |
-| arm/resources/features              | 2015-12-01         | refactor                            |
-| arm/resources/links                 | 2016-09-01         | refactor                            |
-| arm/resources/resources             | 2016-09-01         | refactor                            |
-| arm/resources/subscriptions         | 2016-06-01         | refactor                            |
-| arm/scheduler                       | 2016-03-01         | refactor                            |
-| arm/servermanagement                | 2016-07-01-preview | refactor                            |
-| arm/servicebus                      | 2015-08-01         | refactor                            |
-| arm/servicefabric                   | 2016-09-01         | new                                 |
-| arm/service-map                     | 2015-11-01-preview | refactor                            |
-| arm/sql                             | multiple           | update to latest swagger & refactor |
-| arm/storage                         | 2016-12-01         | update to latest swagger & refactor |
-| arm/storageimportexport             | 2016-11-01         | refactor                            |
-| arm/web                             | multiple           | refactor                            |
+### New Services
 
-### Data plane
-| api                                 | version            | note                                |
-|:------------------------------------|:-------------------|:------------------------------------|
-| dataplane/keyvault                  | 2016-10-01         | refactor                            |
+|          Package Name |     API Version     |
+| --------------------: | :-----------------: |
+|     containerinstance |      2018-06-01     |
+|          reservations |      2018-06-01     |
 
-### Storage
-Storage has returned to this repo.
-It has also been refactored:
-- Blobs, containers, tables, etc are now method receivers. These structs are the ones being
-  updated with each operation.
-- When creating a client, the SDK checks if the storage account provided is valid.
-- Added retry logic. It provides the flexibility for user to provide their own retry logic.
-- Added operations:
-   - Get table
-   - Get entity
-   - Get and set queue ACL
-   - Table batch
-   - Page blob incremental copy
-- All operations that previously had `extraHeaders` as parameter now recieve a struct with well
-  defined possible headers and other options. Some functions are easier to use.
-- Storage tests now use HTTP recordings.
+### Updated Services
 
-### Generated code notes
-- [Azure REST API specs](https://github.com/Azure/azure-rest-api-specs) commit: 519980465d9c195622d466dc4601b1999a448ed5
-- [AutoRest](https://github.com/Azure/autorest) commit: ced950d64e39735b84d41876a56b54b27c227dc7
+|          Package Name |     API Version     |
+| --------------------: | :-----------------: |
+|           datafactory |      2017-09-01     |
+|               network |      2015-06-15     |
 
-## `v9.0.0-beta`
-### ARM
-In addition to the tabulated changes below, each package had the following updates:
- - API Version is now associated with individual methods, instead of the client. This was done to
-   support composite swaggers, which logically may contain more than one API Version.
- - Version numbers are now calculated in the generator instead of at runtime. This keeps us from
-   adding new allocations, while removing the race-conditions that were added.
+## `v17.2.0`
 
-| api                                 | version            | note                               |
-|:------------------------------------|:-------------------|:-----------------------------------|
-| arm/analysisservices                | 2016-05-16         | update to latest swagger           |
-| arm/authorization                   | 2015-07-01         | refactoring                        |
-| arm/batch                           | 2017-01-01         | update to latest swagger &refactor |
-| arm/cdn                             | 2016-10-02         | update to latest swagger           |
-| arm/compute                         | 2016-04-30-preview | update to latest swagger           |
-| arm/dns                             | 2016-04-01         | update to latest swagger &refactor |
-| arm/eventhub                        | 2015-08-01         | refactoring                        |
-| arm/logic                           | 2016-06-01         | update to latest swagger &refactor |
-| arm/notificationshub                | 2016-03-01         | update to latest swagger &refactor |
-| arm/redis                           | 2016-04-01         | update to latest swagger &refactor |
-| arm/resources/resources             | 2016-09-01         | update to latest swagger           |
-| arm/servicebus                      | 2015-08-01         | update to latest swagger           |
-| arm/sql                             | 2014-04-01         | update to latest swagger           |
-| arm/web                             | multiple           | generating from composite          |
-| datalake-analytics/account          | 2016-11-01         | update to latest swagger           |
-| datalake-store/filesystem           | 2016-11-01         | update to latest swagger           |
+### New Services
 
-### Storage
-Storage has been moved to its own repository which can be found here:
-https://github.com/Azure/azure-storage-go
+|          Package Name |     API Version     |
+| --------------------: | :-----------------: |
+|   managedapplications |      2018-06-01     |
+|             resources |      2018-05-01     |
 
-For backwards compatibility, a submodule has been added to this repo. However, consuming storage
-via this repository is deprecated and may be deleted in future versions. 
+### Updated Services
 
-## `v8.1.0-beta`
-### ARM
-| api                                 | version            | note                               |
-|:------------------------------------|:-------------------|:-----------------------------------|
-| arm/apimanagement                   | 2016-07-07         | new                                |
-| arm/apideployment                   | 2016-07-07         | new                                |
-| arm/billing                         | 2017-02-27-preview | new                                |
-| arm/compute                         | 2016-04-30-preview | update to latest swagger           |
-| arm/containerservice                | 2017-01-31         | update to latest swagger           |
-| arm/customer-insights               | 2017-01-01         | new                                |
-| arm/graphrbac                       | 1.6                | new                                |
-| arm/networkwatcher                  | 2016-12-01         | new                                |
-| arm/operationalinsights             | 2015-11-01-preview | new                                |
-| arm/service-map                     | 2015-11-01-preview | new                                |
-| arm/storageimportexport             | 2016-11-01         | new                                |
+|          Package Name |     API Version     |
+| --------------------: | :-----------------: |
+|  networksecuritygroup |       classic       |
 
-### Data plane
-| api                                 | version            | note                               |
-|:------------------------------------|:-------------------|:-----------------------------------|
-| dataplane/keyvault                  | 2016-10-01         | new                                |
+## `v17.1.0`
 
-- Uses go-autorest v7.3.0
+### New Services
 
+|          Package Name |     API Version     |
+| --------------------: | :-----------------: |
+|            iotcentral | 2017-07-01-privatepreview |
 
-## `v8.0.0-beta`
-### ARM
-- In addition to the tablulated changes below, all updated packages received performance
-  improvements to their Version() method.
-- Some validation that was taking place in the runtime was erroneously blocking calls.
-  all packages have been updated to take that bug fix.
+## `v17.0.0`
 
-| api                                 | version            | note                               |
-|:------------------------------------|:-------------------|:-----------------------------------|
-| arm/analysisservices                | 2016-05-16         | update to latest swagger           |
-| arm/cdn                             | 2016-10-02         | update to latest swagger           |
-| arm/cognitiveservices               | 2016-02-01-preview | update to latest swagger           |
-| arm/compute                         | 2016-03-30         | update to latest swagger, refactor |
-| arm/containerregistry               | 2016-06-27-preview | update to latest swagger           |
-| arm/containerservice                | 2016-09-30         | update to latest swagger           |
-| arm/datalake-analytics              | 2016-11-01         | update to latest swagger           |
-| arm/datalake-store                  | 2016-11-01         | update to latest swagger           |
-| arm/disk                            | 2016-04-30-preview | new                                |
-| arm/documentdb                      | 2015-04-08         | update to latest swagger           |
-| arm/iothub                          | 2016-02-03         | update to latest swagger           |
-| arm/keyvault                        | 2015-06-01         | update to latest swagger           |
-| arm/logic                           | 2016-06-01         | update to latest swagger           |
-| arm/machinelearning                 | 2016-05-01-preview | update to latest swagger           |
-| arm/mobileengagement                | 2014-12-01         | update to latest swagger, refactor |
-| arm/redis                           | 2016-04-01         | update to latest swagger           |
-| arm/resources/locks                 | 2016-09-01         | refactor                           |
-| arm/resources/policy                | 2016-12-01         | previous version was deleted       |
-| arm/resources/resources             | 2016-09-01         | update to latest swagger, refactor |
-| arm/scheduler                       | 2016-03-01         | refactor                           |
-| arm/search                          | 2015-08-19         | refactor                           |
-| arm/web                             | 2015-08-01         | refactor                           |
+### New Services
 
-## `v7.0.0-beta`
+|          Package Name |     API Version     |
+| --------------------: | :-----------------: |
+|               batchai |     2018-05-01      |
+| adhybridhealthservice |     2014-01-01      |
+|           consumption |     2018-05-31      |
+|     customimagesearch |        v1.0         |
+|        luis/authoring |        v2.0         |
+|            management | 2018-03-01-preview  |
+|                  maps | 2017-01-01-preview  |
+|                  maps |     2018-05-01      |
+|               network |     2018-05-01      |
+|                policy |     "2018-03-01     |
+|         servicefabric |     "2018-02-01     |
+|              services | "2018-03-01-preview |
+|               storage | 2018-03-01-preview  |
+|        trafficmanager |     2018-02-01      |
+|            workspaces |     2016-04-01      |
 
-| api                                 | version            | note                               |
-|:------------------------------------|:-------------------|:-----------------------------------|
-| arm/analysisservices                | 2016-05-16         | new                                |
-| arm/cdn                             | 2016-10-02         | update to latest swagger           |
-| arm/commerce                        | 2015-06-01-preview | new                                |
-| arm/containerservice                | 2016-09-30         | update to latest swagger           |
-| arm/containerregistry               | 2016-06-27-preview | new                                |
-| arm/datalake-analytics/account      | 2016-11-01         | update to latest swagger           |
-| arm/datalake-store/account          | 2016-11-01         | update to latest swagger           |
-| arm/datalake-store/filesystem       | 2016-11-01         | update to latest swagger           |
-| arm/documentdb                      | 2015-04-08         | new                                |
-| arm/machinelearning/commitmentplans | 2016-05-01-preview | new                                |
-| arm/recoveryservices                | 2016-06-01         | new                                |
-| arm/resources/subscriptions         | 2016-06-01         | new                                |
-| arm/search                          | 2015-08-19         | update to latest swagger           |
-| arm/sql                             | 2014-04-01         | previous version was deleted       |
+### Updated Services
 
-### Storage
-- Can now update messages in storage queues.
-- Added support for blob snapshots and aborting blob copy operations.
-- Added support for getting and setting ACLs on containers.
-- Added various APIs for file and directory manipulation.
+|        Package Name |    API Version     |
+| ------------------: | :----------------: |
+|                 aad |     2017-01-01     |
+|                 aad |     2017-06-01     |
+|             account |     2016-11-01     |
+|             advisor |     2017-04-19     |
+|    analysisservices |     2016-05-16     |
+|    analysisservices |     2017-07-14     |
+|    analysisservices |     2017-08-01     |
+|       apimanagement |     2016-07-07     |
+|       apimanagement |     2016-10-10     |
+|       apimanagement |     2017-03-01     |
+|       apimanagement |     2018-01-01     |
+|               batch |     2015-12-01     |
+|               batch |     2017-01-01     |
+|               batch |     2017-05-01     |
+|               batch |     2017-09-01     |
+|             batchai |     2018-03-01     |
+|             batchai |     2018-05-01     |
+|         botservices |     2017-12-01     |
+|             catalog | 2016-11-01-preview |
+|                 cdn |     2015-06-01     |
+|                 cdn |     2016-04-02     |
+|                 cdn |     2016-10-02     |
+|                 cdn |     2017-04-02     |
+|                 cdn |     2017-10-12     |
+|             compute |     2015-06-15     |
+|             compute |     2016-03-30     |
+|             compute |     2017-03-30     |
+|             compute |     2018-04-01     |
+|      computervision |        v1.0        |
+|         consumption |     2018-03-31     |
+|   containerinstance |     2018-04-01     |
+|   containerregistry |     2017-03-01     |
+|   containerregistry |     2017-10-01     |
+|   containerregistry |     2018-02-01     |
+|    containerservice |     2016-03-30     |
+|    containerservice |     2016-09-30     |
+|    containerservice |     2017-01-31     |
+|    containerservice |     2017-07-01     |
+|    containerservice |     2017-08-31     |
+|    containerservice |     2017-09-30     |
+|    customerinsights |     2017-01-01     |
+|    customerinsights |     2017-04-26     |
+|             databox |     2018-01-01     |
+|          databricks |     2018-04-01     |
+|         datacatalog |     2016-03-30     |
+|         datafactory | 2017-09-01-preview |
+|       datamigration | 2018-03-31-preview |
+|             devices |     2016-02-03     |
+|             devices |     2017-01-19     |
+|             devices |     2017-07-01     |
+|             devices |     2018-01-22     |
+|             devices |     2018-04-01     |
+|                 dns |     2016-04-01     |
+|                 dns |     2017-09-01     |
+|                 dns |     2017-10-01     |
+|          documentdb |     2015-04-08     |
+|                 dtl |     2016-05-15     |
+|           eventgrid |     2018-01-01     |
+|           eventgrid | 2018-05-01-preview |
+|            eventhub |     2015-08-01     |
+|            eventhub |     2017-04-01     |
+|            eventhub | 2018-01-01-preview |
+|            insights |     2015-05-01     |
+|              iothub | 2017-08-21-preview |
+|              iothub |     2017-11-15     |
+|              iothub |     2018-01-22     |
+|           iotspaces | 2017-10-01-preview |
+|               logic |     2016-06-01     |
+| managedapplications | 2016-09-01-preview |
+| managedapplications |     2017-09-01     |
+|          management | 2018-01-01-preview |
+|               media | 2018-03-30-preview |
+|               mysql |     2017-12-01     |
+|             network |     2015-06-15     |
+|             network |     2016-03-30     |
+|             network |     2016-06-01     |
+|             network |     2016-09-01     |
+|             network |     2016-12-01     |
+|             network |     2017-03-01     |
+|             network |     2017-06-01     |
+|             network |     2017-08-01     |
+|             network |     2017-09-01     |
+|             network |     2017-10-01     |
+|             network |     2017-11-01     |
+|             network |     2018-01-01     |
+|             network |     2018-02-01     |
+|             network |     2018-04-01     |
+|    notificationhubs |     2014-09-01     |
+|    notificationhubs |     2016-03-01     |
+|    notificationhubs |     2017-04-01     |
+| operationalinsights |     2015-03-20     |
+| operationalinsights |         v1         |
+|          postgresql |     2017-12-01     |
+|    powerbidedicated |     2017-10-01     |
+|     powerbiembedded |     2016-01-29     |
+|          prediction |    customvision    |
+|   luis/programmatic |        v2.0        |
+|               redis |     2016-04-01     |
+|               redis |     2017-02-01     |
+|               redis |     2017-10-01     |
+|               redis |     2018-03-01     |
+|               relay |     2016-07-01     |
+|               relay |     2017-04-01     |
+|        reservations |     2017-11-01     |
+|           resources |     2015-11-01     |
+|           resources |     2016-02-01     |
+|           resources |     2016-07-01     |
+|           resources |     2016-09-01     |
+|           resources |     2017-05-10     |
+|           resources |     2018-02-01     |
+|        luis/runtime |        v2.0        |
+|           scheduler |     2016-03-01     |
+|              search |     2015-08-19     |
+|    servermanagement | 2015-07-01-preview |
+|    servermanagement | 2016-07-01-preview |
+|          servicebus |     2015-08-01     |
+|          servicebus |     2017-04-01     |
+|       servicefabric |     2016-09-01     |
+|       servicefabric | 2017-07-01-preview |
+|             signalr | 2018-03-01-preview |
+|        siterecovery |     2016-08-10     |
+|        siterecovery |     2018-01-10     |
+|                 sql |     2014-04-01     |
+|                 sql | 2015-05-01-preview |
+|                 sql | 2017-03-01-preview |
+|                 sql | 2017-10-01-preview |
+|             storage | 2015-05-01-preview |
+|             storage |     2015-06-15     |
+|             storage |     2016-01-01     |
+|             storage |     2016-05-01     |
+|             storage |     2016-12-01     |
+|             storage |     2017-06-01     |
+|             storage |     2017-10-01     |
+|             storage |     2018-02-01     |
+|          storsimple |     2017-06-01     |
+|     streamanalytics |     2016-03-01     |
+|        subscription | 2017-11-01-preview |
+|        subscription | 2018-03-01-preview |
+|  timeseriesinsights | 2017-02-28-preview |
+|  timeseriesinsights |     2017-11-15     |
+|      trafficmanager |     2018-03-01     |
+|            training |    customvision    |
+|        visualstudio | 2014-04-01-preview |
+|                 web |  2015-08-preview   |
+|                 web |     2016-09-01     |
+|                 web |     2018-02-01     |
+|         webservices |     2017-01-01     |
 
-### Support for the following swagger extensions was added to the Go generator which affected codegen.
-- x-ms-client-flatten
-- x-ms-paramater-location
+## `v16.2.2`
 
-## `v6.0.0-beta`
+### Updated Services
 
-| api                            | version            | note                               |
-|:-------------------------------|:-------------------|:-----------------------------------|
-| arm/authorization              | no change          | code refactoring                   |
-| arm/batch                      | no change          | code refactoring                   |
-| arm/compute                    | no change          | code refactoring                   |
-| arm/containerservice           | 2016-03-30         | return                             |
-| arm/datalake-analytics/account | 2015-10-01-preview | new                                |
-| arm/datalake-store/filesystem  | no change          | moved to datalake-store/filesystem |
-| arm/eventhub                   | no change          | code refactoring                   |
-| arm/intune                     | no change          | code refactoring                   |
-| arm/iothub                     | no change          | code refactoring                   |
-| arm/keyvault                   | no change          | code refactoring                   |
-| arm/mediaservices              | no change          | code refactoring                   |
-| arm/network                    | no change          | code refactoring                   |
-| arm/notificationhubs           | no change          | code refactoring                   |
-| arm/redis                      | no change          | code refactoring                   |
-| arm/resources/resources        | no change          | code refactoring                   |
-| arm/resources/links            | 2016-09-01         | new                                |
-| arm/resources/locks            | 2016-09-01         | updated                            |
-| arm/resources/policy           | no change          | code refactoring                   |
-| arm/resources/resources        | 2016-09-01         | updated                            |
-| arm/servermanagement           | 2016-07-01-preview | updated                            |
-| arm/web                        | no change          | code refactoring                   |
+| Package Name |    API Version     |
+| -----------: | :----------------: |
+|      signalr | 2018-03-01-preview |
 
-- storage: Added blob lease functionality and tests
+## `v16.2.1`
 
-## `v5.0.0-beta`
+### Updated Services
 
-| api                           | version             | note             |
-|:------------------------------|:--------------------|:-----------------|
-| arm/network                   | 2016-09-01          | updated          |
-| arm/servermanagement          | 2015-07-01-preview  | new              |
-| arm/eventhub                  | 2015-08-01          | new              |
-| arm/containerservice          | --                  | removed          |
-| arm/resources/subscriptions   | no change           | code refactoring |
-| arm/resources/features        | no change           | code refactoring |
-| arm/resources/resources       | no change           | code refactoring |
-| arm/datalake-store/accounts   | no change           | code refactoring |
-| arm/datalake-store/filesystem | no change           | code refactoring |
-| arm/notificationhubs          | no change           | code refactoring |
-| arm/redis                     | no change           | code refactoring |
+| Package Name |        API Version        |
+| -----------: | :-----------------------: |
+|          web | 2016-09-01<br/>2018-02-01 |
 
-- storage: Add more file storage share operations.
-- azure-rest-api-specs/commit/b8cdc2c50a0872fc0039f20c2b6b33aa0c2af4bf
-- Uses go-autorest v7.2.1
+## `v16.2.0`
 
-## `v4.0.0-beta`
+### New Services
 
-- arm/logic: breaking change in package logic.
-- arm: parameter validation code added in all arm packages.
-- Uses go-autorest v7.2.0.
+|   Package Name |    API Version     |
+| -------------: | :----------------: |
+|      eventgrid | 2018-05-01-preview |
+| trafficmanager |     2018-03-01     |
 
+### Updated Services
 
-## `v3.2.0-beta`
+|  Package Name |        API Version        |
+| ------------: | :-----------------------: |
+|         redis | 2017-10-01<br/>2018-03-01 |
+| textanalytics |           v2.0            |
+|           web | 2016-09-01<br/>2018-02-01 |
 
-| api                         | version             | note      |
-|:----------------------------|:--------------------|:----------|
-| arm/mediaservices           | 2015-10-01          | new       |
-| arm/keyvault                | 2015-06-01          | new       |
-| arm/iothub                  | 2016-02-03          | new       |
-| arm/datalake-store          | 2015-12-01          | new       |
-| arm/network                 | 2016-06-01          | updated   |
-| arm/resources/resources     | 2016-07-01          | updated   |
-| arm/resources/policy        | 2016-04-01          | updated   |
-| arm/servicebus              | 2015-08-01          | updated   |
+## `v16.1.0`
 
-- arm: uses go-autorest version v7.1.0.
-- storage: fix for operating on blobs names containing special characters.
-- storage: add SetBlobProperties(), update BlobProperties response fields.
-- storage: make storage client work correctly with read-only secondary account.
-- storage: add Azure Storage Emulator support.
+* Added a `NewAuthorizerFromEnvironment()` function for the keyvault service.
 
+## `v16.0.0`
 
-## `v3.1.0-beta`
+### New Services
 
-- Added a new arm/compute/containerservice (2016-03-30) package
-- Reintroduced NewxxClientWithBaseURI method.
-- Uses go-autorest version - v7.0.7.
+|        Package Name |    API Version     |
+| ------------------: | :----------------: |
+|             batchai |     2018-05-01     |
+|         botservices |     2017-12-01     |
+|   containerinstance |     2018-04-01     |
+|   containerregistry |     2018-02-01     |
+|            keyvault |        v7.0        |
+| managedapplications |     2017-09-01     |
+|             network |     2018-04-01     |
+|      policyinsights |     2018-04-04     |
+|             signalr | 2018-03-01-preview |
+|             storage |     2018-02-0      |
+|        visualsearch |        v1.0        |
+|                 web |     2018-02-01     |
 
+### Updated Services
 
-## `v3.0.0-beta`
+|        Package Name |                           API Version                            |
+| ------------------: | :--------------------------------------------------------------: |
+|       apimanagement |                            2018-01-01                            |
+|          automation |                2015-10-31<br/>2017-05-15-preview                 |
+|             billing |                        2018-03-01-preview                        |
+|         botservices |                            2017-12-01                            |
+|             catalog |                        2016-11-01-preview                        |
+|   cognitiveservices |                            2017-04-18                            |
+|            commerce |                        2015-06-01-preview                        |
+|             compute |                            2018-04-01                            |
+|         consumption |                            2018-03-31                            |
+|    contentmoderator |                               v1.0                               |
+|         datafactory |                        2017-09-01-preview                        |
+|       datamigration |                        2017-11-15-preview                        |
+|            eventhub |                            2017-04-01                            |
+|            insights |                            2015-05-0                             |
+|              iothub |                            2017-11-15                            |
+|             network |                            2018-02-01                            |
+| operationalinsights |                2015-03-20<br/>2015-11-01-preview                 |
+|          servicebus |                            2017-04-01                            |
+|        siterecovery |                            2018-01-10                            |
+|                 sql | 2017-03-01-preview<br/>2017-10-01-preview<br/>2015-05-01-preview |
+|  timeseriesinsights |                            2017-11-15                            |
+|        luis/runtime |                               v2.0                               |
+|                 web |                            2016-09-01                            |
 
-This release brings the Go SDK ARM packages up-to-date with Azure ARM Swagger files for most
-services. Since the underlying [Swagger files](https://github.com/Azure/azure-rest-api-specs)
-continue to change substantially, the ARM packages are still in *beta* status.
+## `v15.3.0`
 
-The ARM packages now align with the following API versions (*highlighted* packages are new or
-updated in this release):
+### New Services
 
-| api                         | version             | note      |
-|:----------------------------|:--------------------|:----------|
-| arm/authorization           | 2015-07-01          | no change |
-| arm/intune                  | 2015-01-14-preview  | no change |
-| arm/notificationhubs        | 2014-09-01          | no change |
-| arm/resources/features      | 2015-12-01          | no change |
-| arm/resources/subscriptions | 2015-11-01          | no change |
-| arm/web                     | 2015-08-01          | no change |
-| arm/cdn                     | 2016-04-02          | updated   |
-| arm/compute                 | 2016-03-30          | updated   |
-| arm/dns                     | 2016-04-01          | updated   |
-| arm/logic                   | 2015-08-01-preview  | updated   |
-| arm/network                 | 2016-03-30          | updated   |
-| arm/redis                   | 2016-04-01          | updated   |
-| arm/resources/resources     | 2016-02-01          | updated   |
-| arm/resources/policy        | 2015-10-01-preview  | updated   |
-| arm/resources/locks         | 2015-01-01          | updated (resources/authorization earlier)|
-| arm/scheduler               | 2016-03-01          | updated   |
-| arm/storage                 | 2016-01-01          | updated   |
-| arm/search                  | 2015-02-28          | updated   |
-| arm/batch                   | 2015-12-01          | new       |
-| arm/cognitiveservices       | 2016-02-01-preview  | new       |
-| arm/devtestlabs             | 2016-05-15          | new       |
-| arm/machinelearning         | 2016-05-01-preview  | new       |
-| arm/powerbiembedded         | 2016-01-29          | new       |
-| arm/mobileengagement        | 2014-12-01          | new       |
-| arm/servicebus              | 2014-09-01          | new       |
-| arm/sql                     | 2015-05-01          | new       |
-| arm/trafficmanager          | 2015-11-01          | new       |
+|  Package Name |    API Version     |
+| ------------: | :----------------: |
+|       databox |     2018-01-01     |
+|       devices |     2018-04-01     |
+|         media | 2018-03-30-preview |
+| servicefabric |        6.2         |
 
+### Updated Services
 
-Below are some design changes.
-- Removed Api version from method arguments.
-- Removed New...ClientWithBaseURI() method in all clients. BaseURI value is set in client.go.
-- Uses go-autorest version v7.0.6.
+|      Package Name |  API Version   |
+| ----------------: | :------------: |
+|     apimanagement |   2018-01-01   |
+|             batch | 2018-03-01.6.1 |
+| containerregistry |   2017-10-01   |
+|        documentdb |   2015-04-08   |
+|        servicebus |   2017-04-01   |
 
+## `v15.2.0`
 
-## `v2.2.0-beta`
+### New Services
 
-- Uses go-autorest version v7.0.5.
-- Update version of pacakges "jwt-go" and "crypto" in glide.lock.
+| Package Name | API Version |
+| -----------: | :---------: |
+|       addons | 2017-05-15  |
+|       addons | 2018-03-01  |
 
+### Updated Services
 
-## `v2.1.1-beta`
+|  Package Name | API Version |
+| ------------: | :---------: |
+| apimanagement | 2017-03-01  |
+| apimanagement | 2018-01-01  |
+|      insights | 2015-05-01  |
 
-- arm: Better error messages for long running operation failures (Uses go-autorest version v7.0.4).
+## `v15.1.1`
 
+### Bug Fixes
 
-## `v2.1.0-beta`
+* Drain the response body when retrying a request.
+* Avoid allocating when draining a response body.
 
-- arm: Uses go-autorest v7.0.3 (polling related updates).
-- arm: Cancel channel argument added in long-running calls.
-- storage: Allow caller to provide headers for DeleteBlob methods.
-- storage: Enables connection sharing with http keepalive.
-- storage: Add BlobPrefixes and Delimiter to BlobListResponse
+## `v15.1.0`
 
+### New Services
 
-## `v2.0.0-beta`
+|      Package Name |    API Version     |
+| ----------------: | :----------------: |
+|     datamigration | 2018-03-31-preview |
+|           devices |     2018-01-22     |
+|           network |     2018-02-01     |
+| cognitiveservices |    customvision    |
 
-- Uses go-autorest v6.0.0 (Polling and Asynchronous requests related changes).
+## Updated Services
 
- 
-## `v0.5.0-beta`
+| Package Name |                                  API Version                                   |
+| -----------: | :----------------------------------------------------------------------------: |
+|      compute | 2015-06-15<br/>2016-03-30<br/>2016-04-30-preview<br/>2017-03-30<br/>2018-04-01 |
+|  datafactory |                               2017-09-01-preview                               |
+|     insights |                                   2018-03-01                                   |
+|        mysql |                                   2017-12-01                                   |
+|   postgresql |                                   2017-12-01                                   |
+|          web |                                   2016-09-01                                   |
 
-Updated following packages to new API versions:
-- arm/resources/features 2015-12-01
-- arm/resources/resources 2015-11-01
-- arm/resources/subscriptions 2015-11-01
+## `v15.0.1`
 
+Fixing some build issues, and temporarily reverting CI.
 
-### Changes 
+## `v15.0.0`
 
- - SDK now uses go-autorest v3.0.0.
+NOTE: There is a new subdirectory, ./services/preview, which going forward will be used for segregating pre-GA packages.
 
+### New Features
 
+* Added helper func per enum type that returns a slice of all possible values for that type.
 
-## `v0.4.0-beta`
+### Bug Fixes
 
-This release brings the Go SDK ARM packages up-to-date with Azure ARM Swagger files for most
-services. Since the underlying [Swagger files](https://github.com/Azure/azure-rest-api-specs)
-continue to change substantially, the ARM packages are still in *beta* status.
+* Removed the "arm-" prefix from user-agent strings as not all services are for ARM.
+* Fixed missing marshaller for structs with flattened fields.
+* Fixed an issue where the incorrect content MIME type was being specified.
+* Marshalling of empty values for enum types now works as expected.
 
-The ARM packages now align with the following API versions (*highlighted* packages are new or
-updated in this release):
+### New Services
 
-- *arm/authorization 2015-07-01*
-- *arm/cdn 2015-06-01*
-- arm/compute 2015-06-15
-- arm/dns 2015-05-04-preview
-- *arm/intune 2015-01-14-preview*
-- arm/logic 2015-02-01-preview
-- *arm/network 2015-06-15*
-- *arm/notificationhubs 2014-09-01*
-- arm/redis 2015-08-01
-- *arm/resources/authorization 2015-01-01*
-- *arm/resources/features 2014-08-01-preview*
-- *arm/resources/resources 2014-04-01-preview*
-- *arm/resources/subscriptions 2014-04-01-preview*
-- *arm/scheduler 2016-01-01*
-- arm/storage 2015-06-15
-- arm/web 2015-08-01
+|   Package Name |                           API Version                            |
+| -------------: | :--------------------------------------------------------------: |
+|  apimanagement |                            2017-03-01                            |
+|     azurestack |                            2017-06-01                            |
+|        billing |                        2018-03-01-preview                        |
+|        compute |                            2018-04-01                            |
+|    consumption |                            2018-03-31                            |
+|     databricks |                            2018-04-01                            |
+|            dns |                            2017-10-01                            |
+|       insights |                            2018-03-01                            |
+|         iothub |                            2018-01-22                            |
+|      iotspaces |                        2017-10-01-preview                        |
+|     management |                        2018-01-01-preview                        |
+|        migrate |                            2018-02-02                            |
+| policyinsights | 2017-08-09-preview<br/>2017-10-17-preview<br/>2017-12-12-preview |
+|      resources |                            2018-02-01                            |
+|   siterecovery |                            2018-01-10                            |
+|            sql |                        2017-10-01-preview                        |
+
+### Breaking Changes
+
+|        Package Name |                API Version                 |
+| ------------------: | :----------------------------------------: |
+|          automation |             2017-05-15-preview             |
+|             advisor |                 2017-04-19                 |
+|   cognitiveservices |                 2017-04-18                 |
+|             compute |         2017-03-30<br/>2017-12-01          |
+|         consumption |                 2018-01-31                 |
+|   containerinstance |             2018-02-01-preview             |
+|    containerservice |         2017-08-31<br/>2017-09-30          |
+|        customsearch |                    v1.0                    |
+|         datafactory |             2017-09-01-preview             |
+|       datamigration |             2017-11-15-preview             |
+|                 dns |             2018-03-01-preview             |
+|        entitysearch |                    v1.0                    |
+|         imagesearch |                    v1.0                    |
+|            insights |             2017-05-01-preview             |
+|              iothub |                 2017-11-15                 |
+|          management | 2017-08-31-preview<br/>2017-11-01-preview  |
+|               mysql |             2017-12-01-preview             |
+|          newssearch |                    v1.0                    |
+| operationalinsights |                 2015-03-20                 |
+|          postgresql |             2017-12-01-preview             |
+|          servicebus |                 2015-08-01                 |
+|       servicefabric | 2017-07-01-preview<br/>5.6<br/>6.0<br/>6.1 |
+|          servicemap |             2015-11-01-preview             |
+|          spellcheck |                    v1.0                    |
+|  timeseriesinsights |     2017-02-28-preview<br/>2017-11-15      |
+|         videosearch |                    v1.0                    |
+|                 web |                 2016-09-01                 |
+|           websearch |                    v1.0                    |
+
+## `v14.6.0`
+
+### New Services
+
+* Batch 2018-03-01.6.1
+* BatchAI 2018-03-01
+* Cognitive services custom vision prediction v1.1
+* Eventhub 2018-01-01-preview
+* MySQL 2017-12-01
+* PostgreSQL 2017-12-01
+* Redis 2018-03-01
+* Subscription 2018-03-01-preview
+
+## `v14.5.0`
 
 ### Changes
 
-- Moved the arm/authorization, arm/features, arm/resources, and arm/subscriptions packages under a new, resources, package (to reflect the corresponding Swagger structure)
-- Added a new arm/authoriation (2015-07-01) package
-- Added a new arm/cdn (2015-06-01) package
-- Added a new arm/intune (2015-01-14-preview) package
-- Udated arm/network (2015-06-01)
-- Added a new arm/notificationhubs (2014-09-01) package
-- Updated arm/scheduler (2016-01-01) package
+* Added new preview packages for apimanagement and dns.
 
+## `v14.4.0`
 
------
+### Changes
 
-## `v0.3.0-beta`
+* Added new preview API versions for mysql and postgresql.
 
-- Corrected unintentional struct field renaming and client renaming in v0.2.0-beta
+## `v14.3.0`
 
------
+### Changes
 
-## `v0.2.0-beta`
+* Add exports for max file range and sizes for files in storage.
+* Updated README regarding blob storage support.
+* Add godoc indexer tool.
+* Add apidiff tool.
 
-- Added support for DNS, Redis, and Web site services
-- Updated Storage service to API version 2015-06-15
-- Updated Network to include routing table support
-- Address https://github.com/Azure/azure-sdk-for-go/issues/232
-- Address https://github.com/Azure/azure-sdk-for-go/issues/231
-- Address https://github.com/Azure/azure-sdk-for-go/issues/230
-- Address https://github.com/Azure/azure-sdk-for-go/issues/224
-- Address https://github.com/Azure/azure-sdk-for-go/issues/184
-- Address https://github.com/Azure/azure-sdk-for-go/issues/183
+## `v14.2.0`
 
-------
+### Changes
 
-## `v0.1.1-beta`
+* For blob storage, added GetProperties() method to Container.
+* Added PublicAccess field to ContainerProperties struct.
 
-- Improves the UserAgent string to disambiguate arm packages from others in the SDK
-- Improves setting the http.Response into generated results (reduces likelihood of a nil reference)
-- Adds gofmt, golint, and govet to Travis CI for the arm packages
+## `v14.1.1`
 
-##### Fixed Issues
+* Fixing timestamp marshalling bug in the `storage` package.
+* Updating `profileBuilder` to clear-output folders when it is run by `go generate`.
+* Tweaking Swagger -> SDK config to use "latest" instead of "nightly" and be tied to a particular version of autorest.go.
 
-- https://github.com/Azure/azure-sdk-for-go/issues/196
-- https://github.com/Azure/azure-sdk-for-go/issues/213
+## `v14.1.0`
 
-------
+### Changes
 
-## v0.1.0-beta
+* Update README with details on new authentication helpers.
+* Update `latest` profile to point to latest stable API versions.
+* Add new API version for Azure Monitoring service and for Batch Data plane service.
 
-This release addresses the issues raised against the alpha release and adds more features. Most
-notably, to address the challenges of encoding JSON
-(see the [comments](https://github.com/Azure/go-autorest#handling-empty-values) in the
-[go-autorest](https://github.com/Azure/go-autorest) package) by using pointers for *all* structure
-fields (with the exception of enumerations). The
-[go-autorest/autorest/to](https://github.com/Azure/go-autorest/tree/master/autorest/to) package
-provides helpers to convert to / from pointers. The examples demonstrate their usage.
+## `v14.0.2`
 
-Additionally, the packages now align with Go coding standards and pass both `golint` and `govet`.
-Accomplishing this required renaming various fields and parameters (such as changing Url to URL).
+### Changes
 
-##### Changes
+* Updating `profileBuilder list` to accept an `input` flag instead of reading from `stdin`.
+* Simplifying CI to have less chatter, be faster, and have no special cases.
 
-- Changed request / response structures to use pointer fields.
-- Changed methods to return `error` instead of `autorest.Error`.
-- Re-divided methods to ease asynchronous requests.
-- Added paged results support.
-- Added a UserAgent string.
-- Added changes necessary to pass golint and govet.
-- Updated README.md with details on asynchronous requests and paging.
-- Saved package dependencies through Godep (for the entire SDK).
+## `v14.0.1`
 
-##### Fixed Issues:
+### Changes
 
-- https://github.com/Azure/azure-sdk-for-go/issues/205
-- https://github.com/Azure/azure-sdk-for-go/issues/206
-- https://github.com/Azure/azure-sdk-for-go/issues/211
-- https://github.com/Azure/azure-sdk-for-go/issues/212
+* Removed the ./services/search/2016-09-01/search package, it was never intended to be included and doesn't work.
 
------
+## `v14.0.0`
 
-## v0.1.0-alpha
+### Breaking Changes
 
-This release introduces the Azure Resource Manager packages generated from the corresponding
-[Swagger API](http://swagger.io) [definitions](https://github.com/Azure/azure-rest-api-specs).
+* Removed the ./arm, ./datalake-store and ./dataplane directories. You can find the same packages under ./services
+* The management package was moved to ./services/classic/management
+* Renamed package ./services/redis/mgmt/2017-10-01/cache to ./services/redis/mgmt/2017-10-01/redis
+
+### Changes
+
+* Removed the "-beta" suffix.
+* Added various new services.
+* Added ./version package for centralized SDK versioning.

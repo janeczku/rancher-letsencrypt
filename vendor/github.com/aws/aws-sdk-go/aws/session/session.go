@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/corehandlers"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/aws/csm"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -26,7 +27,7 @@ import (
 // Sessions are safe to create service clients concurrently, but it is not safe
 // to mutate the Session concurrently.
 //
-// The Session satisfies the service client's client.ClientConfigProvider.
+// The Session satisfies the service client's client.ConfigProvider.
 type Session struct {
 	Config   *aws.Config
 	Handlers request.Handlers
@@ -58,7 +59,12 @@ func New(cfgs ...*aws.Config) *Session {
 	envCfg := loadEnvConfig()
 
 	if envCfg.EnableSharedConfig {
-		s, err := newSession(Options{}, envCfg, cfgs...)
+		var cfg aws.Config
+		cfg.MergeIn(cfgs...)
+		s, err := NewSessionWithOptions(Options{
+			Config:            cfg,
+			SharedConfigState: SharedConfigEnable,
+		})
 		if err != nil {
 			// Old session.New expected all errors to be discovered when
 			// a request is made, and would report the errors then. This
@@ -76,10 +82,16 @@ func New(cfgs ...*aws.Config) *Session {
 				r.Error = err
 			})
 		}
+
 		return s
 	}
 
-	return deprecatedNewSession(cfgs...)
+	s := deprecatedNewSession(cfgs...)
+	if envCfg.CSMEnabled {
+		enableCSM(&s.Handlers, envCfg.CSMClientID, envCfg.CSMPort, s.Config.Logger)
+	}
+
+	return s
 }
 
 // NewSession returns a new Session created from SDK defaults, config files,
@@ -155,6 +167,10 @@ type Options struct {
 	// and enable or disable the shared config functionality.
 	SharedConfigState SharedConfigState
 
+	// Ordered list of files the session will load configuration from.
+	// It will override environment variable AWS_SHARED_CREDENTIALS_FILE, AWS_CONFIG_FILE.
+	SharedConfigFiles []string
+
 	// When the SDK's shared config is configured to assume a role with MFA
 	// this option is required in order to provide the mechanism that will
 	// retrieve the MFA token. There is no default value for this field. If
@@ -218,7 +234,7 @@ type Options struct {
 //
 //     // Force enable Shared Config support
 //     sess := session.Must(session.NewSessionWithOptions(session.Options{
-//         SharedConfigState: SharedConfigEnable,
+//         SharedConfigState: session.SharedConfigEnable,
 //     }))
 func NewSessionWithOptions(opts Options) (*Session, error) {
 	var envCfg envConfig
@@ -291,8 +307,20 @@ func deprecatedNewSession(cfgs ...*aws.Config) *Session {
 	}
 
 	initHandlers(s)
-
 	return s
+}
+
+func enableCSM(handlers *request.Handlers, clientID string, port string, logger aws.Logger) {
+	logger.Log("Enabling CSM")
+	if len(port) == 0 {
+		port = csm.DefaultPort
+	}
+
+	r, err := csm.Start(clientID, "127.0.0.1:"+port)
+	if err != nil {
+		return
+	}
+	r.InjectHandlers(handlers)
 }
 
 func newSession(opts Options, envCfg envConfig, cfgs ...*aws.Config) (*Session, error) {
@@ -304,13 +332,18 @@ func newSession(opts Options, envCfg envConfig, cfgs ...*aws.Config) (*Session, 
 	userCfg := &aws.Config{}
 	userCfg.MergeIn(cfgs...)
 
-	// Order config files will be loaded in with later files overwriting
+	// Ordered config files will be loaded in with later files overwriting
 	// previous config file values.
-	cfgFiles := []string{envCfg.SharedConfigFile, envCfg.SharedCredentialsFile}
-	if !envCfg.EnableSharedConfig {
-		// The shared config file (~/.aws/config) is only loaded if instructed
-		// to load via the envConfig.EnableSharedConfig (AWS_SDK_LOAD_CONFIG).
-		cfgFiles = cfgFiles[1:]
+	var cfgFiles []string
+	if opts.SharedConfigFiles != nil {
+		cfgFiles = opts.SharedConfigFiles
+	} else {
+		cfgFiles = []string{envCfg.SharedConfigFile, envCfg.SharedCredentialsFile}
+		if !envCfg.EnableSharedConfig {
+			// The shared config file (~/.aws/config) is only loaded if instructed
+			// to load via the envConfig.EnableSharedConfig (AWS_SDK_LOAD_CONFIG).
+			cfgFiles = cfgFiles[1:]
+		}
 	}
 
 	// Load additional config from file(s)
@@ -329,6 +362,9 @@ func newSession(opts Options, envCfg envConfig, cfgs ...*aws.Config) (*Session, 
 	}
 
 	initHandlers(s)
+	if envCfg.CSMEnabled {
+		enableCSM(&s.Handlers, envCfg.CSMClientID, envCfg.CSMPort, s.Config.Logger)
+	}
 
 	// Setup HTTP client with custom cert bundle if enabled
 	if opts.CustomCABundle != nil {
@@ -557,11 +593,12 @@ func (s *Session) clientConfigWithErr(serviceName string, cfgs ...*aws.Config) (
 	}
 
 	return client.Config{
-		Config:        s.Config,
-		Handlers:      s.Handlers,
-		Endpoint:      resolved.URL,
-		SigningRegion: resolved.SigningRegion,
-		SigningName:   resolved.SigningName,
+		Config:             s.Config,
+		Handlers:           s.Handlers,
+		Endpoint:           resolved.URL,
+		SigningRegion:      resolved.SigningRegion,
+		SigningNameDerived: resolved.SigningNameDerived,
+		SigningName:        resolved.SigningName,
 	}, err
 }
 
@@ -581,10 +618,11 @@ func (s *Session) ClientConfigNoResolveEndpoint(cfgs ...*aws.Config) client.Conf
 	}
 
 	return client.Config{
-		Config:        s.Config,
-		Handlers:      s.Handlers,
-		Endpoint:      resolved.URL,
-		SigningRegion: resolved.SigningRegion,
-		SigningName:   resolved.SigningName,
+		Config:             s.Config,
+		Handlers:           s.Handlers,
+		Endpoint:           resolved.URL,
+		SigningRegion:      resolved.SigningRegion,
+		SigningNameDerived: resolved.SigningNameDerived,
+		SigningName:        resolved.SigningName,
 	}
 }

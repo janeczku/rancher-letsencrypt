@@ -1,14 +1,12 @@
-FROM alpine:3.4
+FROM golang:alpine3.7 as builder
 
-ENV GOPATH /go
+ARG LEGO_VERSION=dev
 
-RUN apk update && apk add ca-certificates go git && \
-    rm -rf /var/cache/apk/* && \
-    go get -u github.com/xenolf/lego && \
-    cd /go/src/github.com/xenolf/lego && \
-    go build -o /usr/bin/lego . && \
-    apk del go git && \
-    rm -rf /var/cache/apk/* && \
-    rm -rf /go
+WORKDIR /go/src/github.com/xenolf/lego
+COPY . .
+RUN go build -ldflags="-s -X main.version=${LEGO_VERSION}"
 
+FROM alpine:3.7
+RUN apk update && apk add --no-cache --virtual ca-certificates
+COPY --from=builder /go/src/github.com/xenolf/lego/lego /usr/bin/lego
 ENTRYPOINT [ "/usr/bin/lego" ]
